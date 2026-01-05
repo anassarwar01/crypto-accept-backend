@@ -1,0 +1,21 @@
+{
+  "moduleFileExtensions": [
+    "js",
+    "json",
+    "ts"
+  ],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "^@users/(.*)$": "<rootDir>/../src/modules/users/$1",
+    "^@merchants/(.*)$": "<rootDir>/../src/modules/merchants/$1",
+    "^@customers/(.*)$": "<rootDir>/../src/modules/customers/$1",
+    "^@transactions/(.*)$": "<rootDir>/../src/modules/transactions/$1",
+    "^@cryptocurrency/(.*)$": "<rootDir>/../src/modules/cryptocurrency/$1",
+    "^@database/data-source$": "<rootDir>/../data-source.ts"
+  }
+}
