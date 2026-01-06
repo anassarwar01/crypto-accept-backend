@@ -150,25 +150,3 @@ pipeline {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-Message Muhammad Rameez
-
-
-
-
-
-
-
-
-
