@@ -6,7 +6,7 @@ import {
     ValidationArguments,
 } from 'class-validator';
 import { Injectable } from '@nestjs/common';
-import { CryptocurrencyService } from '../../cryptocurrency/cryptocurrency.service';
+import { CryptocurrencyService } from '../../crypto-currencies/crypto-currencies.service';
 
 @ValidatorConstraint({ name: 'isCryptocurrencyCode', async: true })
 @Injectable()

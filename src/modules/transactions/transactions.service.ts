@@ -12,8 +12,7 @@ import { TransactionRepository } from './transaction.repository';
 import { ConversionRatesService } from '../conversion-rates/conversion-rates.service';
 
 import { TransactionDetailsDto, TransactionDetailsResponseDto } from './dto/transaction-details.dto';
-import { CryptocurrencyService } from '../cryptocurrency/cryptocurrency.service';
-import { Transaction } from 'typeorm';
+import { CryptocurrencyService } from '../crypto-currencies/crypto-currencies.service';
 import { TransactionResponseDto } from './dto/transaction.dto';
 import { TransactionsGateway } from './gateways/transactions.gateway';
 import { TransactionStatus } from './enums/transaction.enums';
@@ -34,8 +33,6 @@ export class TransactionsService {
     request: CreateTransactionDto,
     merchantId: string,
   ): Promise<CreateTransactionResponseDTO> {
-    // ...
-    // userId is guaranteed to be present by 
 
     // Get or create customer
     const customer = await this.customerService.getCustomerByEmail(

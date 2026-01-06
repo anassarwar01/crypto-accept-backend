@@ -19,7 +19,7 @@ import { Transaction } from './entities/transaction.entity';
 import { TransactionRepository } from './transaction.repository';
 import { RefMiddleware } from '../common/middleware/ref.middleware';
 import { ConversionRatesModule } from '../conversion-rates/conversion-rates.module';
-import { CryptocurrencyModule } from '../cryptocurrency/cryptocurrency.module';
+import { CryptocurrencyModule } from '../crypto-currencies/crypto-currencies.module';
 import { IsCryptocurrencyCodeConstraint } from './decorators/is-cryptocurrency-code.decorator';
 import { TransactionsGateway } from './gateways/transactions.gateway';
 import { IsUniqueRequestIdConstraint } from './decorators/is-unique-request-id.decorator';

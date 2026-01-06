@@ -7,7 +7,7 @@ import { UsersModule } from './modules/users/users.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { MerchantsModule } from './modules/merchants/merchants.module';
-import { CryptocurrencyModule } from './modules/cryptocurrency/cryptocurrency.module';
+import { CryptocurrencyModule } from './modules/crypto-currencies/crypto-currencies.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { MerchantCustomersModule } from './modules/merchant-customers/merchant-customers.module';
 import { ErrorLogsModule } from './modules/error-logs/error-logs.module';

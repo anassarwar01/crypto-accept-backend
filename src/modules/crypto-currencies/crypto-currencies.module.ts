@@ -1,8 +1,8 @@
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CryptocurrencyService } from './cryptocurrency.service';
-import { CryptocurrencyController } from './cryptocurrency.controller';
-import { Cryptocurrency } from './entities/cryptocurrency.entity';
+import { CryptocurrencyService } from './crypto-currencies.service';
+import { CryptocurrencyController } from './crypto-currencies.controller';
+import { Cryptocurrency } from './entities/crypto-currency.entity';
 import { RefMiddleware } from '../common/middleware/ref.middleware';
 import { CommonModule } from '../common/common.module';
 

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Cryptocurrency } from './entities/cryptocurrency.entity';
+import { Cryptocurrency } from './entities/crypto-currency.entity';
 
 @Injectable()
 export class CryptocurrencyService {

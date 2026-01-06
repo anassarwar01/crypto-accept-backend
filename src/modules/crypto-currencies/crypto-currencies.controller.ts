@@ -1,6 +1,6 @@
-// src/modules/cryptocurrency/cryptocurrency.controller.ts
+// src/modules/crypto-currencies/cryptocurrency.controller.ts
 import { Controller, Get } from '@nestjs/common';
-import { CryptocurrencyService } from './cryptocurrency.service';
+import { CryptocurrencyService } from './crypto-currencies.service';
 import {
   ApiTags,
   ApiExtraModels,

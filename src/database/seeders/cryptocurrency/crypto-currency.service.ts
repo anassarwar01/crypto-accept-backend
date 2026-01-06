@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import AppDataSource from '../../../../data-source';
-import { Cryptocurrency } from '../../../modules/cryptocurrency/entities/cryptocurrency.entity';
+import { Cryptocurrency } from '../../../modules/crypto-currencies/entities/crypto-currency.entity';
 
 @Injectable()
 export class CryptocurrencySeederService {

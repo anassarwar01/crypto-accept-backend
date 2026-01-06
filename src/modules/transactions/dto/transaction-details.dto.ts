@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transaction } from '../entities/transaction.entity';
-import { Cryptocurrency } from '../../cryptocurrency/entities/cryptocurrency.entity';
+import { Cryptocurrency } from '../../crypto-currencies/entities/crypto-currency.entity';
 
 export class TransactionDetailsDto {
     // Currently empty, but can be used for request validation if needed
@@ -52,11 +52,11 @@ export class TransactionDetailsResponseDto {
     details: FiatDetailsDto;
 
     constructor(cryptoCurrencies: Cryptocurrency[], transaction: Transaction) {
+        this.details = new FiatDetailsDto(transaction);
         this.cryptoCurrencies = cryptoCurrencies.map(
             (c) => new CryptoDetailsDto({
                 name: c.cryptoCurrencyName, symbol: c.cryptoCurrencyCode
             }),
         );
-        this.details = new FiatDetailsDto(transaction);
     }
 }

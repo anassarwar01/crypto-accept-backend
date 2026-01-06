@@ -3,7 +3,7 @@ import 'reflect-metadata'; // Required by TypeORM
 import AppDataSource from '../../../data-source';
 import { UserSeederService } from './user/user.service';
 import { MerchantSeederService } from './merchant/merchant.service';
-import { CryptocurrencySeederService } from './cryptocurrency/cryptocurrency.service';
+import { CryptocurrencySeederService } from './cryptocurrency/crypto-currency.service';
 
 async function runSeeders() {
     try {
