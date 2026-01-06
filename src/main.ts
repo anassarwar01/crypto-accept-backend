@@ -24,6 +24,7 @@ async function bootstrap() {
   // Swagger configuration
   const config = new DocumentBuilder()
     .setTitle('My API')
+    .addServer(`${process.env.BACKEND_DOMAIN}/api/v1`)
     .setDescription('API docs for my NestJS app')
     .setVersion('1.0')
     // .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'x-api-key')
