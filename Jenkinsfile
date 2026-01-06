@@ -1,12 +1,12 @@
 pipeline {
     agent any
     environment {
-        PROJECT_NAME = 'Crypto-Accept-Backend'
-        REPO_NAME = 'Crypto-Accept-Backend'
+        PROJECT_NAME = 'crypto-accept-backend'
+        REPO_NAME = 'crypto-accept-backend'
         REMOTE_SERVER = 'jenkins@88.99.216.177'
         PLAYWRIGHT_BRANCH = 'test'
         SONARQUBE_ENABLED_BRANCH = 'test'
-        PROJECT_TYPE = 'NestJS'
+        PROJECT_TYPE = 'nestjs'
     }
     stages {
         stage('Get Git Info') {
@@ -44,7 +44,7 @@ pipeline {
                 script {
                     try {
                         sh """
-                            ssh -T -o StrictHostKeyChecking=no ${env.REMOTE_SERVER} " cd ${env.WORKSPACE_DIR}${env.GIT_BRANCH}/${env.REPO_NAME} && sudo git pull origin ${env.GIT_BRANCH} && case '${env.PROJECT_TYPE}' in laravel) sudo php artisan optimize:clear ;; NestJS) sudo npm i && sudo npm run build && sudo pm2 restart crypto-accept-DEV ;; laravel-mix) sudo npm i && sudo npm run build && sudo php artisan optimize:clear ;; *) echo 'Invalid project type'; exit 1 ;; esac"
+                            ssh -T -o StrictHostKeyChecking=no ${env.REMOTE_SERVER} " cd ${env.WORKSPACE_DIR}${env.GIT_BRANCH}/${env.REPO_NAME} && sudo git pull origin ${env.GIT_BRANCH} && case '${env.PROJECT_TYPE}' in laravel) sudo php artisan optimize:clear ;; nestjs) sudo npm i && sudo npm run build && sudo pm2 restart crypto-accept-DEV ;; laravel-mix) sudo npm i && sudo npm run build && sudo php artisan optimize:clear ;; *) echo 'Invalid project type'; exit 1 ;; esac"
                         """
                     } catch (Exception e) {
                         env.FAILURE_STAGE = 'Pull from GitHub & Deploy'
