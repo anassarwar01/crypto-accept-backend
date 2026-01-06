@@ -14,11 +14,11 @@ async function runSeeders() {
         console.log('Database initialized. Starting seeders...');
 
         // Run your seeders
-        // const userSeeder = new UserSeederService();
-        // await userSeeder.seed();
+        const userSeeder = new UserSeederService();
+        await userSeeder.seed();
 
-        // const merchantSeeder = new MerchantSeederService();
-        // await merchantSeeder.seed();
+        const merchantSeeder = new MerchantSeederService();
+        await merchantSeeder.seed();
 
         const cryptoSeeder = new CryptocurrencySeederService();
         await cryptoSeeder.seed();
