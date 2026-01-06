@@ -42,6 +42,9 @@ export class TransactionSummaryResponseDto {
     status: string;
 
     @ApiProperty()
+    walletAddress: string;
+
+    @ApiProperty()
     orderItems: OrderItem[];
 
     constructor(transaction: Transaction, cryptoCurrency: string) {
@@ -50,6 +53,7 @@ export class TransactionSummaryResponseDto {
         this.fiatCurrency = transaction.fiatCurrency || '';
         this.cryptoCurrency = cryptoCurrency;
         this.cryptoAmount = 123;
+        this.walletAddress = '';
         this.orderItems = transaction.orderItems?.map(item => ({
             name: item.name,
             quantity: item.quantity,
