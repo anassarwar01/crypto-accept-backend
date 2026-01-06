@@ -70,7 +70,7 @@ export class TransactionsService {
     );
 
     // Generate order request URL
-    const paymentUrl = this.configService.get<string>('PAYMENT_URL') || '';
+    const paymentUrl = this.configService.get<string>('FRONTEND_DOMAIN') || '';
     return new CreateTransactionResponseDTO(transaction, paymentUrl);
   }
 

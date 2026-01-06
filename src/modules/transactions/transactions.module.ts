@@ -7,10 +7,7 @@ import {
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CustomersModule } from '../customers/customers.module';
 import { UsersModule } from '../users/users.module';
-import { OrdersModule } from '../orders/orders.module';
 import { CommonModule } from '../common/common.module';
-import { User } from '../users/entities/user.entity';
-import { Merchant } from '../merchants/entities/merchant.entity';
 import { MerchantCustomersModule } from '../merchant-customers/merchant-customers.module';
 import { TransactionsController } from './transactions.controller';
 import { TransactionsService } from './transactions.service';
@@ -29,7 +26,6 @@ import { IsUniqueRequestIdConstraint } from './decorators/is-unique-request-id.d
     TypeOrmModule.forFeature([Transaction]),
     CustomersModule,
     UsersModule,
-    OrdersModule,
     CommonModule,
     MerchantCustomersModule,
     CryptocurrencyModule,
