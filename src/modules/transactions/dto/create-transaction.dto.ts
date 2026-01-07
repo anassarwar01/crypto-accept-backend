@@ -7,7 +7,7 @@ import {
     ValidateNested,
     MinLength,
     MaxLength,
-    Min,
+    Min, Max,
     Matches,
     IsEnum,
     IsArray,
@@ -46,9 +46,16 @@ export class OrderItemDto {
     @Min(1)
     quantity: number;
 
-    @ApiProperty({ example: 999.99 })
-    @IsNumber()
+    @ApiProperty({
+        example: 99.99,
+        description: 'Price must be between 0.01 and 100',
+        minimum: 0.01,
+        maximum: 100,
+    })
+    @Type(() => Number)
+    @IsNumber({ maxDecimalPlaces: 2 })
     @Min(0.01)
+    @Max(100)
     price: number;
 }
 
