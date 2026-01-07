@@ -26,17 +26,20 @@ describe('AuthMiddleware (e2e)', () => {
         }).compile();
 
         app = moduleFixture.createNestApplication();
+        app.setGlobalPrefix('api/v1/');
         await app.init();
     });
 
     afterAll(async () => {
+        // Wait for any remaining background tasks (logging) to finish
+        await new Promise(resolve => setTimeout(resolve, 500));
         await app.close();
         if (AppDataSource.isInitialized) await AppDataSource.destroy();
     });
 
-    it('/payment/url (POST) - Success with valid API Key', () => {
+    it('/api/v1/transactions (POST) - Success with valid API Key', () => {
         return request(app.getHttpServer())
-            .post('/payment/url')
+            .post('/api/v1/transactions')
             .set('x-api-key', apiKey)
             .send({
                 customer: {
@@ -44,22 +47,22 @@ describe('AuthMiddleware (e2e)', () => {
                     firstName: 'John',
                     lastName: 'Doe',
                 },
-                order: {
-                    fiatAmount: 100.0,
-                    fiatCurrency: 'USD',
-                },
+                orderItems: [
+                    { name: 'Test Product', quantity: 1, price: 100.0 }
+                ],
+                fiatCurrency: 'USD',
                 redirectUrl: 'https://example.com/return',
-                paymentRequestId: 'req_' + Math.random().toString(36).substring(7),
+                requestId: 'req_' + Math.random().toString(36).substring(7),
             })
             .expect(201) // NestJS Post default is 201
             .then((response) => {
-                expect(response.body).toHaveProperty('url');
+                expect(response.body.data).toHaveProperty('url');
             });
     });
 
-    it('/payment/url (POST) - Fail with invalid API Key', () => {
+    it('/api/v1/transactions (POST) - Fail with invalid API Key', () => {
         return request(app.getHttpServer())
-            .post('/payment/url')
+            .post('/api/v1/transactions')
             .set('x-api-key', 'INVALID_KEY_' + Math.random())
             .send({
                 customer: {

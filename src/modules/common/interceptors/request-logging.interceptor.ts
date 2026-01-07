@@ -7,7 +7,7 @@ import {
     HttpException,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { concatMap, catchError } from 'rxjs/operators';
 import { RequestLogsService } from '../../request-logs/request-logs.service';
 import { HttpMethod } from '../../request-logs/entities/request-log.entity';
 import { ApiResponse } from '../../../helper/dto/response.dto';
@@ -30,12 +30,12 @@ export class RequestLoggingInterceptor implements NestInterceptor {
         if (sanitizedBody.api_key) sanitizedBody.api_key = '***';
 
         return next.handle().pipe(
-            tap({
-                next: (data) => {
-                    const response = context.switchToHttp().getResponse();
-                    const statusCode = response.statusCode;
+            concatMap(async (data) => {
+                const response = context.switchToHttp().getResponse();
+                const statusCode = response.statusCode;
 
-                    this.requestLogsService.logRequest({
+                try {
+                    await this.requestLogsService.logRequest({
                         userAgent,
                         ipAddress: ip,
                         route: url,
@@ -47,29 +47,32 @@ export class RequestLoggingInterceptor implements NestInterceptor {
                         },
                         httpResponse: data,
                         httpCode: statusCode,
-                    }).catch(err => {
-                        this.logger.error('Error logging request in interceptor', err);
                     });
-                },
-                error: (error) => {
-                    // Errors are handled by the Exception Filter, but we log the request here for full history.
-                    const statusCode = error instanceof HttpException ? error.getStatus() : 500;
-                    const exceptionResponse = error instanceof HttpException ? error.getResponse() : null;
+                } catch (err) {
+                    this.logger.error('Error logging request in interceptor', err);
+                }
+                return data;
+            }),
+            catchError(async (error) => {
+                // Errors are handled by the Exception Filter, but we log the request here for full history.
+                const statusCode = error instanceof HttpException ? error.getStatus() : 500;
+                const exceptionResponse = error instanceof HttpException ? error.getResponse() : null;
 
-                    let message = error?.message || 'Internal server error';
-                    let data: any = null;
+                let message = error?.message || 'Internal server error';
+                let data: any = null;
 
-                    if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
-                        message = exceptionResponse['message'] || message;
-                        if (Array.isArray(message)) {
-                            data = message;
-                            message = 'Validation failed';
-                        }
+                if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
+                    message = exceptionResponse['message'] || message;
+                    if (Array.isArray(message)) {
+                        data = message;
+                        message = 'Validation failed';
                     }
+                }
 
-                    const responseBody = new ApiResponse(statusCode, message, data);
+                const responseBody = new ApiResponse(statusCode, message, data);
 
-                    this.requestLogsService.logRequest({
+                try {
+                    await this.requestLogsService.logRequest({
                         userAgent,
                         ipAddress: ip,
                         route: url,
@@ -81,10 +84,11 @@ export class RequestLoggingInterceptor implements NestInterceptor {
                         },
                         httpResponse: responseBody,
                         httpCode: statusCode,
-                    }).catch(err => {
-                        this.logger.error('Error logging failed request in interceptor', err);
                     });
-                },
+                } catch (err) {
+                    this.logger.error('Error logging failed request in interceptor', err);
+                }
+                throw error;
             }),
         );
     }

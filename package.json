@@ -91,6 +91,14 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^@users/(.*)$": "<rootDir>/modules/users/$1",
+      "^@merchants/(.*)$": "<rootDir>/modules/merchants/$1",
+      "^@customers/(.*)$": "<rootDir>/modules/customers/$1",
+      "^@transactions/(.*)$": "<rootDir>/modules/transactions/$1",
+      "^@cryptocurrency/(.*)$": "<rootDir>/modules/cryptocurrency/$1",
+      "^@database/data-source$": "<rootDir>/../data-source.ts"
+    }
   }
 }

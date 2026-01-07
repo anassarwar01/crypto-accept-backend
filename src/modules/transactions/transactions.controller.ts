@@ -59,14 +59,12 @@ export class TransactionsController {
     required: true,
   })
   @ApiOperation({ summary: 'Get transaction details' })
-  @ApiBody({ type: TransactionDetailsDto })
   @HttpCode(HttpStatus.OK)
   async getDetails(
     @Req() request: Request & { headers: { ref: string } },
-    @Body() detailsDto: TransactionDetailsDto,
   ) {
     const ref = request.headers['ref'] as string;
-    return this.transactionsService.getDetails(ref, detailsDto);
+    return this.transactionsService.getDetails(ref);
   }
 
   @Post('summary')

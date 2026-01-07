@@ -19,7 +19,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         private readonly errorLogsService: ErrorLogsService,
     ) { }
 
-    catch(exception: any, host: ArgumentsHost): void {
+    async catch(exception: any, host: ArgumentsHost): Promise<void> {
         // In certain situations `httpAdapter` might not be available in the
         // constructor method, thus we should resolve it here.
         const { httpAdapter } = this.httpAdapterHost;
@@ -58,6 +58,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
             method: request.method,
             url: request.url,
             requestBody: request.body,
+            //rawBody: request.rawBody, // Capture raw body when JSON parsing fails
             queryParams: request.query,
             merchantId: request.merchantId, // Attached by AuthMiddleware
             userId: request.userId,         // Attached by ApiKeyMiddleware (if still exists)
@@ -65,15 +66,23 @@ export class AllExceptionsFilter implements ExceptionFilter {
         };
 
         // Log to console/cli
-        this.logger.error(
-            `ERR: ${logData.method} ${logData.url} - ${logData.message}`,
-            exception?.stack,
-        );
+        if (httpStatus >= 500) {
+            this.logger.error(
+                `ERR: ${logData.method} ${logData.url} - ${logData.message}`,
+                exception?.stack,
+            );
+        } else {
+            this.logger.warn(
+                `WARN: ${logData.method} ${logData.url} - ${logData.message}`,
+            );
+        }
 
         // Save to database asynchronously (don't block the response)
-        this.errorLogsService.logError(logData).catch((err) => {
+        try {
+            await this.errorLogsService.logError(logData);
+        } catch (err) {
             this.logger.error('Failed to log error to DB', err);
-        });
+        }
 
         httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
     }

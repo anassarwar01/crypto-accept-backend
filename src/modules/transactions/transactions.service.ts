@@ -76,7 +76,6 @@ export class TransactionsService {
 
   async getDetails(
     ref: string,
-    dto: TransactionDetailsDto,
   ): Promise<TransactionDetailsResponseDto> {
     const transaction = await this.transactionRepository.findOne({
       where: { systemReference: ref },
