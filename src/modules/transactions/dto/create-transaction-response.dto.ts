@@ -14,8 +14,16 @@ export class CreateTransactionResponseDTO {
     })
     requestId: string;
 
+
+    // @ApiProperty({
+    //     example: 'https://google.com',
+    //     description: 'The generated payment URL',
+    // })
+    // redirectUrl: string;
+
     constructor(transaction: Transaction, paymentUrl: string) {
         this.requestId = transaction.merchantReference;
         this.url = `${paymentUrl}?ref=${transaction.systemReference}`;
+        // this.redirectUrl = transaction.redirectUrl;
     }
 }

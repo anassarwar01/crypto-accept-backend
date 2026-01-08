@@ -87,6 +87,7 @@ describe('TransactionsController (e2e)', () => {
             .then((response) => {
                 expect(response.body.data).toHaveProperty('cryptoAmount');
                 expect(response.body.data).toHaveProperty('walletAddress');
+                expect(response.body.data).toHaveProperty('signature');
                 expect(response.body.data.cryptoCurrency).toBe('BTC');
             });
     });

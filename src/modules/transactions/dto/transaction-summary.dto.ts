@@ -44,16 +44,23 @@ export class TransactionSummaryResponseDto {
     @ApiProperty()
     walletAddress: string;
 
+    @ApiProperty({
+        example: 'abc123signature...',
+        description: 'The signature required for Socket.IO subscription',
+    })
+    signature: string;
+
     @ApiProperty()
     orderItems: OrderItem[];
 
-    constructor(transaction: Transaction, cryptoCurrency: string) {
+    constructor(transaction: Transaction, cryptoCurrency: string, signature: string) {
         this.status = transaction.status;
         this.fiatAmount = transaction.fiatConvertedAmount || 0;
         this.fiatCurrency = transaction.fiatCurrency || '';
         this.cryptoCurrency = cryptoCurrency;
-        this.cryptoAmount = 123;
+        this.cryptoAmount = 124;
         this.walletAddress = '';
+        this.signature = signature;
         this.orderItems = transaction.orderItems?.map(item => ({
             name: item.name,
             quantity: item.quantity,

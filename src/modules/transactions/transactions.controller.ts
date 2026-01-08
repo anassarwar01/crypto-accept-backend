@@ -112,7 +112,6 @@ export class TransactionsController {
     @Body('status') status: TransactionStatus,
   ) {
     const ref = request.headers['ref'] as string;
-    console.log(status);
     return this.transactionsService.updateStatus(ref, status);
   }
 }

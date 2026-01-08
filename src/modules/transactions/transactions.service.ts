@@ -17,8 +17,12 @@ import { TransactionResponseDto } from './dto/transaction.dto';
 import { TransactionsGateway } from './gateways/transactions.gateway';
 import { TransactionStatus } from './enums/transaction.enums';
 
+import { createHmac } from 'crypto';
+
 @Injectable()
 export class TransactionsService {
+  private readonly signatureSecret: string;
+
   constructor(
     private readonly transactionRepository: TransactionRepository,
     private readonly conversionRatesService: ConversionRatesService,
@@ -27,7 +31,15 @@ export class TransactionsService {
     private readonly configService: ConfigService,
     private readonly cryptoService: CryptocurrencyService,
     private readonly transactionsGateway: TransactionsGateway,
-  ) { }
+  ) {
+    this.signatureSecret = this.configService.get<string>('SOCKET_SIGNATURE_SECRET') || 'default-secret-change-me';
+  }
+
+  private generateSignature(ref: string): string {
+    return createHmac('sha256', this.signatureSecret)
+      .update(ref)
+      .digest('hex');
+  }
 
   async create(
     request: CreateTransactionDto,
@@ -71,6 +83,7 @@ export class TransactionsService {
 
     // Generate order request URL
     const paymentUrl = this.configService.get<string>('FRONTEND_DOMAIN') || '';
+
     return new CreateTransactionResponseDTO(transaction, paymentUrl);
   }
 
@@ -101,7 +114,9 @@ export class TransactionsService {
       throw new BadRequestException('Transaction not found');
     }
 
-    return new TransactionSummaryResponseDto(transaction, dto.cryptoCurrency);
+    const signature = this.generateSignature(transaction.systemReference);
+
+    return new TransactionSummaryResponseDto(transaction, dto.cryptoCurrency, signature);
   }
 
   async getTransaction(ref: string): Promise<TransactionResponseDto> {
@@ -130,7 +145,7 @@ export class TransactionsService {
     await this.transactionRepository.updateTransaction(transaction);
     // save uses updateTransaction which does save
 
-    this.transactionsGateway.sendStatusUpdate(ref, status);
+    await this.transactionsGateway.sendStatusUpdate(ref, status);
     return new TransactionResponseDto(transaction);
   }
 
