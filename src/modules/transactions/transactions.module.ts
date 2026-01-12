@@ -19,9 +19,11 @@ import { ConversionRatesModule } from '../conversion-rates/conversion-rates.modu
 import { CryptocurrencyModule } from '../crypto-currencies/crypto-currencies.module';
 import { FeatureFlagModule } from '../feature-flags/feature-flag.module';
 import { IpregistryModule } from '../external-services/ipregistry/ipregistry.module';
+import { MerchantsModule } from '../merchants/merchants.module';
 import { IsCryptocurrencyCodeConstraint } from './decorators/is-cryptocurrency-code.decorator';
 import { TransactionsGateway } from './gateways/transactions.gateway';
 import { IsUniqueRequestIdConstraint } from './decorators/is-unique-request-id.decorator';
+import { IsMerchantAllowedUrlConstraint } from './decorators/is-merchant-allowed-url.decorator';
 
 @Module({
   imports: [
@@ -33,7 +35,9 @@ import { IsUniqueRequestIdConstraint } from './decorators/is-unique-request-id.d
     CryptocurrencyModule,
     ConversionRatesModule,
     FeatureFlagModule,
+    FeatureFlagModule,
     IpregistryModule,
+    MerchantsModule,
   ],
   controllers: [TransactionsController],
   providers: [
@@ -41,6 +45,7 @@ import { IsUniqueRequestIdConstraint } from './decorators/is-unique-request-id.d
     TransactionRepository,
     IsCryptocurrencyCodeConstraint,
     IsUniqueRequestIdConstraint,
+    IsMerchantAllowedUrlConstraint,
     TransactionsGateway,
   ],
   exports: [TransactionsService, TransactionsGateway, TransactionRepository],

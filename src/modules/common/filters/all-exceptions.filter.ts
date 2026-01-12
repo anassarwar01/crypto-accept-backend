@@ -48,10 +48,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
             }
         }
 
+        const redirectUrl = request.body?.redirectUrl || request.query?.redirectUrl || request['transaction']?.redirectUrl || null;
+
         const responseBody = new ApiResponse(
             httpStatus,
             message,
-            errors
+            errors,
+            redirectUrl
         );
 
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

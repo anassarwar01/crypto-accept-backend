@@ -31,14 +31,20 @@ export class RefMiddleware implements NestMiddleware {
         const transaction = await this.transactionRepository.findOne({
             where: {
                 systemReference: ref,
-                expiresAt: MoreThan(new Date()),
             },
         });
 
         if (!transaction) {
             throw new BadRequestException(
-                'The transaction is invalid or has expired.',
+                'The transaction is invalid.',
             );
+        }
+
+        // Attach details to request object for logging and downstream use (including error handling)
+        (req as any).transaction = transaction;
+
+        if (transaction.expiresAt && transaction.expiresAt <= new Date()) {
+            throw new BadRequestException('Transaction has expired.');
         }
 
         switch (transaction.status) {
@@ -51,9 +57,6 @@ export class RefMiddleware implements NestMiddleware {
                 throw new BadRequestException('Transaction is in process.');
 
             case TransactionStatus.INITIATED:
-                // Attach details to request object for logging and downstream use
-                (req as any).transaction = transaction;
-
                 break;
 
             default:

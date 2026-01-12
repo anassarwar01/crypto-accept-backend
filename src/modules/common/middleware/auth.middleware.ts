@@ -38,8 +38,13 @@ export class AuthMiddleware implements NestMiddleware {
         }
 
         // Attach merchantId to request object
-        (req as Request & { merchantId: string }).merchantId =
-            merchant.id;
+        (req as Request & { merchantId: string }).merchantId = merchant.id;
+
+        // Also attach to body so it's available for DTO validation
+        if (req.body && typeof req.body === 'object') {
+            req.body.merchantId = merchant.id;
+        }
+
 
         next();
     }

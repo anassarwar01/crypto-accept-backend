@@ -16,13 +16,14 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, ApiResponse<T>
 
         return next.handle().pipe(
             map((data) => {
-                // If the data is already an ApiResponse instance, return it as is
-                if (data instanceof ApiResponse) {
-                    return data;
+                const request = context.switchToHttp().getRequest();
+                let redirectUrl: string | undefined = undefined;
+
+                if (request['transaction']?.redirectUrl) {
+                    redirectUrl = request['transaction'].redirectUrl;
                 }
 
-                // Wrap the data in a standardized ApiResponse
-                return new ApiResponse(statusCode, 'Request successful', data);
+                return new ApiResponse(statusCode, 'Request successful', data, redirectUrl);
             }),
         );
     }

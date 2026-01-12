@@ -34,6 +34,12 @@ export class Transaction {
   @Column({ type: 'varchar', name: 'short_code' })
   shortCode: string;
 
+  @Column({ type: 'varchar', name: 'redirect_url', nullable: true })
+  redirectUrl?: string;
+
+  @Column({ type: 'varchar', name: 'callback_url', nullable: true })
+  callbackUrl?: string;
+
   @Column('decimal', {
     precision: 10,
     scale: 2,

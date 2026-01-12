@@ -68,6 +68,16 @@ export class CreateTransactions1700678407000 implements MigrationInterface {
             isNullable: false,
           },
           {
+            name: 'callback_url',
+            type: 'varchar',
+            isNullable: true,
+          },
+          {
+            name: 'redirect_url',
+            type: 'varchar',
+            isNullable: true,
+          },
+          {
             name: 'updated_at',
             type: 'timestamp',
             default: 'CURRENT_TIMESTAMP',

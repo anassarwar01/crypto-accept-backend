@@ -17,6 +17,7 @@ import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional, ApiHideProperty } from '@nestjs/swagger';
 import { FiatCurrency, TransactionStatus } from '../enums/transaction.enums';
 import { IsUniqueRequestId } from '../decorators/is-unique-request-id.decorator';
+import { IsMerchantAllowedUrl } from '../decorators/is-merchant-allowed-url.decorator';
 
 export class CustomerDto {
     @ApiProperty({ format: 'email', example: 'john.doe@example.com' })
@@ -83,6 +84,7 @@ export class CreateTransactionDto {
     })
     @IsOptional()
     @IsUrl()
+    @IsMerchantAllowedUrl('Callback')
     callbackUrl?: string;
 
     @ApiProperty({
@@ -91,6 +93,7 @@ export class CreateTransactionDto {
         description: 'Required redirect URL after payment',
     })
     @IsUrl()
+    @IsMerchantAllowedUrl('Redirect')
     redirectUrl: string;
 
     @ApiProperty({ minLength: 8, maxLength: 128, example: "12345678" })
@@ -121,6 +124,8 @@ export class SaveTransactionDto {
     merchantReference: string;
     expiresAt: Date;
     orderItems: any[];
+    redirectUrl: string;
+    callbackUrl?: string;
 
     constructor(
         request: any,
@@ -137,6 +142,8 @@ export class SaveTransactionDto {
         this.merchantReference = request.requestId;
         this.expiresAt = new Date(Date.now() + Number(process.env.TRANSACTION_EXPIRE_TIME) * 60 * 1000);
         this.orderItems = request.orderItems || [];
+        this.redirectUrl = request.redirectUrl;
+        this.callbackUrl = request.callbackUrl;
     }
 
     toEntity() {
@@ -152,6 +159,8 @@ export class SaveTransactionDto {
             orderItems: this.orderItems,
             expiresAt: this.expiresAt,
             status: TransactionStatus.INITIATED,
+            redirectUrl: this.redirectUrl,
+            callbackUrl: this.callbackUrl,
         };
     }
 }
