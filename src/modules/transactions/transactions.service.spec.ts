@@ -10,6 +10,8 @@ import { TransactionsGateway } from './gateways/transactions.gateway';
 import { BadRequestException } from '@nestjs/common';
 import { TransactionStatus } from './enums/transaction.enums';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
+import { FeatureFlagService } from '../feature-flags/feature-flag.service';
+import { IpregistryService } from '../external-services/ipregistry/ipregistry.service';
 
 describe('TransactionsService', () => {
   let service: TransactionsService;
@@ -48,6 +50,14 @@ describe('TransactionsService', () => {
     sendStatusUpdate: jest.fn(),
   };
 
+  const mockFeatureFlagService = {
+    getFlag: jest.fn(),
+  };
+
+  const mockIpregistryService = {
+    checkAccess: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -59,6 +69,8 @@ describe('TransactionsService', () => {
         { provide: ConfigService, useValue: mockConfigService },
         { provide: CryptocurrencyService, useValue: mockCryptocurrencyService },
         { provide: TransactionsGateway, useValue: mockTransactionsGateway },
+        { provide: FeatureFlagService, useValue: mockFeatureFlagService },
+        { provide: IpregistryService, useValue: mockIpregistryService },
       ],
     }).compile();
 
@@ -101,34 +113,24 @@ describe('TransactionsService', () => {
 
   describe('getTransaction', () => {
     it('should return a transaction if found', async () => {
-      const ref = 'ref_123';
-      const transaction = { id: 'trans_123', systemReference: ref, status: TransactionStatus.PENDING };
-      mockTransactionRepository.findOne.mockResolvedValue(transaction);
+      const transaction = { id: 'trans_123', systemReference: 'ref_123', status: TransactionStatus.PENDING };
 
-      const result = await service.getTransaction(ref);
+      const result = await service.getTransaction(transaction);
       expect(result).toBeDefined();
-      expect(mockTransactionRepository.findOne).toHaveBeenCalled();
-    });
-
-    it('should throw BadRequestException if not found', async () => {
-      mockTransactionRepository.findOne.mockResolvedValue(null);
-      await expect(service.getTransaction('invalid')).rejects.toThrow(BadRequestException);
     });
   });
 
   describe('updateStatus', () => {
     it('should update status and trigger gateway', async () => {
-      const ref = 'ref_123';
       const status = TransactionStatus.COMPLETED;
-      const transaction = { id: 'trans_123', systemReference: ref, status: TransactionStatus.PENDING };
-      mockTransactionRepository.findOne.mockResolvedValue(transaction);
+      const transaction = { id: 'trans_123', systemReference: 'ref_123', status: TransactionStatus.PENDING };
       mockTransactionRepository.updateTransaction.mockResolvedValue(undefined);
 
-      const result = await service.updateStatus(ref, status);
+      const result = await service.updateStatus(transaction, status);
 
       expect(result).toBeDefined();
       expect(transaction.status).toBe(status);
-      expect(mockTransactionsGateway.sendStatusUpdate).toHaveBeenCalledWith(ref, status);
+      expect(mockTransactionsGateway.sendStatusUpdate).toHaveBeenCalledWith(transaction.systemReference, status);
     });
   });
 });

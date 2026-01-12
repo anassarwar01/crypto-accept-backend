@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TransactionsController } from './transactions.controller';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
-import { TransactionStatus } from './enums/transaction.enums';
+import { TransactionStatus, FiatCurrency } from './enums/transaction.enums';
 import { TransactionDetailsDto } from './dto/transaction-details.dto';
 import { TransactionSummaryDto } from './dto/transaction-summary.dto';
 
@@ -42,9 +42,13 @@ describe('TransactionsController', () => {
     it('should call service.create', async () => {
       const dto: CreateTransactionDto = {
         customer: { email: 'test@test.com', firstName: 'John', lastName: 'Doe' },
-        order: { fiatAmount: 100, fiatCurrency: 'USD' },
-        paymentRequestId: 'req_123',
-        redirectUrl: 'url',
+        fiatCurrency: FiatCurrency.USD,
+        orderItems: [
+          { name: 'Test Product', quantity: 1, price: 100 }
+        ],
+        requestId: 'test_req_123',
+        redirectUrl: 'https://example.com/redirect',
+        callbackUrl: 'https://example.com/callback',
       };
       const req = { merchantId: 'm_123' } as any;
       mockTransactionsService.create.mockResolvedValue({ id: 't_123' });
@@ -57,26 +61,26 @@ describe('TransactionsController', () => {
 
   describe('getTransaction', () => {
     it('should call service.getTransaction', async () => {
-      const ref = 'ref_123';
-      const req = { headers: { ref } } as any;
+      const transaction = { id: 't_123', systemReference: 'ref_123' };
+      const req = { transaction } as any;
       mockTransactionsService.getTransaction.mockResolvedValue({ id: 't_123' });
 
       const result = await controller.getTransaction(req);
       expect(result).toEqual({ id: 't_123' });
-      expect(service.getTransaction).toHaveBeenCalledWith(ref);
+      expect(service.getTransaction).toHaveBeenCalledWith(transaction);
     });
   });
 
   describe('updateStatus', () => {
     it('should call service.updateStatus', async () => {
-      const ref = 'ref_123';
+      const transaction = { id: 't_123', systemReference: 'ref_123' };
       const status = TransactionStatus.COMPLETED;
-      const req = { headers: { ref } } as any;
+      const req = { transaction } as any;
       mockTransactionsService.updateStatus.mockResolvedValue({ id: 't_123' });
 
       const result = await controller.updateStatus(req, status);
       expect(result).toEqual({ id: 't_123' });
-      expect(service.updateStatus).toHaveBeenCalledWith(ref, status);
+      expect(service.updateStatus).toHaveBeenCalledWith(transaction, status);
     });
   });
 });

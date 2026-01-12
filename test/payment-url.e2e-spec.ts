@@ -53,6 +53,7 @@ describe('TransactionsController (e2e)', () => {
                 ],
                 fiatCurrency: 'USD',
                 redirectUrl: 'https://example.com/return',
+                callbackUrl: 'https://example.com/return',
                 requestId: 'req_' + Math.random().toString(36).substring(7),
             })
             .expect(201)

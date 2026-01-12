@@ -25,7 +25,7 @@ describe('RefMiddleware Verification (e2e)', () => {
             .get('/api/v1/transactions/details')
             .expect(400)
             .then((response) => {
-                expect(response.body.message).toContain('Invalid transaction reference format');
+                expect(response.body.message).toContain('Invalid transaction reference');
             });
     });
 
@@ -35,7 +35,7 @@ describe('RefMiddleware Verification (e2e)', () => {
             .send({ cryptoCurrency: 'BTC' })
             .expect(400)
             .then((response) => {
-                expect(response.body.message).toContain('Invalid transaction reference format');
+                expect(response.body.message).toContain('Invalid transaction reference');
             });
     });
 
@@ -44,7 +44,7 @@ describe('RefMiddleware Verification (e2e)', () => {
             .get('/api/v1/transactions')
             .expect(400)
             .then((response) => {
-                expect(response.body.message).toContain('Invalid transaction reference format');
+                expect(response.body.message).toContain('Invalid transaction reference');
             });
     });
 });

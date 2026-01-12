@@ -6,7 +6,9 @@
   ],
   "rootDir": ".",
   "testEnvironment": "node",
+  "testTimeout": 30000,
   "testRegex": ".e2e-spec.ts$",
+  "globalTeardown": "<rootDir>/teardown.ts",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },

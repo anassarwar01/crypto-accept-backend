@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import AppDataSource from '../../../../data-source';
-import { Merchant } from '../../../modules/merchants/entities/merchant.entity';
+import { Merchant } from '@merchants/entities/merchant.entity';
 import { User, UserRole } from '@users/entities/user.entity';
 
 @Injectable()
