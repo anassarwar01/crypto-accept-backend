@@ -133,6 +133,7 @@ export class SaveTransactionDto {
         merchantId: string,
         fiatBaseAmount: number,
         fiatAmount: number,
+        expireMinutes?: number,
     ) {
         this.merchantId = merchantId;
         this.customerId = customer.id;
@@ -140,7 +141,8 @@ export class SaveTransactionDto {
         this.fiatBaseAmount = fiatBaseAmount;
         this.fiatCurrency = request.fiatCurrency;
         this.merchantReference = request.requestId;
-        this.expiresAt = new Date(Date.now() + Number(process.env.TRANSACTION_EXPIRE_TIME) * 60 * 1000);
+        const minutes = typeof expireMinutes !== 'undefined' ? Number(expireMinutes) : 60;
+        this.expiresAt = new Date(Date.now() + minutes * 60 * 1000);
         this.orderItems = request.orderItems || [];
         this.redirectUrl = request.redirectUrl;
         this.callbackUrl = request.callbackUrl;

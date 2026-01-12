@@ -20,6 +20,7 @@ import { CryptocurrencyModule } from '../crypto-currencies/crypto-currencies.mod
 import { FeatureFlagModule } from '../feature-flags/feature-flag.module';
 import { IpregistryModule } from '../external-services/ipregistry/ipregistry.module';
 import { MerchantsModule } from '../merchants/merchants.module';
+import { SystemSettingsModule } from '../system-settings/system-settings.module';
 import { IsCryptocurrencyCodeConstraint } from './decorators/is-cryptocurrency-code.decorator';
 import { TransactionsGateway } from './gateways/transactions.gateway';
 import { IsUniqueRequestIdConstraint } from './decorators/is-unique-request-id.decorator';
@@ -38,6 +39,7 @@ import { IsMerchantAllowedUrlConstraint } from './decorators/is-merchant-allowed
     FeatureFlagModule,
     IpregistryModule,
     MerchantsModule,
+    SystemSettingsModule,
   ],
   controllers: [TransactionsController],
   providers: [

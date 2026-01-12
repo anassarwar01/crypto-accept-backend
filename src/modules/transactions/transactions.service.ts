@@ -10,6 +10,7 @@ import { CreateTransactionResponseDTO } from './dto/create-transaction-response.
 import { TransactionSummaryDto, TransactionSummaryResponseDto } from './dto/transaction-summary.dto';
 import { TransactionRepository } from './transaction.repository';
 import { ConversionRatesService } from '../conversion-rates/conversion-rates.service';
+import { SystemSettingsService } from '../system-settings/system-settings.service';
 
 import { TransactionDetailsDto, TransactionDetailsResponseDto } from './dto/transaction-details.dto';
 import { CryptocurrencyService } from '../crypto-currencies/crypto-currencies.service';
@@ -33,6 +34,7 @@ export class TransactionsService {
     private readonly customerService: CustomersService,
     private readonly merchantCustomersService: MerchantCustomersService,
     private readonly configService: ConfigService,
+    private readonly systemSettingsService: SystemSettingsService,
     private readonly cryptoService: CryptocurrencyService,
     private readonly transactionsGateway: TransactionsGateway,
     private readonly featureFlagService: FeatureFlagService,
@@ -67,18 +69,21 @@ export class TransactionsService {
     // Calculate total fiat amount from order items
     const fiatAmount = request.orderItems?.reduce((acc, item) => acc + (item.price * item.quantity), 0) || 0;
 
-    // Calculate fiat base amount (EUR is the system base)
+    // Calculate fiat base amount (system base currency is stored in DB)
     let fiatBaseAmount = fiatAmount;
-    if (request.fiatCurrency !== process.env.BASE_CURRENCY) {
-      const rate = await this.conversionRatesService.getRate('EUR', request.fiatCurrency);
+    const baseCurrency = (await this.systemSettingsService.getValue('BASE_CURRENCY')) || this.configService.get<string>('BASE_CURRENCY') || 'EUR';
+    if (request.fiatCurrency !== baseCurrency) {
+      const rate = await this.conversionRatesService.getRate(baseCurrency, request.fiatCurrency);
       if (rate && rate > 0) {
         fiatBaseAmount = fiatAmount / rate;
       }
     }
 
     // Create transaction
+    const expireMinutes = (await this.systemSettingsService.getNumber('TRANSACTION_EXPIRE_TIME')) ?? Number(this.configService.get<number>('TRANSACTION_EXPIRE_TIME')) ?? 60;
+
     const transaction = await this.transactionRepository.createTransaction(
-      new SaveTransactionDto(request, customerEntity, merchantId, fiatBaseAmount, fiatAmount).toEntity(),
+      new SaveTransactionDto(request, customerEntity, merchantId, fiatBaseAmount, fiatAmount, expireMinutes).toEntity(),
     );
 
     // Generate order request URL

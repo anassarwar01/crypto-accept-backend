@@ -71,7 +71,7 @@ export class IpregistryService extends BaseHttpService {
             }
 
             // Check security
-            if (isProxy || isVpn || isTor) {
+            if (isProxy == true || isVpn == true || isTor == true) {
                 return { allowed: false, reason: 'Proxy/VPN/Tor detected' };
             }
 
