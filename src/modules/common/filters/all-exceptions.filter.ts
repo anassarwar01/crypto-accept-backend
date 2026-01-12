@@ -8,6 +8,8 @@ import {
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { ErrorLogsService } from '../../error-logs/error-logs.service';
+import { RequestLogsService } from '../../request-logs/request-logs.service';
+import { HttpMethod } from '../../request-logs/entities/request-log.entity';
 import { ApiResponse } from '../../../helper/dto/response.dto';
 
 @Catch()
@@ -17,6 +19,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     constructor(
         private readonly httpAdapterHost: HttpAdapterHost,
         private readonly errorLogsService: ErrorLogsService,
+        private readonly requestLogsService: RequestLogsService,
     ) { }
 
     async catch(exception: any, host: ArgumentsHost): Promise<void> {
@@ -51,6 +54,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
             errors
         );
 
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        const merchantId = uuidRegex.test(request.merchantId) ? request.merchantId : null;
+        const userId = uuidRegex.test(request.userId) ? request.userId : null;
+
         // Prepare log data
         const logData = {
             message: exception?.message || 'Unknown Error',
@@ -60,8 +67,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
             requestBody: request.body,
             //rawBody: request.rawBody, // Capture raw body when JSON parsing fails
             queryParams: request.query,
-            merchantId: request.merchantId, // Attached by AuthMiddleware
-            userId: request.userId,         // Attached by ApiKeyMiddleware (if still exists)
+            merchantId: merchantId,
+            userId: userId,
             statusCode: httpStatus,
         };
 
@@ -77,11 +84,34 @@ export class AllExceptionsFilter implements ExceptionFilter {
             );
         }
 
+        // Sanitize body (remove sensitive data like passwords)
+        const sanitizedBody = { ...request.body };
+        if (sanitizedBody.password) sanitizedBody.password = '***';
+        if (sanitizedBody.apiKey) sanitizedBody.apiKey = '***';
+        if (sanitizedBody.api_key) sanitizedBody.api_key = '***';
+
         // Save to database asynchronously (don't block the response)
         try {
             await this.errorLogsService.logError(logData);
+
+            // Also log the failed request to request_logs for full history
+            await this.requestLogsService.logRequest({
+                userAgent: request.get('user-agent') || '',
+                ipAddress: request.ip,
+                route: request.url,
+                httpMethod: request.method as HttpMethod,
+                httpRequest: {
+                    body: sanitizedBody,
+                    query: request.query,
+                    headers: request.headers,
+                },
+                httpResponse: responseBody,
+                httpCode: httpStatus,
+                merchantId: merchantId,
+                userId: userId,
+            } as any);
         } catch (err) {
-            this.logger.error('Failed to log error to DB', err);
+            this.logger.error('Failed to log error/request to DB', err);
         }
 
         httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);

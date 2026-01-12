@@ -17,6 +17,8 @@ import { TransactionRepository } from './transaction.repository';
 import { RefMiddleware } from '../common/middleware/ref.middleware';
 import { ConversionRatesModule } from '../conversion-rates/conversion-rates.module';
 import { CryptocurrencyModule } from '../crypto-currencies/crypto-currencies.module';
+import { FeatureFlagModule } from '../feature-flags/feature-flag.module';
+import { IpregistryModule } from '../external-services/ipregistry/ipregistry.module';
 import { IsCryptocurrencyCodeConstraint } from './decorators/is-cryptocurrency-code.decorator';
 import { TransactionsGateway } from './gateways/transactions.gateway';
 import { IsUniqueRequestIdConstraint } from './decorators/is-unique-request-id.decorator';
@@ -30,6 +32,8 @@ import { IsUniqueRequestIdConstraint } from './decorators/is-unique-request-id.d
     MerchantCustomersModule,
     CryptocurrencyModule,
     ConversionRatesModule,
+    FeatureFlagModule,
+    IpregistryModule,
   ],
   controllers: [TransactionsController],
   providers: [
@@ -39,7 +43,7 @@ import { IsUniqueRequestIdConstraint } from './decorators/is-unique-request-id.d
     IsUniqueRequestIdConstraint,
     TransactionsGateway,
   ],
-  exports: [TransactionsService, TransactionsGateway],
+  exports: [TransactionsService, TransactionsGateway, TransactionRepository],
 })
 export class TransactionsModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
@@ -55,6 +59,7 @@ export class TransactionsModule implements NestModule {
         { path: 'transactions/summary', method: RequestMethod.POST },
         { path: 'transactions/details', method: RequestMethod.GET },
         { path: 'transactions', method: RequestMethod.GET },
+        { path: 'transactions/test/status-update', method: RequestMethod.POST },
       );
   }
 }

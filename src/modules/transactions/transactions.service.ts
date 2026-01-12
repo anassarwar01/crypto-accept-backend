@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CreateTransactionDto, SaveTransactionDto } from './dto/create-transaction.dto';
 import { CustomersService } from '../customers/customers.service';
@@ -15,9 +15,13 @@ import { TransactionDetailsDto, TransactionDetailsResponseDto } from './dto/tran
 import { CryptocurrencyService } from '../crypto-currencies/crypto-currencies.service';
 import { TransactionResponseDto } from './dto/transaction.dto';
 import { TransactionsGateway } from './gateways/transactions.gateway';
+import { FeatureFlagService } from '../feature-flags/feature-flag.service';
+import { IpregistryService } from '../external-services/ipregistry/ipregistry.service';
 import { TransactionStatus } from './enums/transaction.enums';
+import { Transaction } from './entities/transaction.entity';
 
-import { createHmac } from 'crypto';
+import { generateSignature } from '../common/utils/helper';
+import { encodeReference } from '../common/utils/reference-coder';
 
 @Injectable()
 export class TransactionsService {
@@ -31,14 +35,10 @@ export class TransactionsService {
     private readonly configService: ConfigService,
     private readonly cryptoService: CryptocurrencyService,
     private readonly transactionsGateway: TransactionsGateway,
+    private readonly featureFlagService: FeatureFlagService,
+    private readonly ipregistryService: IpregistryService,
   ) {
     this.signatureSecret = this.configService.get<string>('SOCKET_SIGNATURE_SECRET') || 'default-secret-change-me';
-  }
-
-  private generateSignature(ref: string): string {
-    return createHmac('sha256', this.signatureSecret)
-      .update(ref)
-      .digest('hex');
   }
 
   async create(
@@ -88,14 +88,20 @@ export class TransactionsService {
   }
 
   async getDetails(
-    ref: string,
+    transaction: Transaction,
+    ip?: string,
   ): Promise<TransactionDetailsResponseDto> {
-    const transaction = await this.transactionRepository.findOne({
-      where: { systemReference: ref },
-    });
+    const flag = await this.featureFlagService.getFlag('country_restriction');
 
-    if (!transaction) {
-      throw new BadRequestException('Transaction not found');
+    if (flag && flag.active && ip) {
+      const allowedCountries = flag.rules?.allowed_countries || [];
+      const result = await this.ipregistryService.checkAccess(ip, allowedCountries);
+
+      if (!result.allowed) {
+        transaction.status = TransactionStatus.CANCELLED;
+        await this.transactionRepository.updateTransaction(transaction);
+        throw new ForbiddenException(result.reason || 'Access denied based on your location or security settings.');
+      }
     }
 
     const cryptosResponse = await this.cryptoService.findAll();
@@ -103,49 +109,24 @@ export class TransactionsService {
   }
 
   async getSummary(
-    ref: string,
+    transaction: Transaction,
     dto: TransactionSummaryDto,
   ): Promise<TransactionSummaryResponseDto> {
-    const transaction = await this.transactionRepository.findOne({
-      where: { systemReference: ref },
-    });
-
-    if (!transaction) {
-      throw new BadRequestException('Transaction not found');
-    }
-
-    const signature = this.generateSignature(transaction.systemReference);
-
+    const signature = generateSignature(encodeReference(transaction.systemReference), this.signatureSecret);
     return new TransactionSummaryResponseDto(transaction, dto.cryptoCurrency, signature);
   }
 
-  async getTransaction(ref: string): Promise<TransactionResponseDto> {
-    const transaction = await this.transactionRepository.findOne({
-      where: { systemReference: ref },
-    });
-
-    if (!transaction) {
-      throw new BadRequestException('Transaction not found');
-    }
-
+  async getTransaction(transaction: Transaction): Promise<TransactionResponseDto> {
     return new TransactionResponseDto(transaction);
   }
 
-  async updateStatus(ref: string, status: TransactionStatus): Promise<TransactionResponseDto> {
-    const transaction = await this.transactionRepository.findOne({
-      where: { systemReference: ref },
-    });
-
-    if (!transaction) {
-      throw new BadRequestException('Transaction not found');
-    }
-
+  async updateStatus(transaction: Transaction, status: TransactionStatus): Promise<TransactionResponseDto> {
     transaction.status = status;
 
     await this.transactionRepository.updateTransaction(transaction);
     // save uses updateTransaction which does save
 
-    await this.transactionsGateway.sendStatusUpdate(ref, status);
+    await this.transactionsGateway.sendStatusUpdate(transaction.systemReference, status);
     return new TransactionResponseDto(transaction);
   }
 

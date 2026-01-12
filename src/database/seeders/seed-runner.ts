@@ -4,6 +4,7 @@ import AppDataSource from '../../../data-source';
 import { UserSeederService } from './user/user.service';
 import { MerchantSeederService } from './merchant/merchant.service';
 import { CryptocurrencySeederService } from './cryptocurrency/crypto-currency.service';
+import { FeatureFlagSeeder } from './feature-flag/feature-flag.seeder';
 
 async function runSeeders() {
     try {
@@ -22,6 +23,9 @@ async function runSeeders() {
 
         const cryptoSeeder = new CryptocurrencySeederService();
         await cryptoSeeder.seed();
+
+        const featureFlagSeeder = new FeatureFlagSeeder();
+        await featureFlagSeeder.seed(AppDataSource);
 
         console.log('All seeders completed!');
         process.exit(0);

@@ -11,12 +11,13 @@ import { createHmac } from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
+import { decodeReference, encodeReference } from '../../common/utils/reference-coder';
 
 @WebSocketGateway({
     cors: {
         origin: '*',
     },
-    namespace: 'transactions',
+    namespace: process.env.WEBSOCKET_NAMESPACE
 })
 export class TransactionsGateway
     implements OnGatewayConnection, OnGatewayDisconnect {
@@ -52,26 +53,29 @@ export class TransactionsGateway
             }
         }
 
-        const { ref, signature } = parsedData;
+        const { ref: encodedRef, signature } = parsedData;
 
-        if (!ref || !signature) {
+        if (!encodedRef || !signature) {
             this.logger.error(`Missing ref or signature in subscription: ${JSON.stringify(parsedData)}`);
             return { event: 'error', data: 'Missing ref or signature' };
         }
 
-        // Verify signature
+        // Verify signature against the ENCODED ref
         const expectedSignature = createHmac('sha256', this.signatureSecret)
-            .update(ref)
+            .update(encodedRef)
             .digest('hex');
 
         if (signature !== expectedSignature) {
-            this.logger.error(`Invalid signature for ref ${ref}: expected ${expectedSignature}, got ${signature}`);
+            this.logger.error(`Invalid signature for ref ${encodedRef}: expected ${expectedSignature}, got ${signature}`);
             return { event: 'error', data: 'Invalid signature' };
         }
 
+        // Decode the reference to get the real UUID for the room
+        const ref = decodeReference(encodedRef);
+
         client.join(ref);
         this.logger.log(`Client ${client.id} joined room: ${ref} (Verified)`);
-        return { event: 'subscribed', data: { ref } };
+        return { event: 'subscribed', data: { ref: encodedRef } };
     }
 
     @SubscribeMessage('unsubscribe')
@@ -79,17 +83,20 @@ export class TransactionsGateway
         @ConnectedSocket() client: Socket,
         @MessageBody() data: { ref: string },
     ) {
-        const ref = typeof data === 'string' ? JSON.parse(data).ref : data.ref;
+        const encodedRef = typeof data === 'string' ? JSON.parse(data).ref : data.ref;
+        const ref = decodeReference(encodedRef);
         this.logger.log(`Client ${client.id} unsubscribing from transaction: ${ref}`);
         client.leave(ref);
-        return { event: 'unsubscribed', data: { ref } };
+        return { event: 'unsubscribed', data: { ref: encodedRef } };
     }
 
     async sendStatusUpdate(ref: string, status: string) {
+        // ref is the real UUID here
         const sockets = await this.server.in(ref).fetchSockets();
+        const encodedRef = encodeReference(ref);
         this.logger.log(
-            `Broadcasting statusUpdate for ${ref} to ${sockets.length} clients in room`,
+            `Broadcasting statusUpdate for ${ref} (${encodedRef}) to ${sockets.length} clients in room`,
         );
-        this.server.to(ref).emit('statusUpdated', { ref, status });
+        this.server.to(ref).emit('statusUpdated', { ref: encodedRef, status });
     }
 }

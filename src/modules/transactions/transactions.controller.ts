@@ -16,11 +16,11 @@ import {
   ApiHeader,
   ApiBody,
 } from '@nestjs/swagger';
-import { TransactionDetailsDto } from './dto/transaction-details.dto';
 import { TransactionSummaryDto } from './dto/transaction-summary.dto';
 
 import { TransactionStatus } from './enums/transaction.enums';
 import { InjectMerchantIdInterceptor } from './interceptors/inject-merchant-id.interceptor';
+import { getClientIp } from '../common/utils/helper';
 
 @ApiTags('Transactions')
 @Controller('transactions')
@@ -61,10 +61,11 @@ export class TransactionsController {
   @ApiOperation({ summary: 'Get transaction details' })
   @HttpCode(HttpStatus.OK)
   async getDetails(
-    @Req() request: Request & { headers: { ref: string } },
+    @Req() request: any,
   ) {
-    const ref = request.headers['ref'] as string;
-    return this.transactionsService.getDetails(ref);
+    const transaction = request.transaction;
+    const ip = getClientIp(request);
+    return this.transactionsService.getDetails(transaction, ip);
   }
 
   @Post('summary')
@@ -77,11 +78,11 @@ export class TransactionsController {
   @ApiBody({ type: TransactionSummaryDto })
   @HttpCode(HttpStatus.OK)
   async getSummary(
-    @Req() request: Request & { headers: { ref: string } },
+    @Req() request: any,
     @Body() summaryDto: TransactionSummaryDto,
   ) {
-    const ref = request.headers['ref'] as string;
-    return this.transactionsService.getSummary(ref, summaryDto);
+    const transaction = request.transaction;
+    return this.transactionsService.getSummary(transaction, summaryDto);
   }
 
   @Get('')
@@ -93,10 +94,10 @@ export class TransactionsController {
   @ApiOperation({ summary: 'Get transaction summary' })
   @HttpCode(HttpStatus.OK)
   async getTransaction(
-    @Req() request: Request & { headers: { ref: string } },
+    @Req() request: any,
   ) {
-    const ref = request.headers['ref'] as string;
-    return this.transactionsService.getTransaction(ref);
+    const transaction = request.transaction;
+    return this.transactionsService.getTransaction(transaction);
   }
 
   @Post('test/status-update')
@@ -108,10 +109,10 @@ export class TransactionsController {
   @ApiOperation({ summary: 'Test endpoint to update transaction status and trigger WebSocket' })
   @HttpCode(HttpStatus.OK)
   async updateStatus(
-    @Req() request: Request & { headers: { ref: string } },
+    @Req() request: any,
     @Body('status') status: TransactionStatus,
   ) {
-    const ref = request.headers['ref'] as string;
-    return this.transactionsService.updateStatus(ref, status);
+    const transaction = request.transaction;
+    return this.transactionsService.updateStatus(transaction, status);
   }
 }

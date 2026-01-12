@@ -1,16 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transaction } from '../entities/transaction.entity';
+import { encodeReference } from '../../common/utils/reference-coder';
 
 export class CreateTransactionResponseDTO {
     @ApiProperty({
-        example: 'https://payment-gateway.com?ref=uuid',
+        example: 'https://payment-gateway.com?ref=...',
         description: 'The generated payment URL',
     })
     url: string;
 
     @ApiProperty({
-        example: '5a2fee31-ef3b-4456-991e-9f4ddcc8d1ba',
-        description: 'The system reference (ref) for the transaction',
+        example: 'ORD-12345',
+        description: 'The merchant reference for the transaction',
     })
     requestId: string;
 
@@ -23,7 +24,8 @@ export class CreateTransactionResponseDTO {
 
     constructor(transaction: Transaction, paymentUrl: string) {
         this.requestId = transaction.merchantReference;
-        this.url = `${paymentUrl}?ref=${transaction.systemReference}`;
+        const encodedRef = encodeReference(transaction.systemReference);
+        this.url = `${paymentUrl}?ref=${encodedRef}`;
         // this.redirectUrl = transaction.redirectUrl;
     }
 }
