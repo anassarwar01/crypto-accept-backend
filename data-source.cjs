@@ -12,6 +12,14 @@ require('tsconfig-paths').register({
     '@customers/*': ['src/modules/customers/*'],
     '@transactions/*': ['src/modules/transactions/*'],
     '@cryptocurrency/*': ['src/modules/cryptocurrency/*'],
+    '@crypto-transactions/*': ['src/modules/crypto-transactions/*'],
+    '@system-settings/*': ['src/modules/system-settings/*'],
+    '@feature-flags/*': ['src/modules/feature-flags/*'],
+    '@external-services/*': ['src/modules/external-services/*'],
+    '@merchant-customers/*': ['src/modules/merchant-customers/*'],
+    '@common/*': ['src/modules/common/*'],
+    '@cron/*': ['src/cron/*'],
+    '@test/*': ['test/*'],
   },
 });
 

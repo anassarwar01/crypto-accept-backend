@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConversionRate } from '../transactions/entities/conversion-rate.entity';
+import { ConversionRate } from './entities/conversion-rate.entity';
 import { ConversionRatesService } from './conversion-rates.service';
 
 @Module({

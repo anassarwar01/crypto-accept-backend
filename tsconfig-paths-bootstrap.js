@@ -12,6 +12,14 @@ tsConfigPaths.register({
     '@cryptocurrency/*': ['src/modules/cryptocurrency/*'],
     '@database/data-source': ['data-source.ts'],
     '@helper/*': ['src/helper/*'],
+    '@crypto-transactions/*': ['src/modules/crypto-transactions/*'],
+    '@system-settings/*': ['src/modules/system-settings/*'],
+    '@feature-flags/*': ['src/modules/feature-flags/*'],
+    '@external-services/*': ['src/modules/external-services/*'],
+    '@merchant-customers/*': ['src/modules/merchant-customers/*'],
+    '@common/*': ['src/modules/common/*'],
+    '@cron/*': ['src/cron/*'],
+    '@test/*': ['test/*'],
   },
 });
 

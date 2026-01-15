@@ -8,10 +8,14 @@ import { ConfigService } from '@nestjs/config';
 import { CryptocurrencyService } from '../crypto-currencies/crypto-currencies.service';
 import { TransactionsGateway } from './gateways/transactions.gateway';
 import { BadRequestException } from '@nestjs/common';
-import { TransactionStatus } from './enums/transaction.enums';
+import { FiatCurrency, TransactionStatus } from './enums/transaction.enums';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { FeatureFlagService } from '../feature-flags/feature-flag.service';
 import { IpregistryService } from '../external-services/ipregistry/ipregistry.service';
+import { SystemSettingsService } from '../system-settings/system-settings.service';
+import { TransactionsBroadcastService } from './transactions-broadcast.service';
+import { CryptoTransactionsService } from '../crypto-transactions/crypto-transactions.service';
+import { QuantozService } from '../external-services/quantoz/quantoz.service';
 
 describe('TransactionsService', () => {
   let service: TransactionsService;
@@ -58,6 +62,24 @@ describe('TransactionsService', () => {
     checkAccess: jest.fn(),
   };
 
+  const mockSystemSettingsService = {
+    getValue: jest.fn(),
+    getNumber: jest.fn(),
+  };
+
+  const mockBroadcastService = {
+    emitStatusUpdate: jest.fn(),
+  };
+
+  const mockCryptoTransactionsService = {
+    upsertRecord: jest.fn(),
+    findOneByTransactionId: jest.fn(),
+  };
+
+  const mockQuantozService = {
+    getEstimatedPrice: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -67,10 +89,13 @@ describe('TransactionsService', () => {
         { provide: CustomersService, useValue: mockCustomersService },
         { provide: MerchantCustomersService, useValue: mockMerchantCustomersService },
         { provide: ConfigService, useValue: mockConfigService },
+        { provide: SystemSettingsService, useValue: mockSystemSettingsService },
         { provide: CryptocurrencyService, useValue: mockCryptocurrencyService },
-        { provide: TransactionsGateway, useValue: mockTransactionsGateway },
+        { provide: TransactionsBroadcastService, useValue: mockBroadcastService },
         { provide: FeatureFlagService, useValue: mockFeatureFlagService },
         { provide: IpregistryService, useValue: mockIpregistryService },
+        { provide: CryptoTransactionsService, useValue: mockCryptoTransactionsService },
+        { provide: QuantozService, useValue: mockQuantozService },
       ],
     }).compile();
 
@@ -87,20 +112,27 @@ describe('TransactionsService', () => {
   describe('create', () => {
     const createDto: CreateTransactionDto = {
       customer: { email: 'test@test.com', firstName: 'John', lastName: 'Doe' },
-      order: { fiatAmount: 100, fiatCurrency: 'USD' },
-      paymentRequestId: 'req_123',
+      fiatCurrency: FiatCurrency.USD,
+      orderItems: [{ name: 'Test Item', quantity: 1, price: 100 }],
+      requestId: 'req_123',
       redirectUrl: 'http://redirect.com',
     };
     const merchantId = 'merchant_123';
 
     it('should create a new transaction', async () => {
-      const customer = { id: 'cust_123', email: 'test@test.com' };
+      const customer = { id: 'cust_123', email: 'test@test.com' } as any;
       mockCustomersService.getCustomerByEmail.mockResolvedValue(null);
       mockCustomersService.createCustomer.mockResolvedValue(customer);
       mockMerchantCustomersService.linkCustomer.mockResolvedValue(undefined);
       mockConversionRatesService.getRate.mockResolvedValue(1.1);
-      mockTransactionRepository.createTransaction.mockResolvedValue({ id: 'trans_123', systemReference: 'ref_123' });
-      mockConfigService.get.mockReturnValue('http://frontend.com');
+      mockSystemSettingsService.getValue.mockResolvedValue('USD');
+      mockSystemSettingsService.getNumber.mockResolvedValue(15);
+      mockTransactionRepository.createTransaction.mockResolvedValue({ id: 'trans_123', systemReference: 'ref_123' } as any);
+      mockConfigService.get.mockImplementation((key) => {
+        if (key === 'FRONTEND_DOMAIN') return 'http://frontend.com';
+        if (key === 'SOCKET_SIGNATURE_SECRET') return 'test-secret';
+        return null;
+      });
 
       const result = await service.create(createDto, merchantId);
 
@@ -113,7 +145,7 @@ describe('TransactionsService', () => {
 
   describe('getTransaction', () => {
     it('should return a transaction if found', async () => {
-      const transaction = { id: 'trans_123', systemReference: 'ref_123', status: TransactionStatus.PENDING };
+      const transaction = { id: 'trans_123', systemReference: 'ref_123', status: TransactionStatus.PENDING } as any;
 
       const result = await service.getTransaction(transaction);
       expect(result).toBeDefined();
@@ -122,15 +154,15 @@ describe('TransactionsService', () => {
 
   describe('updateStatus', () => {
     it('should update status and trigger gateway', async () => {
-      const status = TransactionStatus.COMPLETED;
-      const transaction = { id: 'trans_123', systemReference: 'ref_123', status: TransactionStatus.PENDING };
+      const status = TransactionStatus.SUCCEEDED;
+      const transaction = { id: 'trans_123', systemReference: 'ref_123', status: TransactionStatus.PENDING } as any;
       mockTransactionRepository.updateTransaction.mockResolvedValue(undefined);
 
       const result = await service.updateStatus(transaction, status);
 
       expect(result).toBeDefined();
       expect(transaction.status).toBe(status);
-      expect(mockTransactionsGateway.sendStatusUpdate).toHaveBeenCalledWith(transaction.systemReference, status);
+      expect(mockBroadcastService.emitStatusUpdate).toHaveBeenCalledWith(transaction.systemReference, status, undefined);
     });
   });
 });

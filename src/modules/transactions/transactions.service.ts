@@ -16,13 +16,13 @@ import { SystemSettingsService } from '../system-settings/system-settings.servic
 import { TransactionDetailsDto, TransactionDetailsResponseDto } from './dto/transaction-details.dto';
 import { CryptocurrencyService } from '../crypto-currencies/crypto-currencies.service';
 import { TransactionResponseDto } from './dto/transaction.dto';
-import { CryptoTransactionsService } from './crypto-transactions.service';
+import { CryptoTransactionsService } from '../crypto-transactions/crypto-transactions.service';
 import { FeatureFlagService } from '../feature-flags/feature-flag.service';
 import { IpregistryService } from '../external-services/ipregistry/ipregistry.service';
 import { TransactionStatus } from './enums/transaction.enums';
-import { CryptoCurrency, CryptoStatus } from './enums/crypto-transaction.enums';
+import { CryptoCurrency, CryptoStatus } from '../crypto-transactions/enums/crypto-transaction.enums';
 import { TransactionsBroadcastService } from './transactions-broadcast.service';
-import { CryptoTransaction } from './entities/crypto-transaction.entity';
+import { CryptoTransaction } from '../crypto-transactions/entities/crypto-transaction.entity';
 import { QuantozService } from '../external-services/quantoz/quantoz.service';
 import { Transaction } from './entities/transaction.entity';
 

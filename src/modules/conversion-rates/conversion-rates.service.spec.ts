@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConversionRatesService } from './conversion-rates.service';
-import { ConversionRate } from '../transactions/entities/conversion-rate.entity';
+import { ConversionRate } from './entities/conversion-rate.entity';
 
 describe('ConversionRatesService', () => {
     let service: ConversionRatesService;

@@ -11,8 +11,8 @@ import {
 } from 'typeorm';
 import { Merchant } from '@merchants/entities/merchant.entity';
 import { Customer } from '@customers/entities/customer.entity';
-import { CryptoTransaction } from './crypto-transaction.entity';
-import { FiatCurrency, TransactionStatus } from '../enums/transaction.enums';
+import { CryptoTransaction } from '@crypto-transactions/entities/crypto-transaction.entity';
+import { FiatCurrency, TransactionStatus } from '@transactions/enums/transaction.enums';
 
 @Entity('transactions')
 export class Transaction {

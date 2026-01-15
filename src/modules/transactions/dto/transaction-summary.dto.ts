@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { IsCryptocurrencyCode } from '../decorators/is-cryptocurrency-code.decorator';
 import { Transaction } from '../entities/transaction.entity';
-import { CryptoCurrency, CryptoStatus } from '../enums/crypto-transaction.enums';
+import { CryptoCurrency, CryptoStatus } from '../../crypto-transactions/enums/crypto-transaction.enums';
 
 export class TransactionSummaryDto {
     @ApiProperty({
@@ -79,8 +79,8 @@ export class TransactionSummaryResponseDto {
         this.fiatAmount = transaction.fiatConvertedAmount || 0;
         this.fiatCurrency = transaction.fiatCurrency || '';
         this.cryptoCurrency = cryptoCurrency;
-        this.cryptoAmount = transaction.cryptoTransaction.amount;
-        this.walletAddress = transaction.cryptoTransaction.walletAddress;
+        this.cryptoAmount = transaction.cryptoTransaction?.amount || 0;
+        this.walletAddress = transaction.cryptoTransaction?.walletAddress || '';
         this.signature = signature;
         this.orderItems = transaction.orderItems?.map(item => ({
             name: item.name,

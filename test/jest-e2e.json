@@ -18,6 +18,7 @@
     "^@customers/(.*)$": "<rootDir>/../src/modules/customers/$1",
     "^@transactions/(.*)$": "<rootDir>/../src/modules/transactions/$1",
     "^@cryptocurrency/(.*)$": "<rootDir>/../src/modules/cryptocurrency/$1",
-    "^@database/data-source$": "<rootDir>/../data-source.ts"
+    "^@database/data-source$": "<rootDir>/../data-source.ts",
+    "^@helper/(.*)$": "<rootDir>/../src/helper/$1"
   }
 }

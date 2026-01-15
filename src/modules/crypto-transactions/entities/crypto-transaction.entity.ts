@@ -8,7 +8,7 @@ import {
     Index,
     OneToOne,
 } from 'typeorm';
-import { Transaction } from './transaction.entity';
+import { Transaction } from '../../transactions/entities/transaction.entity';
 import { CryptoCurrency, CryptoStatus } from '../enums/crypto-transaction.enums';
 
 @Entity('crypto_transactions')

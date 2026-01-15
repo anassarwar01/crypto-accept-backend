@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ConversionRate } from '../transactions/entities/conversion-rate.entity';
+import { ConversionRate } from './entities/conversion-rate.entity';
 
 @Injectable()
 export class ConversionRatesService {
