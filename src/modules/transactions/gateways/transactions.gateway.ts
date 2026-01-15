@@ -113,7 +113,7 @@ export class TransactionsGateway
                 // Simulate async process (5 seconds)
                 setTimeout(async () => {
                     this.logger.log(`Random Value: ${Math.random()}`);
-                    const randomStatus = Math.random() > 0.4 ? TransactionStatus.SUCCEEDED : TransactionStatus.FAILED;
+                    const randomStatus = TransactionStatus.SUCCEEDED;
                     this.logger.log(`Simulation: Updating ${ref} to ${randomStatus}`);
                     await this.transactionsService.updateStatus(transaction, randomStatus);
                 }, 5000);
