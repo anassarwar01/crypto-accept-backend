@@ -1,8 +1,9 @@
 export enum CryptoCurrency {
     BTC = 'BTC',
     ETH = 'ETH',
-    USDT = 'USDT',
-    USDC = 'USDC',
+    ALGO = 'ALGO',
+    XLM = 'XLM',
+    LTC = 'LTC',
 }
 
 export enum CryptoStatus {

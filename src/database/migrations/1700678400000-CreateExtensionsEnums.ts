@@ -24,7 +24,7 @@ export class CreateExtensionsEnums1700678400000 implements MigrationInterface {
       `CREATE TYPE "fiat_currency_enum" AS ENUM ('USD', 'EUR', 'GBP', 'NGN')`,
     );
     await queryRunner.query(
-      `CREATE TYPE "crypto_currency_enum" AS ENUM ('BTC', 'ETH', 'USDT', 'USDC')`,
+      `CREATE TYPE "crypto_currency_enum" AS ENUM ('BTC', 'ETH', 'LTC', 'ALGO', 'XLM')`,
     );
     await queryRunner.query(
       `CREATE TYPE "crypto_status_enum" AS ENUM ('initiated', 'pending', 'confirmed', 'failed', 'cancelled')`,

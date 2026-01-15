@@ -21,7 +21,7 @@ export class CreateCryptoTransactions1700678408000 implements MigrationInterface
             name: 'currency',
             type: 'enum',
             enumName: 'crypto_currency_enum',
-            enum: ['BTC', 'ETH', 'USDT', 'USDC'],
+            enum: ['BTC', 'ETH', 'LTC', 'ALGO', 'XLM'],
             isNullable: true,
           },
           {
