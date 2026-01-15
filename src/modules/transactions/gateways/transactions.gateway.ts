@@ -21,7 +21,7 @@ import { TransactionsBroadcastService } from '../transactions-broadcast.service'
 
 @WebSocketGateway({
     cors: {
-        origin: process.env.FRONTEND_ORIGIN || '*',
+        origin: '*',
     },
     namespace: process.env.WEBSOCKET_NAMESPACE
 })
