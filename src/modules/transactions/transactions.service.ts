@@ -133,7 +133,7 @@ export class TransactionsService {
     // Call to quantoz to initiate the transcation and add record in crytpotransaction table
     const flag = await this.featureFlagService.getFlag('quantoz_simulation');
     if (flag && flag.active) {
-      await this.cryptoTransactionsService.upsertRecord(
+      transaction.cryptoTransaction = await this.cryptoTransactionsService.upsertRecord(
         new SaveCryptoTransactionDto(transaction, dto.cryptoCurrency));
     }
     else {

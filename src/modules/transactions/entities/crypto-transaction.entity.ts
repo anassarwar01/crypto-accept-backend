@@ -4,9 +4,9 @@ import {
     Column,
     CreateDateColumn,
     UpdateDateColumn,
-    ManyToOne,
     JoinColumn,
     Index,
+    OneToOne,
 } from 'typeorm';
 import { Transaction } from './transaction.entity';
 import { CryptoCurrency, CryptoStatus } from '../enums/crypto-transaction.enums';
@@ -74,7 +74,7 @@ export class CryptoTransaction {
     updatedAt: Date;
 
     // Relations
-    @ManyToOne(() => Transaction, { onDelete: 'CASCADE' })
+    @OneToOne(() => Transaction, (tx) => tx.cryptoTransaction, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'transaction_id' })
     transaction: Transaction;
 }

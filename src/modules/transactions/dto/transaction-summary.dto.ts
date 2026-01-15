@@ -30,7 +30,7 @@ export class SaveCryptoTransactionDto {
         this.merchantCode = transaction.merchantId;
         this.accountCode = 'temp-account'; // Placeholder
         this.currency = cryptoCurrency as CryptoCurrency;
-        this.amount = 124; // Hardcoded for now
+        this.amount = 123; // Hardcoded for now
         this.status = CryptoStatus.INITIATED;
     }
 }
@@ -79,8 +79,8 @@ export class TransactionSummaryResponseDto {
         this.fiatAmount = transaction.fiatConvertedAmount || 0;
         this.fiatCurrency = transaction.fiatCurrency || '';
         this.cryptoCurrency = cryptoCurrency;
-        this.cryptoAmount = 124;
-        this.walletAddress = '';
+        this.cryptoAmount = transaction.cryptoTransaction.amount;
+        this.walletAddress = transaction.cryptoTransaction.walletAddress;
         this.signature = signature;
         this.orderItems = transaction.orderItems?.map(item => ({
             name: item.name,

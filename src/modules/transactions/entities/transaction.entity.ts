@@ -7,9 +7,11 @@ import {
   ManyToOne,
   JoinColumn,
   Index,
+  OneToOne,
 } from 'typeorm';
 import { Merchant } from '@merchants/entities/merchant.entity';
 import { Customer } from '@customers/entities/customer.entity';
+import { CryptoTransaction } from './crypto-transaction.entity';
 import { FiatCurrency, TransactionStatus } from '../enums/transaction.enums';
 
 @Entity('transactions')
@@ -104,4 +106,9 @@ export class Transaction {
   })
   @JoinColumn({ name: 'customer_id' })
   customer?: Customer;
+
+  @OneToOne(() => CryptoTransaction, (cryptoTx) => cryptoTx.transaction, {
+    eager: true,
+  })
+  cryptoTransaction: CryptoTransaction;
 }
