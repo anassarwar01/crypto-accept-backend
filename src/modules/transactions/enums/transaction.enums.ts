@@ -208,7 +208,7 @@ export enum AllFiatCurrency {
 export enum TransactionStatus {
     INITIATED = 'transfer.initiated',
     PENDING = 'transfer.pending',
-    COMPLETED = 'transfer.completed',
+    SUCCEEDED = 'transfer.succeeded',
     FAILED = 'transfer.failed',
     CANCELLED = 'transfer.cancelled',
     EXPIRED = 'transfer.expired',

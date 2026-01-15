@@ -33,6 +33,11 @@ export class TransactionRepository {
         return this.repository.save(entity);
     }
 
+    async findByReference(systemReference: string): Promise<Transaction | null> {
+        return this.repository.findOne({
+            where: { systemReference },
+        });
+    }
 
     async expireOverdueTransactions(): Promise<number> {
         const now = new Date();
@@ -47,6 +52,10 @@ export class TransactionRepository {
             .execute();
 
         return result.affected || 0;
+    }
+
+    async updateTransactionStatus(systemReference: string, status: TransactionStatus) {
+        return this.repository.update({ systemReference }, { status });
     }
 
     // other custom methods...

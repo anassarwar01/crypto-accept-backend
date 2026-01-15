@@ -23,6 +23,7 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
+      "@helper/*": ["src/helper/*"],
       "@users/*": ["src/modules/users/*"],
       "@merchants/*": ["src/modules/merchants/*"],
       "@customers/*": ["src/modules/customers/*"],

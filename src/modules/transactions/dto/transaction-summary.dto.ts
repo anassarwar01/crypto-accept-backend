@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { IsCryptocurrencyCode } from '../decorators/is-cryptocurrency-code.decorator';
 import { Transaction } from '../entities/transaction.entity';
+import { CryptoCurrency, CryptoStatus } from '../enums/crypto-transaction.enums';
 
 export class TransactionSummaryDto {
     @ApiProperty({
@@ -12,6 +13,26 @@ export class TransactionSummaryDto {
     @IsNotEmpty()
     @IsCryptocurrencyCode()
     cryptoCurrency: string;
+}
+
+export class SaveCryptoTransactionDto {
+    transactionId: string;
+    transactionCode: string;
+    merchantCode: string;
+    accountCode: string;
+    currency: CryptoCurrency;
+    amount: number;
+    status: CryptoStatus;
+
+    constructor(transaction: Transaction, cryptoCurrency: string) {
+        this.transactionId = transaction.id;
+        this.transactionCode = transaction.shortCode;
+        this.merchantCode = transaction.merchantId;
+        this.accountCode = 'temp-account'; // Placeholder
+        this.currency = cryptoCurrency as CryptoCurrency;
+        this.amount = 124; // Hardcoded for now
+        this.status = CryptoStatus.INITIATED;
+    }
 }
 
 export class OrderItem {

@@ -126,6 +126,7 @@ export class SaveTransactionDto {
     orderItems: any[];
     redirectUrl: string;
     callbackUrl?: string;
+    expireMinutes: number;
 
     constructor(
         request: any,
@@ -133,7 +134,7 @@ export class SaveTransactionDto {
         merchantId: string,
         fiatBaseAmount: number,
         fiatAmount: number,
-        expireMinutes?: number,
+        expireMinutes: number,
     ) {
         this.merchantId = merchantId;
         this.customerId = customer.id;
@@ -141,11 +142,11 @@ export class SaveTransactionDto {
         this.fiatBaseAmount = fiatBaseAmount;
         this.fiatCurrency = request.fiatCurrency;
         this.merchantReference = request.requestId;
-        const minutes = typeof expireMinutes !== 'undefined' ? Number(expireMinutes) : 60;
-        this.expiresAt = new Date(Date.now() + minutes * 60 * 1000);
+        this.expiresAt = new Date(Date.now() + expireMinutes * 60 * 1000);
         this.orderItems = request.orderItems || [];
         this.redirectUrl = request.redirectUrl;
         this.callbackUrl = request.callbackUrl;
+        this.expireMinutes = expireMinutes;
     }
 
     toEntity() {
@@ -163,6 +164,7 @@ export class SaveTransactionDto {
             status: TransactionStatus.INITIATED,
             redirectUrl: this.redirectUrl,
             callbackUrl: this.callbackUrl,
+            expireMinutes: this.expireMinutes,
         };
     }
 }

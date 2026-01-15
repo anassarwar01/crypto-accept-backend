@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { BaseHttpService } from '../../common/services/base-http.service';
 import { ThirdPartyLogsService } from '../../third-party-logs/third-party-logs.service';
 import { HttpMethod, ThirdPartyLogType } from '../../third-party-logs/entities/third-party-log.entity';
+import { MESSAGES } from '@helper/constant/messages';
 
 @Injectable()
 export class IpregistryService extends BaseHttpService {
@@ -65,14 +66,12 @@ export class IpregistryService extends BaseHttpService {
             const isVpn = response.security.is_vpn;
             const isTor = response.security.is_tor;
 
-            // Check country
-            if (!allowedCountries.includes(countryCode.toUpperCase())) {
-                return { allowed: false, reason: 'Country not allowed' };
-            }
-
-            // Check security
-            if (isProxy == true || isVpn == true || isTor == true) {
-                return { allowed: false, reason: 'Proxy/VPN/Tor detected' };
+            // Combined check: country and security
+            if (!allowedCountries.includes(countryCode.toUpperCase()) || isProxy || isVpn || isTor) {
+                return {
+                    allowed: false,
+                    reason: MESSAGES.COUNTRY_NOT_AVAILABLE
+                };
             }
 
             return { allowed: true };

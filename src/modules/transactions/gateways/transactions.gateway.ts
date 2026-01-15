@@ -9,9 +9,15 @@ import {
 } from '@nestjs/websockets';
 import { createHmac } from 'crypto';
 import { ConfigService } from '@nestjs/config';
+import { ModuleRef } from '@nestjs/core';
 import { Server, Socket } from 'socket.io';
-import { Logger } from '@nestjs/common';
+import { Logger, Inject, forwardRef, OnModuleInit } from '@nestjs/common';
 import { decodeReference, encodeReference } from '../../common/utils/reference-coder';
+import { TransactionsService } from '../transactions.service';
+import { TransactionStatus } from '@transactions/enums/transaction.enums';
+import { Transaction } from '../entities/transaction.entity';
+import { FeatureFlagService } from '../../feature-flags/feature-flag.service';
+import { TransactionsBroadcastService } from '../transactions-broadcast.service';
 
 @WebSocketGateway({
     cors: {
@@ -20,15 +26,27 @@ import { decodeReference, encodeReference } from '../../common/utils/reference-c
     namespace: process.env.WEBSOCKET_NAMESPACE
 })
 export class TransactionsGateway
-    implements OnGatewayConnection, OnGatewayDisconnect {
+    implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit {
     @WebSocketServer()
     server: Server;
 
     private logger: Logger = new Logger('TransactionsGateway');
     private readonly signatureSecret: string;
 
-    constructor(private readonly configService: ConfigService) {
+    constructor(
+        private readonly configService: ConfigService,
+        private readonly transactionsService: TransactionsService,
+        private readonly featureFlagService: FeatureFlagService,
+        private readonly broadcastService: TransactionsBroadcastService,
+    ) {
         this.signatureSecret = this.configService.get<string>('SOCKET_SIGNATURE_SECRET') || 'default-secret-change-me';
+    }
+
+    onModuleInit() {
+        // Listen for status updates from the service and broadcast them
+        this.broadcastService.statusUpdates$.subscribe(({ ref, status, redirectUrl }) => {
+            this.sendStatusUpdate(ref, status, redirectUrl);
+        });
     }
 
     handleConnection(client: Socket) {
@@ -40,7 +58,7 @@ export class TransactionsGateway
     }
 
     @SubscribeMessage('subscribe')
-    handleSubscribe(
+    async handleSubscribe(
         @ConnectedSocket() client: Socket,
         @MessageBody() data: any,
     ) {
@@ -73,8 +91,37 @@ export class TransactionsGateway
         // Decode the reference to get the real UUID for the room
         const ref = decodeReference(encodedRef);
 
+        let transaction: Transaction;
+        try {
+            // Use centralized validation logic (same as RefMiddleware)
+            transaction = await this.transactionsService.findWithValidation(ref);
+        } catch (e) {
+            this.logger.error(`Validation failed for sub ${ref}: ${e.message}`);
+            return { event: 'error', data: e.message };
+        }
+
         client.join(ref);
         this.logger.log(`Client ${client.id} joined room: ${ref} (Verified)`);
+
+        // Update transaction status to PENDING after successful subscription
+        this.transactionsService.updateStatus(transaction, TransactionStatus.PENDING).then(async () => {
+            // Check for simulation flag
+            const flag = await this.featureFlagService.getFlag('quantoz_simulation');
+            if (flag && flag.active) {
+                this.logger.log(`Quantoz simulation active for ${ref}. Simulating status change...`);
+
+                // Simulate async process (5 seconds)
+                setTimeout(async () => {
+                    this.logger.log(`Random Value: ${Math.random()}`);
+                    const randomStatus = Math.random() > 0.5 ? TransactionStatus.SUCCEEDED : TransactionStatus.FAILED;
+                    this.logger.log(`Simulation: Updating ${ref} to ${randomStatus}`);
+                    await this.transactionsService.updateStatus(transaction, randomStatus);
+                }, 5000);
+            }
+        }).catch(err => {
+            this.logger.error(`Failed to update transaction ${ref} to PENDING on subscription: ${err.message}`);
+        });
+
         return { event: 'subscribed', data: { ref: encodedRef } };
     }
 
@@ -90,13 +137,17 @@ export class TransactionsGateway
         return { event: 'unsubscribed', data: { ref: encodedRef } };
     }
 
-    async sendStatusUpdate(ref: string, status: string) {
+    async sendStatusUpdate(ref: string, status: string, redirectUrl?: string) {
         // ref is the real UUID here
         const sockets = await this.server.in(ref).fetchSockets();
         const encodedRef = encodeReference(ref);
         this.logger.log(
             `Broadcasting statusUpdate for ${ref} (${encodedRef}) to ${sockets.length} clients in room`,
         );
-        this.server.to(ref).emit('statusUpdated', { ref: encodedRef, status });
+        this.server.to(ref).emit('statusUpdated', {
+            ref: encodedRef,
+            status,
+            redirectUrl,
+        });
     }
 }

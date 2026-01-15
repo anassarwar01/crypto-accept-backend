@@ -11,8 +11,10 @@ import { CommonModule } from '../common/common.module';
 import { MerchantCustomersModule } from '../merchant-customers/merchant-customers.module';
 import { TransactionsController } from './transactions.controller';
 import { TransactionsService } from './transactions.service';
+import { CryptoTransactionsService } from './crypto-transactions.service';
 import { AuthMiddleware } from '../common/middleware/auth.middleware';
 import { Transaction } from './entities/transaction.entity';
+import { CryptoTransaction } from './entities/crypto-transaction.entity';
 import { TransactionRepository } from './transaction.repository';
 import { RefMiddleware } from '../common/middleware/ref.middleware';
 import { ConversionRatesModule } from '../conversion-rates/conversion-rates.module';
@@ -22,13 +24,15 @@ import { IpregistryModule } from '../external-services/ipregistry/ipregistry.mod
 import { MerchantsModule } from '../merchants/merchants.module';
 import { SystemSettingsModule } from '../system-settings/system-settings.module';
 import { IsCryptocurrencyCodeConstraint } from './decorators/is-cryptocurrency-code.decorator';
+import { QuantozModule } from '../external-services/quantoz/quantoz.module';
 import { TransactionsGateway } from './gateways/transactions.gateway';
 import { IsUniqueRequestIdConstraint } from './decorators/is-unique-request-id.decorator';
 import { IsMerchantAllowedUrlConstraint } from './decorators/is-merchant-allowed-url.decorator';
+import { TransactionsBroadcastService } from './transactions-broadcast.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Transaction]),
+    TypeOrmModule.forFeature([Transaction, CryptoTransaction]),
     CustomersModule,
     UsersModule,
     CommonModule,
@@ -36,21 +40,23 @@ import { IsMerchantAllowedUrlConstraint } from './decorators/is-merchant-allowed
     CryptocurrencyModule,
     ConversionRatesModule,
     FeatureFlagModule,
-    FeatureFlagModule,
     IpregistryModule,
     MerchantsModule,
     SystemSettingsModule,
+    QuantozModule,
   ],
   controllers: [TransactionsController],
   providers: [
     TransactionsService,
+    CryptoTransactionsService,
     TransactionRepository,
     IsCryptocurrencyCodeConstraint,
     IsUniqueRequestIdConstraint,
     IsMerchantAllowedUrlConstraint,
     TransactionsGateway,
+    TransactionsBroadcastService,
   ],
-  exports: [TransactionsService, TransactionsGateway, TransactionRepository],
+  exports: [TransactionsService, CryptoTransactionsService, TransactionsGateway, TransactionRepository, TransactionsBroadcastService],
 })
 export class TransactionsModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

@@ -11,6 +11,7 @@ tsConfigPaths.register({
     '@transactions/*': ['src/modules/transactions/*'],
     '@cryptocurrency/*': ['src/modules/cryptocurrency/*'],
     '@database/data-source': ['data-source.ts'],
+    '@helper/*': ['src/helper/*'],
   },
 });
 

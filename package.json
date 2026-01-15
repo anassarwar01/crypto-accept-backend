@@ -44,6 +44,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
     "cors": "^2.8.5",
+    "ioredis": "^5.9.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.3"
@@ -98,7 +99,8 @@
       "^@customers/(.*)$": "<rootDir>/modules/customers/$1",
       "^@transactions/(.*)$": "<rootDir>/modules/transactions/$1",
       "^@cryptocurrency/(.*)$": "<rootDir>/modules/cryptocurrency/$1",
-      "^@database/data-source$": "<rootDir>/../data-source.ts"
+      "^@database/data-source$": "<rootDir>/../data-source.ts",
+      "^@helper/(.*)$": "<rootDir>/helper/$1"
     }
   }
 }

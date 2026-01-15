@@ -14,7 +14,7 @@ export class CreateExtensionsEnums1700678400000 implements MigrationInterface {
       `CREATE TYPE "transaction_status_enum" AS ENUM (
         'transfer.initiated',
         'transfer.pending',
-        'transfer.completed',
+        'transfer.succeeded',
         'transfer.failed',
         'transfer.cancelled',
         'transfer.expired'

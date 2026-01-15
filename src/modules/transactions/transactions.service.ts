@@ -1,4 +1,6 @@
-import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { CreateTransactionDto, SaveTransactionDto } from './dto/create-transaction.dto';
 import { CustomersService } from '../customers/customers.service';
@@ -7,22 +9,27 @@ import { CreateCustomerDTO } from '../customers/dto/create-customer.dto';
 import { Customer } from '../customers/entities/customer.entity';
 import { MerchantCustomersService } from '../merchant-customers/merchant-customers.service';
 import { CreateTransactionResponseDTO } from './dto/create-transaction-response.dto';
-import { TransactionSummaryDto, TransactionSummaryResponseDto } from './dto/transaction-summary.dto';
+import { TransactionSummaryDto, TransactionSummaryResponseDto, SaveCryptoTransactionDto } from './dto/transaction-summary.dto';
 import { TransactionRepository } from './transaction.repository';
 import { ConversionRatesService } from '../conversion-rates/conversion-rates.service';
 import { SystemSettingsService } from '../system-settings/system-settings.service';
-
 import { TransactionDetailsDto, TransactionDetailsResponseDto } from './dto/transaction-details.dto';
 import { CryptocurrencyService } from '../crypto-currencies/crypto-currencies.service';
 import { TransactionResponseDto } from './dto/transaction.dto';
-import { TransactionsGateway } from './gateways/transactions.gateway';
+import { CryptoTransactionsService } from './crypto-transactions.service';
 import { FeatureFlagService } from '../feature-flags/feature-flag.service';
 import { IpregistryService } from '../external-services/ipregistry/ipregistry.service';
 import { TransactionStatus } from './enums/transaction.enums';
+import { CryptoCurrency, CryptoStatus } from './enums/crypto-transaction.enums';
+import { TransactionsBroadcastService } from './transactions-broadcast.service';
+import { CryptoTransaction } from './entities/crypto-transaction.entity';
+import { QuantozService } from '../external-services/quantoz/quantoz.service';
 import { Transaction } from './entities/transaction.entity';
 
 import { generateSignature } from '../common/utils/helper';
 import { encodeReference } from '../common/utils/reference-coder';
+import { MESSAGES } from '@helper/constant/messages';
+import { validateTransactionState } from './utils/transaction-validator.util';
 
 @Injectable()
 export class TransactionsService {
@@ -36,9 +43,11 @@ export class TransactionsService {
     private readonly configService: ConfigService,
     private readonly systemSettingsService: SystemSettingsService,
     private readonly cryptoService: CryptocurrencyService,
-    private readonly transactionsGateway: TransactionsGateway,
+    private readonly broadcastService: TransactionsBroadcastService,
     private readonly featureFlagService: FeatureFlagService,
     private readonly ipregistryService: IpregistryService,
+    private readonly cryptoTransactionsService: CryptoTransactionsService,
+    private readonly quantozService: QuantozService,
   ) {
     this.signatureSecret = this.configService.get<string>('SOCKET_SIGNATURE_SECRET') || 'default-secret-change-me';
   }
@@ -70,8 +79,10 @@ export class TransactionsService {
     const fiatAmount = request.orderItems?.reduce((acc, item) => acc + (item.price * item.quantity), 0) || 0;
 
     // Calculate fiat base amount (system base currency is stored in DB)
+    // Calculate fiat base amount
     let fiatBaseAmount = fiatAmount;
-    const baseCurrency = (await this.systemSettingsService.getValue('BASE_CURRENCY')) || this.configService.get<string>('BASE_CURRENCY') || 'EUR';
+    const baseCurrency = (await this.systemSettingsService.getValue('base_currency')) || this.configService.get<string>('base_currency') || 'EUR';
+
     if (request.fiatCurrency !== baseCurrency) {
       const rate = await this.conversionRatesService.getRate(baseCurrency, request.fiatCurrency);
       if (rate && rate > 0) {
@@ -80,7 +91,8 @@ export class TransactionsService {
     }
 
     // Create transaction
-    const expireMinutes = (await this.systemSettingsService.getNumber('TRANSACTION_EXPIRE_TIME')) ?? Number(this.configService.get<number>('TRANSACTION_EXPIRE_TIME')) ?? 60;
+    // Resolve expire minutes robustly: prefer DB value, then config.
+    let expireMinutes = await this.systemSettingsService.getNumber('transaction_expire_time') ?? 5;
 
     const transaction = await this.transactionRepository.createTransaction(
       new SaveTransactionDto(request, customerEntity, merchantId, fiatBaseAmount, fiatAmount, expireMinutes).toEntity(),
@@ -117,7 +129,20 @@ export class TransactionsService {
     transaction: Transaction,
     dto: TransactionSummaryDto,
   ): Promise<TransactionSummaryResponseDto> {
+
+    // Call to quantoz to initiate the transcation and add record in crytpotransaction table
+    const flag = await this.featureFlagService.getFlag('quantoz_simulation');
+    if (flag && flag.active) {
+      await this.cryptoTransactionsService.upsertRecord(
+        new SaveCryptoTransactionDto(transaction, dto.cryptoCurrency));
+    }
+    else {
+      // TODO: Call to quantoz to initiate the transcation and add record in crytpotransaction table
+    }
+
+    // Generate signature for the connection of websocket
     const signature = generateSignature(encodeReference(transaction.systemReference), this.signatureSecret);
+
     return new TransactionSummaryResponseDto(transaction, dto.cryptoCurrency, signature);
   }
 
@@ -127,12 +152,25 @@ export class TransactionsService {
 
   async updateStatus(transaction: Transaction, status: TransactionStatus): Promise<TransactionResponseDto> {
     transaction.status = status;
-
     await this.transactionRepository.updateTransaction(transaction);
-    // save uses updateTransaction which does save
 
-    await this.transactionsGateway.sendStatusUpdate(transaction.systemReference, status);
+    this.broadcastService.emitStatusUpdate(transaction.systemReference, status, transaction.redirectUrl);
     return new TransactionResponseDto(transaction);
   }
 
+  async updateStatusByRef(ref: string, status: TransactionStatus): Promise<TransactionResponseDto> {
+    const transaction = await this.findWithValidation(ref, false);
+    return this.updateStatus(transaction, status);
+  }
+
+  async findWithValidation(ref: string, checkStatus = true): Promise<Transaction> {
+    const transaction = await this.transactionRepository.findByReference(ref);
+    if (!transaction) {
+      throw new BadRequestException(MESSAGES.TRANSACTION_INVALID);
+    }
+
+    validateTransactionState(transaction, checkStatus);
+
+    return transaction;
+  }
 }
