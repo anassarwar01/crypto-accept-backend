@@ -39,7 +39,7 @@
         "src/modules/transactions/*"
       ],
       "@cryptocurrency/*": [
-        "src/modules/cryptocurrency/*"
+        "src/modules/crypto-currencies/*"
       ],
       "@database/data-source": [
         "data-source.ts"

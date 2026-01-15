@@ -21,7 +21,7 @@ import { TransactionsBroadcastService } from '../transactions-broadcast.service'
 
 @WebSocketGateway({
     cors: {
-        origin: '*',
+        origin: process.env.FRONTEND_DOMAIN_ORIGIN,
     },
     namespace: process.env.WEBSOCKET_NAMESPACE
 })
@@ -113,7 +113,7 @@ export class TransactionsGateway
                 // Simulate async process (5 seconds)
                 setTimeout(async () => {
                     this.logger.log(`Random Value: ${Math.random()}`);
-                    const randomStatus = Math.random() > 0.5 ? TransactionStatus.SUCCEEDED : TransactionStatus.FAILED;
+                    const randomStatus = Math.random() > 0.4 ? TransactionStatus.SUCCEEDED : TransactionStatus.FAILED;
                     this.logger.log(`Simulation: Updating ${ref} to ${randomStatus}`);
                     await this.transactionsService.updateStatus(transaction, randomStatus);
                 }, 5000);

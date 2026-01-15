@@ -15,7 +15,7 @@ export function validateTransactionState(transaction: Transaction, checkStatus =
 
     // 1. Expiry Check
     if (transaction.expiresAt && transaction.expiresAt <= new Date()) {
-        throw new BadRequestException(MESSAGES.TRANSACTION_EXPIRED_STALE);
+        throw new BadRequestException(MESSAGES.TRANSACTION_EXPIRED);
     }
 
     // 2. Status State Checks

@@ -34,10 +34,10 @@ export class RefMiddleware implements NestMiddleware {
             throw new BadRequestException(MESSAGES.TRANSACTION_INVALID);
         }
 
-        validateTransactionState(transaction);
-
         // Attach details to request object for logging and downstream use (including error handling)
         (req as any).transaction = transaction;
+
+        validateTransactionState(transaction);
 
         next();
     }
