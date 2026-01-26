@@ -22,6 +22,7 @@ import { IpregistryService } from '../external-services/ipregistry/ipregistry.se
 import { TransactionStatus } from './enums/transaction.enums';
 import { CryptoCurrency, CryptoStatus } from '../crypto-transactions/enums/crypto-transaction.enums';
 import { TransactionsBroadcastService } from './transactions-broadcast.service';
+import { TransactionsCallbackService } from './transactions-callback.service';
 import { CryptoTransaction } from '../crypto-transactions/entities/crypto-transaction.entity';
 import { QuantozService } from '../external-services/quantoz/quantoz.service';
 import { Transaction } from './entities/transaction.entity';
@@ -48,6 +49,7 @@ export class TransactionsService {
     private readonly ipregistryService: IpregistryService,
     private readonly cryptoTransactionsService: CryptoTransactionsService,
     private readonly quantozService: QuantozService,
+    private readonly callbackService: TransactionsCallbackService,
   ) {
     this.signatureSecret = this.configService.get<string>('SOCKET_SIGNATURE_SECRET') || 'default-secret-change-me';
   }
@@ -117,6 +119,8 @@ export class TransactionsService {
       if (!result.allowed) {
         transaction.status = TransactionStatus.CANCELLED;
         await this.transactionRepository.updateTransaction(transaction);
+        // Trigger callback for automated cancellation
+        this.callbackService.sendCallback(transaction);
         throw new ForbiddenException(result.reason || 'Access denied based on your location or security settings.');
       }
     }
@@ -155,6 +159,10 @@ export class TransactionsService {
     await this.transactionRepository.updateTransaction(transaction);
 
     this.broadcastService.emitStatusUpdate(transaction.systemReference, status, transaction.redirectUrl);
+
+    // Trigger callback
+    this.callbackService.sendCallback(transaction);
+
     return new TransactionResponseDto(transaction);
   }
 

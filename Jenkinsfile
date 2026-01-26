@@ -3,7 +3,7 @@ pipeline {
     environment {
         PROJECT_NAME = 'crypto-accept-backend'
         REPO_NAME = 'crypto-accept-backend'
-        REMOTE_SERVER = 'jenkins@88.99.216.177'
+        REMOTE_SERVER = 'jenkins@23.88.31.61'
         PLAYWRIGHT_BRANCH = 'test'
         SONARQUBE_ENABLED_BRANCH = 'test'
         PROJECT_TYPE = 'nestjs'
@@ -44,7 +44,7 @@ pipeline {
                 script {
                     try {
                         sh """
-                            ssh -T -o StrictHostKeyChecking=no ${env.REMOTE_SERVER} " cd ${env.WORKSPACE_DIR}${env.GIT_BRANCH}/${env.REPO_NAME} && sudo git pull origin ${env.GIT_BRANCH} && case '${env.PROJECT_TYPE}' in laravel) sudo php artisan optimize:clear ;; nestjs) sudo npm i && sudo npm run build && sudo pm2 restart crypto-accept-DEV ;; laravel-mix) sudo npm i && sudo npm run build && sudo php artisan optimize:clear ;; *) echo 'Invalid project type'; exit 1 ;; esac"
+                            ssh -T -o StrictHostKeyChecking=no ${env.REMOTE_SERVER} " cd ${env.WORKSPACE_DIR}${env.GIT_BRANCH}/${env.REPO_NAME} && sudo git pull origin ${env.GIT_BRANCH} && case '${env.PROJECT_TYPE}' in laravel) sudo php artisan optimize:clear ;; nestjs) sudo npm i && sudo npm run build && sudo /root/.nvm/versions/node/v20.13.1/bin/pm2 restart ${env.REPO_NAME}-${env.GIT_BRANCH} ;; laravel-mix) sudo npm i && sudo npm run build && sudo php artisan optimize:clear ;; *) echo 'Invalid project type'; exit 1 ;; esac"
                         """
                     } catch (Exception e) {
                         env.FAILURE_STAGE = 'Pull from GitHub & Deploy'
@@ -136,6 +136,12 @@ pipeline {
                         "text": ":white_check_mark: Jenkins Build Successful for ${PROJECT_NAME} on branch ${env.GIT_BRANCH}\\n*Commit:* ${env.GIT_COMMIT}\\n*Author:* ${env.GIT_AUTHOR} <${env.GIT_EMAIL}>\\n*Message:* ${env.GIT_MESSAGE}\\n*Changes:* ${env.GIT_CHANGES}"
                     }' ${env.SLACK_WEBHOOK_URL}
                 """
+                sh """
+                    curl -X POST https://slack.com/api/chat.postMessage -H 'Authorization: Bearer ${env.SLACK_TOKEN}' -H 'Content-type: application/json'  -d '{
+                        "channel": "${env.RIDM_SLACK_CHANNEL}",
+                        "text": ":white_check_mark: Jenkins Build Successful for ${PROJECT_NAME}\\n*Environment:* ${env.GIT_BRANCH}\\n*Commit:* ${env.GIT_COMMIT}\\n*Author:* ${env.GIT_AUTHOR} <${env.GIT_EMAIL}>\\n*Message:* ${env.GIT_MESSAGE}\\n*Changes:* ${env.GIT_CHANGES}"
+                    }'
+                """
             }
         }
         failure {
@@ -145,6 +151,16 @@ pipeline {
                         "channel": "${env.SLACK_CHANNEL}",
                         "text": ":x: Jenkins Build Failed for ${env.PROJECT_NAME} on branch ${env.GIT_BRANCH}\\n*Commit:* ${env.GIT_COMMIT}\\n*Author:* ${env.GIT_AUTHOR} <${env.GIT_EMAIL}>\\n*Message:* ${env.GIT_MESSAGE}\\n*Changes:* ${env.GIT_CHANGES}\\n*Failed Stage:* ${env.FAILURE_STAGE}\\n*Reason:* ${env.FAILURE_REASON}"
                     }' ${env.SLACK_WEBHOOK_URL}
+                """
+               // RIDM_SLACK_CHANNEL notification 
+                sh """
+                    curl -X POST https://slack.com/api/chat.postMessage \\
+                        -H 'Authorization: Bearer ${env.SLACK_TOKEN}' \\
+                        -H 'Content-type: application/json' \\
+                        -d '{
+                            "channel": "${env.RIDM_SLACK_CHANNEL}",
+                            "text": ":x: Jenkins Build Failed for ${PROJECT_NAME}\\n*Environment:* ${env.GIT_BRANCH}\\n*Commit:* ${env.GIT_COMMIT}\\n*Author:* ${env.GIT_AUTHOR} <${env.GIT_EMAIL}>\\n*Message:* ${env.GIT_MESSAGE}\\n*Changes:* ${env.GIT_CHANGES}\\n*Failed Stage:* ${env.FAILURE_STAGE}\\n*Reason:* ${env.FAILURE_REASON}"
+                        }'
                 """
             }
         }

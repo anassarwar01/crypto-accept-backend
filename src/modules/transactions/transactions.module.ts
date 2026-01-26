@@ -30,6 +30,10 @@ import { IsUniqueRequestIdConstraint } from './decorators/is-unique-request-id.d
 import { IsMerchantAllowedUrlConstraint } from './decorators/is-merchant-allowed-url.decorator';
 import { TransactionsBroadcastService } from './transactions-broadcast.service';
 
+import { HttpModule } from '@nestjs/axios';
+import { ThirdPartyLogsModule } from '../third-party-logs/third-party-logs.module';
+import { TransactionsCallbackService } from './transactions-callback.service';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([Transaction, CryptoTransaction]),
@@ -44,6 +48,8 @@ import { TransactionsBroadcastService } from './transactions-broadcast.service';
     MerchantsModule,
     SystemSettingsModule,
     QuantozModule,
+    HttpModule,
+    ThirdPartyLogsModule,
   ],
   controllers: [TransactionsController],
   providers: [
@@ -55,8 +61,9 @@ import { TransactionsBroadcastService } from './transactions-broadcast.service';
     IsMerchantAllowedUrlConstraint,
     TransactionsGateway,
     TransactionsBroadcastService,
+    TransactionsCallbackService,
   ],
-  exports: [TransactionsService, CryptoTransactionsService, TransactionsGateway, TransactionRepository, TransactionsBroadcastService],
+  exports: [TransactionsService, CryptoTransactionsService, TransactionsGateway, TransactionRepository, TransactionsBroadcastService, TransactionsCallbackService],
 })
 export class TransactionsModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

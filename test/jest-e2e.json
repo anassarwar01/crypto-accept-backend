@@ -19,6 +19,14 @@
     "^@transactions/(.*)$": "<rootDir>/../src/modules/transactions/$1",
     "^@cryptocurrency/(.*)$": "<rootDir>/../src/modules/cryptocurrency/$1",
     "^@database/data-source$": "<rootDir>/../data-source.ts",
-    "^@helper/(.*)$": "<rootDir>/../src/helper/$1"
+    "^@helper/(.*)$": "<rootDir>/../src/helper/$1",
+    "^@crypto-transactions/(.*)$": "<rootDir>/../src/modules/crypto-transactions/$1",
+    "^@system-settings/(.*)$": "<rootDir>/../src/modules/system-settings/$1",
+    "^@feature-flags/(.*)$": "<rootDir>/../src/modules/feature-flags/$1",
+    "^@external-services/(.*)$": "<rootDir>/../src/modules/external-services/$1",
+    "^@merchant-customers/(.*)$": "<rootDir>/../src/modules/merchant-customers/$1",
+    "^@common/(.*)$": "<rootDir>/../src/modules/common/$1",
+    "^@cron/(.*)$": "<rootDir>/../src/cron/$1",
+    "^@test/(.*)$": "<rootDir>/../test/$1"
   }
 }
