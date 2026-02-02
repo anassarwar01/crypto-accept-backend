@@ -21,7 +21,7 @@ async function bootstrap() {
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   // Global prefix
-  app.setGlobalPrefix('api/v1/');
+  app.setGlobalPrefix('api/v1');
 
   // CORS
   app.enableCors({
