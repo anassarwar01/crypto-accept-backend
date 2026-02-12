@@ -37,6 +37,9 @@ export class ErrorLog {
     @Column({ type: 'integer', nullable: true })
     statusCode?: number;
 
-    @CreateDateColumn({ name: 'created_at' })
+    @CreateDateColumn({
+        name: 'created_at',
+        type: 'timestamp',
+    })
     createdAt: Date;
 }

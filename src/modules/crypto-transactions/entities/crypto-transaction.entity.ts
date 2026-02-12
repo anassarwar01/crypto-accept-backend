@@ -45,6 +45,14 @@ export class CryptoTransaction {
     })
     amount: number;
 
+    @Column('decimal', {
+        precision: 14,
+        scale: 8,
+        nullable: true,
+        name: 'rate',
+    })
+    rate: number;
+
     @Column({ type: 'varchar', name: 'hash', nullable: true })
     hash: string;
 
@@ -60,16 +68,15 @@ export class CryptoTransaction {
     status: CryptoStatus;
 
     @CreateDateColumn({
-        type: 'timestamp',
-        default: () => 'CURRENT_TIMESTAMP',
         name: 'created_at',
+        type: 'timestamp',
+
     })
     createdAt: Date;
 
     @UpdateDateColumn({
-        type: 'timestamp',
-        default: () => 'CURRENT_TIMESTAMP',
         name: 'updated_at',
+        type: 'timestamp',
     })
     updatedAt: Date;
 

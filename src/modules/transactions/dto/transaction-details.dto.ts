@@ -22,12 +22,16 @@ export class FiatDetailsDto {
     @ApiProperty()
     ref: string;
 
+    @ApiProperty()
+    transactionExist: boolean;
+
     constructor(transaction: Transaction) {
         this.fiatCurrency = transaction.fiatCurrency || '';
         this.fiatAmount = transaction.fiatConvertedAmount || 0;
         // this.merchantReference = transaction.merchantReference;
         // this.status = transaction.status;
         // this.ref = transaction.systemReference;
+        this.transactionExist = transaction.cryptoTransaction !== null;
     }
 }
 
@@ -50,6 +54,9 @@ export class TransactionDetailsResponseDto {
 
     @ApiProperty({ type: FiatDetailsDto })
     details: FiatDetailsDto;
+
+    @ApiProperty()
+    transactionExists: boolean;
 
     constructor(cryptoCurrencies: Cryptocurrency[], transaction: Transaction) {
         this.details = new FiatDetailsDto(transaction);

@@ -1,3 +1,5 @@
+process.env.TZ = 'UTC';
+process.env.PGTZ = 'UTC';
 // data-source.ts
 import path from 'path';
 import { DataSource } from 'typeorm';
@@ -34,6 +36,7 @@ const AppDataSource = new DataSource({
   database: dbName,
   entities: [path.join(baseDir, 'src/**/*.entity{.ts,.js}')],
   migrations: [path.join(baseDir, 'src/database/migrations/*{.ts,.js}')],
+  useUTC: true,
 });
 
 export default AppDataSource;

@@ -1,10 +1,10 @@
 // src/database/seeders/seed.ts
 import 'reflect-metadata'; // Required by TypeORM
 import AppDataSource from '../../../data-source';
-import { UserSeederService } from './user/user.service';
-import { MerchantSeederService } from './merchant/merchant.service';
-import { CryptocurrencySeederService } from './cryptocurrency/crypto-currency.service';
-import { FeatureFlagSeeder } from './feature-flag/feature-flag.seeder';
+import { UserSeederService } from './users/users.service';
+import { MerchantsSeederService } from './merchants/merchants.service';
+import { CryptocurrenciesSeederService } from './crypto-currencies/crypto-currencies.service';
+import { FeatureFlagsSeeder } from './feature-flags/feature-flags.seeder';
 
 async function runSeeders() {
     try {
@@ -18,13 +18,13 @@ async function runSeeders() {
         const userSeeder = new UserSeederService();
         await userSeeder.seed();
 
-        const merchantSeeder = new MerchantSeederService();
+        const merchantSeeder = new MerchantsSeederService();
         await merchantSeeder.seed();
 
-        const cryptoSeeder = new CryptocurrencySeederService();
+        const cryptoSeeder = new CryptocurrenciesSeederService();
         await cryptoSeeder.seed();
 
-        const featureFlagSeeder = new FeatureFlagSeeder();
+        const featureFlagSeeder = new FeatureFlagsSeeder();
         await featureFlagSeeder.seed(AppDataSource);
 
         console.log('All seeders completed!');

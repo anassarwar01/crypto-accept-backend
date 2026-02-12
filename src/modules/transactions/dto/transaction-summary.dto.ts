@@ -3,6 +3,8 @@ import { IsNotEmpty, IsString } from 'class-validator';
 import { IsCryptocurrencyCode } from '../decorators/is-cryptocurrency-code.decorator';
 import { Transaction } from '../entities/transaction.entity';
 import { CryptoCurrency, CryptoStatus } from '../../crypto-transactions/enums/crypto-transaction.enums';
+import { QuantozService } from '../../external-services/quantoz/quantoz.service';
+import { QuantozEstimatedPrice, QuantozMerchantResponse } from '../../external-services/quantoz/interfaces/quantoz.interfaces';
 
 export class TransactionSummaryDto {
     @ApiProperty({
@@ -22,16 +24,20 @@ export class SaveCryptoTransactionDto {
     accountCode: string;
     currency: CryptoCurrency;
     amount: number;
+    rate: number;
     status: CryptoStatus;
+    walletAddress: string;
 
-    constructor(transaction: Transaction, cryptoCurrency: string) {
+    constructor(transaction: Transaction, cryptoCurrency: string, quantozResult: QuantozMerchantResponse, rate: QuantozEstimatedPrice, quantozService: QuantozService) {
         this.transactionId = transaction.id;
-        this.transactionCode = transaction.shortCode;
-        this.merchantCode = transaction.merchantId;
-        this.accountCode = 'temp-account'; // Placeholder
+        this.transactionCode = quantozResult.transactionCode || '';
+        this.merchantCode = quantozResult.merchantCustomerCode || '';
+        this.accountCode = quantozResult.accountCode || '';
         this.currency = cryptoCurrency as CryptoCurrency;
-        this.amount = 123; // Hardcoded for now
-        this.status = CryptoStatus.INITIATED;
+        this.amount = quantozResult.expectedCryptoAmount;
+        this.rate = rate?.estimatedPrices?.buy || 0;
+        this.status = quantozService.mapStatus(quantozResult.status || 'SELLINITIATED');
+        this.walletAddress = quantozResult.cryptoPaymentAddress || '';
     }
 }
 
@@ -57,7 +63,10 @@ export class TransactionSummaryResponseDto {
     cryptoCurrency: string;
 
     @ApiProperty()
-    cryptoAmount: number;
+    cryptoAmount: string;
+
+    @ApiProperty()
+    fee: string;
 
     @ApiProperty()
     status: string;
@@ -74,12 +83,13 @@ export class TransactionSummaryResponseDto {
     @ApiProperty()
     orderItems: OrderItem[];
 
-    constructor(transaction: Transaction, cryptoCurrency: string, signature: string) {
+    constructor(transaction: Transaction, cryptoCurrency: string, signature: string, cryptoPrice: QuantozEstimatedPrice) {
         this.status = transaction.status;
         this.fiatAmount = transaction.fiatConvertedAmount || 0;
         this.fiatCurrency = transaction.fiatCurrency || '';
         this.cryptoCurrency = cryptoCurrency;
-        this.cryptoAmount = transaction.cryptoTransaction?.amount || 0;
+        this.cryptoAmount = '' + transaction.cryptoTransaction?.amount || '0';
+        this.fee = '' + cryptoPrice?.estimatedPrices?.estimatedNetworkFastFee || '0';
         this.walletAddress = transaction.cryptoTransaction?.walletAddress || '';
         this.signature = signature;
         this.orderItems = transaction.orderItems?.map(item => ({

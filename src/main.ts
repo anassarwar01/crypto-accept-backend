@@ -1,3 +1,5 @@
+process.env.TZ = 'UTC';
+process.env.PGTZ = 'UTC';
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -21,7 +23,9 @@ async function bootstrap() {
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   // Global prefix
-  app.setGlobalPrefix('api/v1');
+  app.setGlobalPrefix('api/v1', {
+    exclude: ['webhooks/(.*)'],
+  });
 
   // CORS
   app.enableCors({

@@ -12,7 +12,7 @@ export class CustomersService {
   constructor(
     @InjectRepository(Customer)
     private customerRepository: Repository<Customer>,
-  ) {}
+  ) { }
 
   async getCustomerByEmail(dto: GetCustomerDTO): Promise<Customer | null> {
     return this.customerRepository.findOne({
@@ -21,10 +21,7 @@ export class CustomersService {
   }
 
   async createCustomer(dto: CreateCustomerDTO): Promise<Customer> {
-    const customer = this.customerRepository.create({
-      email: dto.email,
-      name: dto.firstName && dto.lastName ? `${dto.firstName} ${dto.lastName}` : undefined,
-    });
+    const customer = this.customerRepository.create(dto);
     return this.customerRepository.save(customer);
   }
 

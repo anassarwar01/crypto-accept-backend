@@ -7,9 +7,17 @@ export enum CryptoCurrency {
 }
 
 export enum CryptoStatus {
-    INITIATED = 'initiated',
-    PENDING = 'pending',
-    CONFIRMED = 'confirmed',
-    FAILED = 'failed',
-    CANCELLED = 'cancelled',
+    sellInitiated = 'sellInitiated',
+    sellCompleted = 'sellCompleted',
+    blocked = 'blocked',
+    deleted = 'deleted',
+    toPayout = 'toPayout',
+    confirming = 'confirming',
+    payoutConfirming = 'payoutConfirming',
+    sellCancelled = 'sellCancelled',
+    payoutOnHold = 'payoutOnHold',
+    buyIncasso = 'buyIncasso',
+    sendDelay = 'sendDelay',
+    toCancel = 'toCancel',
 }
+

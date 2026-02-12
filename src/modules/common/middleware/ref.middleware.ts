@@ -28,6 +28,10 @@ export class RefMiddleware implements NestMiddleware {
             where: {
                 systemReference: ref,
             },
+            relations: {
+                // merchant: true,
+                customer: true,
+            },
         });
 
         if (!transaction) {

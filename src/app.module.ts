@@ -14,10 +14,12 @@ import { RequestLogsModule } from './modules/request-logs/request-logs.module';
 import { ThirdPartyLogsModule } from './modules/third-party-logs/third-party-logs.module';
 import { CronModule } from './cron/cron.module';
 import { FeatureFlagModule } from './modules/feature-flags/feature-flag.module';
+import { SystemSettingsModule } from './modules/system-settings/system-settings.module';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { AllExceptionsFilter } from './modules/common/filters/all-exceptions.filter';
 import { RequestLoggingInterceptor } from './modules/common/interceptors/request-logging.interceptor';
 import { ResponseInterceptor } from './modules/common/interceptors/response.interceptor';
+import { IdempotencyInterceptor } from './modules/common/interceptors/idempotency.interceptor';
 import databaseConfig from './config/database.config';
 
 @Module({
@@ -32,6 +34,7 @@ import databaseConfig from './config/database.config';
             database: process.env.DATABASE_NAME,
             entities: [__dirname + '/**/*.entity{.ts,.js}'],
             synchronize: false, // set to true only in dev
+            useUTC: true,
         }),
         UsersModule,
         TransactionsModule,
@@ -43,6 +46,7 @@ import databaseConfig from './config/database.config';
         RequestLogsModule,
         CronModule,
         FeatureFlagModule,
+        SystemSettingsModule,
         ThirdPartyLogsModule,
     ],
     controllers: [AppController],
@@ -59,6 +63,10 @@ import databaseConfig from './config/database.config';
         {
             provide: APP_INTERCEPTOR,
             useClass: ResponseInterceptor,
+        },
+        {
+            provide: APP_INTERCEPTOR,
+            useClass: IdempotencyInterceptor,
         },
     ],
 })

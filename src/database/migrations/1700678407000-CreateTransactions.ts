@@ -62,12 +62,6 @@ export class CreateTransactions1700678407000 implements MigrationInterface {
           { name: 'expires_at', type: 'timestamp', isNullable: true },
           { name: 'order_items', type: 'jsonb', isNullable: true },
           {
-            name: 'created_at',
-            type: 'timestamp',
-            default: 'CURRENT_TIMESTAMP',
-            isNullable: false,
-          },
-          {
             name: 'callback_url',
             type: 'varchar',
             isNullable: true,
@@ -76,6 +70,12 @@ export class CreateTransactions1700678407000 implements MigrationInterface {
             name: 'redirect_url',
             type: 'varchar',
             isNullable: true,
+          },
+          {
+            name: 'created_at',
+            type: 'timestamp',
+            default: 'CURRENT_TIMESTAMP',
+            isNullable: false,
           },
           {
             name: 'updated_at',
