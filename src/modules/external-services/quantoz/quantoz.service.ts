@@ -97,9 +97,16 @@ export class QuantozService {
 
       if (isAxiosError(error) && error.response) {
         const errResponse = error.response;
-        const message = (errResponse.data ?? 'Quantoz API error') as
-          | string
-          | Record<string, any>;
+        const errData = errResponse.data as QuantozApiResponse;
+
+        let message: string | Record<string, any> = 'Quantoz API error';
+
+        if (errData?.errors && Array.isArray(errData.errors) && errData.errors.length > 0) {
+          message = errData.errors[0] as string;
+        } else {
+          message = (errData?.message ?? 'Quantoz API error');
+        }
+
         throw new HttpException(message, status);
       }
       throw new HttpException('Quantoz API error', 500);

@@ -89,14 +89,21 @@ export class TransactionSummaryResponseDto {
     @ApiProperty()
     orderItems: OrderItem[];
 
-    constructor(transaction: Transaction, cryptoCurrency: string, signature: string, cryptoPrice: QuantozEstimatedPrice, transactionExpireMinutes: number) {
+    constructor(
+        transaction: Transaction,
+        cryptoCurrency: string,
+        signature: string,
+        cryptoPrice: QuantozEstimatedPrice,
+        transactionExpireMinutes: number,
+        fallbackWalletAddress: string,
+    ) {
         this.status = transaction.status;
         this.fiatAmount = transaction.fiatConvertedAmount || 0;
         this.fiatCurrency = transaction.fiatCurrency || '';
         this.cryptoCurrency = cryptoCurrency;
         this.cryptoAmount = '' + transaction.cryptoTransaction?.amount || '0';
         this.fee = '' + cryptoPrice?.estimatedPrices?.estimatedNetworkFastFee || '0';
-        this.walletAddress = transaction.cryptoTransaction?.walletAddress || '';
+        this.walletAddress = transaction.cryptoTransaction?.walletAddress || fallbackWalletAddress;
         this.signature = signature;
         this.transactionTime = transactionExpireMinutes;
 

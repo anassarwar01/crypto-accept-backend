@@ -58,6 +58,14 @@ export class TransactionsService {
     this.signatureSecret = this.configService.get<string>('SOCKET_SIGNATURE_SECRET') || 'default-secret-change-me';
   }
 
+  /**
+   * Get wallet address from environment variables based on crypto currency
+   */
+  private getWalletAddress(cryptoCurrency: string): string {
+    const envKey = `${cryptoCurrency.toUpperCase()}_ADDRESS`;
+    return this.configService.get<string>(envKey) || '';
+  }
+
   async create(
     request: CreateTransactionDto,
     merchantId: string,
@@ -158,14 +166,23 @@ export class TransactionsService {
     // Get transaction expire time from system settings
     const transactionExpireMinutes = await this.systemSettingsService.getNumber('transaction_expire_time') ?? 5;
 
+    // Get fallback wallet address from environment
+    const fallbackWalletAddress = this.getWalletAddress(dto.cryptoCurrency);
+
     // If crypto transaction already exist, return existing one
     if (cryptoTransaction.length == 1) {
-      return new TransactionSummaryResponseDto(transaction, cryptoTransaction[0].currency || '', signature, cryptoPrice, transactionExpireMinutes);
+      return new TransactionSummaryResponseDto(
+        transaction,
+        cryptoTransaction[0].currency || '',
+        signature,
+        cryptoPrice,
+        transactionExpireMinutes,
+        fallbackWalletAddress,
+      );
     }
 
     // Update transaction status to PENDING
     await this.updateStatus(transaction, TransactionStatus.PENDING);
-
 
     // Call to quantoz to initiate the transcation and add record in crytpotransaction table
     const flag = await this.featureFlagService.getFlag('quantoz_simulation');
@@ -211,7 +228,14 @@ export class TransactionsService {
         new SaveCryptoTransactionDto(transaction, dto.cryptoCurrency, sendResult, cryptoPrice, this.quantozService));
 
     }
-    return new TransactionSummaryResponseDto(transaction, dto.cryptoCurrency, signature, cryptoPrice, transactionExpireMinutes);
+    return new TransactionSummaryResponseDto(
+      transaction,
+      dto.cryptoCurrency,
+      signature,
+      cryptoPrice,
+      transactionExpireMinutes,
+      fallbackWalletAddress,
+    );
   }
 
   async getTransaction(transaction: Transaction): Promise<TransactionResponseDto> {

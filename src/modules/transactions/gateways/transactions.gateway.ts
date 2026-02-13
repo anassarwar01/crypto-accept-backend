@@ -19,7 +19,7 @@ import { TransactionsBroadcastService } from '../transactions-broadcast.service'
 import { Subscription } from 'rxjs';
 
 @WebSocketGateway({
-    cors: process.env.APP_ENV === 'development' ? '*' : process.env.FRONTEND_URL,
+    cors: process.env.APP_ENV === 'development' ? '*' : process.env.FRONTEND_DOMAIN,
     namespace: process.env.WEBSOCKET_NAMESPACE,
 })
 export class TransactionsGateway
