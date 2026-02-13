@@ -203,6 +203,23 @@ describe('QuantozService', () => {
             await expect(service.getEstimatedPrices('EUR', 'BTC')).rejects.toThrow(HttpException);
         });
 
+        it('should extract specific error message from errors array', async () => {
+            const axiosError = {
+                isAxiosError: true,
+                response: {
+                    status: 400,
+                    data: {
+                        errors: ['CryptoAmountBelowMinimumSellAmount'],
+                        message: 'There were one or more errors in your request',
+                    },
+                },
+            } as AxiosError;
+
+            mockAxiosRef.request.mockRejectedValue(axiosError);
+
+            await expect(service.getEstimatedPrices('EUR', 'BTC')).rejects.toThrow('Crypto amount is below the minimum allowed limit.');
+        });
+
         it('should handle non-axios errors', async () => {
             mockAxiosRef.request.mockRejectedValue(new Error('Network error'));
 
