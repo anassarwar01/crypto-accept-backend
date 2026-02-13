@@ -36,6 +36,10 @@ export class TransactionRepository {
     async findByReference(systemReference: string): Promise<Transaction | null> {
         return this.repository.findOne({
             where: { systemReference },
+            relations: {
+                // merchant: true,
+                customer: true,
+            },
         });
     }
 
@@ -56,6 +60,10 @@ export class TransactionRepository {
 
     async updateTransactionStatus(systemReference: string, status: TransactionStatus) {
         return this.repository.update({ systemReference }, { status });
+    }
+
+    async findById(id: string): Promise<Transaction | null> {
+        return this.repository.findOne({ where: { id } as any });
     }
 
     // other custom methods...

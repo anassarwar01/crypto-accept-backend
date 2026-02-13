@@ -14,9 +14,15 @@ export class ConversionRate {
     @Column({ name: 'fiat_conversion_rate', type: 'numeric', precision: 10, scale: 2 })
     fiatConversionRate: number;
 
-    @CreateDateColumn({ name: 'created_at' })
+    @CreateDateColumn({
+        name: 'created_at',
+        type: 'timestamp',
+    })
     createdAt: Date;
 
-    @UpdateDateColumn({ name: 'updated_at' })
+    @UpdateDateColumn({
+        name: 'updated_at',
+        type: 'timestamp',
+    })
     updatedAt: Date;
 }

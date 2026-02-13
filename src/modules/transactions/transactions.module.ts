@@ -10,6 +10,7 @@ import { UsersModule } from '../users/users.module';
 import { CommonModule } from '../common/common.module';
 import { MerchantCustomersModule } from '../merchant-customers/merchant-customers.module';
 import { TransactionsController } from './transactions.controller';
+import { QuantozWebhookController } from '../external-services/quantoz/webhooks/quantoz-webhook.controller';
 import { TransactionsService } from './transactions.service';
 import { CryptoTransactionsService } from '../crypto-transactions/crypto-transactions.service';
 import { AuthMiddleware } from '../common/middleware/auth.middleware';
@@ -51,7 +52,7 @@ import { TransactionsCallbackService } from './transactions-callback.service';
     HttpModule,
     ThirdPartyLogsModule,
   ],
-  controllers: [TransactionsController],
+  controllers: [TransactionsController, QuantozWebhookController],
   providers: [
     TransactionsService,
     CryptoTransactionsService,

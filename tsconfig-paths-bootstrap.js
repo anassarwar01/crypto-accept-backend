@@ -1,5 +1,10 @@
 // Bootstrap file to register TypeScript path aliases before TypeORM CLI loads entities
 // NOTE: We hardcode the aliases here to avoid JSON parsing issues with comments in tsconfig.json
+
+// Set timezone to UTC for migrations and seeders
+process.env.TZ = 'UTC';
+process.env.PGTZ = 'UTC';
+
 const tsConfigPaths = require('tsconfig-paths');
 
 tsConfigPaths.register({

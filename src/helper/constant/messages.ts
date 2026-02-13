@@ -4,7 +4,8 @@ export const MESSAGES = {
   TRANSACTION_EXPIRED: 'The requested transaction has expired and is no longer valid.',
   TRANSACTION_IN_PROCESS: 'The requested transaction is in process.',
   TRANSACTION_NOT_AVAILABLE: 'The requested transaction is no longer available.',
-  COUNTRY_NOT_AVAILABLE: 'We\'re not available in your region just yet, but our team is working hard to expand access. Stay tuned. We\'ll be ready to welcome you soon.'
+  COUNTRY_NOT_AVAILABLE: 'We\'re not available in your region just yet, but our team is working hard to expand access. Stay tuned. We\'ll be ready to welcome you soon.',
+  TRANSACTION_COMPLETED: 'The transaction has been completed successfully.',
 };
 
 export default MESSAGES;

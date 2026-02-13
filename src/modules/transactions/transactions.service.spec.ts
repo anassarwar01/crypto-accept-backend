@@ -16,6 +16,7 @@ import { SystemSettingsService } from '../system-settings/system-settings.servic
 import { TransactionsBroadcastService } from './transactions-broadcast.service';
 import { CryptoTransactionsService } from '../crypto-transactions/crypto-transactions.service';
 import { QuantozService } from '../external-services/quantoz/quantoz.service';
+import { TransactionsCallbackService } from './transactions-callback.service';
 
 describe('TransactionsService', () => {
   let service: TransactionsService;
@@ -77,7 +78,11 @@ describe('TransactionsService', () => {
   };
 
   const mockQuantozService = {
-    getEstimatedPrice: jest.fn(),
+    getEstimatedPrices: jest.fn(),
+    merchantSimulate: jest.fn(),
+  };
+  const mockTransactionsCallbackService = {
+    sendCallback: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -96,6 +101,7 @@ describe('TransactionsService', () => {
         { provide: IpregistryService, useValue: mockIpregistryService },
         { provide: CryptoTransactionsService, useValue: mockCryptoTransactionsService },
         { provide: QuantozService, useValue: mockQuantozService },
+        { provide: TransactionsCallbackService, useValue: mockTransactionsCallbackService },
       ],
     }).compile();
 
@@ -149,6 +155,60 @@ describe('TransactionsService', () => {
 
       const result = await service.getTransaction(transaction);
       expect(result).toBeDefined();
+    });
+  });
+
+  describe('getSummary', () => {
+    it('should return transaction summary with simulated crypto amount', async () => {
+      const transaction = {
+        id: 'trans_123',
+        systemReference: 'ref_123',
+        shortCode: 'SC123',
+        merchantId: 'merch_123',
+        customerId: 'cust_123',
+        fiatConvertedAmount: 100,
+        status: TransactionStatus.INITIATED,
+        customer: { email: 'test@example.com' },
+        callbackUrl: 'http://callback.com',
+      } as any;
+
+      const dto = { cryptoCurrency: 'ALGO' };
+
+      mockFeatureFlagService.getFlag.mockResolvedValue({ active: true });
+      mockQuantozService.merchantSimulate.mockResolvedValue({
+        expectedCryptoAmount: 1100,
+        merchantCustomerCode: 'cust_123'
+      });
+      mockCryptoTransactionsService.upsertRecord.mockResolvedValue({
+        amount: 1100,
+        walletAddress: 'wallet_abc'
+      } as any);
+
+      const result = await service.getSummary(transaction, dto);
+
+      expect(result).toBeDefined();
+      expect(mockQuantozService.merchantSimulate).toHaveBeenCalledWith(
+        100,
+        'ALGO',
+        'test@example.com',
+        'ref_123',
+        'trans_123'
+      );
+      expect(mockCryptoTransactionsService.upsertRecord).toHaveBeenCalledWith(
+        expect.objectContaining({
+          amount: 1100,
+        })
+      );
+      expect(result.cryptoAmount).toBe(1100);
+    });
+
+    it('should throw error if simulation fails', async () => {
+      const transaction = { id: 'trans_123' } as any;
+      const dto = { cryptoCurrency: 'ALGO' };
+
+      mockQuantozService.merchantSimulate.mockResolvedValue(null);
+
+      await expect(service.getSummary(transaction, dto)).rejects.toThrow(BadRequestException);
     });
   });
 

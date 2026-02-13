@@ -14,23 +14,25 @@ export class Customer {
   @PrimaryGeneratedColumn('uuid', { name: 'id' })
   id: string;
 
-  @Column({ type: 'varchar', nullable: true, name: 'name' })
-  name?: string;
+  @Column({ type: 'varchar', nullable: true, name: 'first_name' })
+  firstName?: string;
+
+  @Column({ type: 'varchar', nullable: true, name: 'last_name' })
+  lastName?: string;
 
   @Column({ type: 'varchar', unique: true, name: 'email' })
   email: string;
 
   @CreateDateColumn({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
     name: 'created_at',
+    type: 'timestamp',
+
   })
   createdAt: Date;
 
   @UpdateDateColumn({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
     name: 'updated_at',
+    type: 'timestamp',
   })
   updatedAt: Date;
 

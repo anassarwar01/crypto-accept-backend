@@ -3,7 +3,7 @@ import AppDataSource from '../../../../data-source';
 import { Cryptocurrency } from '../../../modules/crypto-currencies/entities/crypto-currency.entity';
 
 @Injectable()
-export class CryptocurrencySeederService {
+export class CryptocurrenciesSeederService {
   async seed() {
     if (!AppDataSource.isInitialized) {
       try {

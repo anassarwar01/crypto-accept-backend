@@ -4,7 +4,7 @@ import { Merchant } from '@merchants/entities/merchant.entity';
 import { User, UserRole } from '@users/entities/user.entity';
 
 @Injectable()
-export class MerchantSeederService {
+export class MerchantsSeederService {
   async seed() {
     if (!AppDataSource.isInitialized) {
       try {
@@ -13,6 +13,7 @@ export class MerchantSeederService {
         console.error('Failed to initialize AppDataSource:', err);
         throw err;
       }
+
     }
 
     const merchantRepo = AppDataSource.getRepository(Merchant);

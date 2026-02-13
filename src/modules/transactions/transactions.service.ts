@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException, Inject, forwardRef, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -26,11 +26,14 @@ import { TransactionsCallbackService } from './transactions-callback.service';
 import { CryptoTransaction } from '../crypto-transactions/entities/crypto-transaction.entity';
 import { QuantozService } from '../external-services/quantoz/quantoz.service';
 import { Transaction } from './entities/transaction.entity';
-
+import type { QuantozMerchantResponse, QuantozWebhookResponse } from '../external-services/quantoz/interfaces/quantoz.interfaces';
 import { generateSignature } from '../common/utils/helper';
 import { encodeReference } from '../common/utils/reference-coder';
 import { MESSAGES } from '@helper/constant/messages';
 import { validateTransactionState } from './utils/transaction-validator.util';
+import { ThirdPartyLogsService } from '../third-party-logs/third-party-logs.service';
+import { ThirdPartyLogType, HttpMethod } from '../third-party-logs/entities/third-party-log.entity';
+
 
 @Injectable()
 export class TransactionsService {
@@ -50,6 +53,7 @@ export class TransactionsService {
     private readonly cryptoTransactionsService: CryptoTransactionsService,
     private readonly quantozService: QuantozService,
     private readonly callbackService: TransactionsCallbackService,
+    private readonly thirdPartyLogsService: ThirdPartyLogsService,
   ) {
     this.signatureSecret = this.configService.get<string>('SOCKET_SIGNATURE_SECRET') || 'default-secret-change-me';
   }
@@ -134,20 +138,80 @@ export class TransactionsService {
     dto: TransactionSummaryDto,
   ): Promise<TransactionSummaryResponseDto> {
 
-    // Call to quantoz to initiate the transcation and add record in crytpotransaction table
-    const flag = await this.featureFlagService.getFlag('quantoz_simulation');
-    if (flag && flag.active) {
-      transaction.cryptoTransaction = await this.cryptoTransactionsService.upsertRecord(
-        new SaveCryptoTransactionDto(transaction, dto.cryptoCurrency));
-    }
-    else {
-      // TODO: Call to quantoz to initiate the transcation and add record in crytpotransaction table
-    }
-
     // Generate signature for the connection of websocket
     const signature = generateSignature(encodeReference(transaction.systemReference), this.signatureSecret);
 
-    return new TransactionSummaryResponseDto(transaction, dto.cryptoCurrency, signature);
+    // Call to quantoz crypto price endpoint
+    const cryptoPrice = await this.quantozService.getEstimatedPrices(
+      (await this.systemSettingsService.getValue('base_currency')) || this.configService.get<string>('base_currency') || 'EUR',
+      dto.cryptoCurrency,
+      transaction.id,
+    );
+
+    if (cryptoPrice === undefined) {
+      throw new BadRequestException('Could not get estimated prices from Quantoz');
+    }
+
+    // Return transcaiton if already exist in crypto transaction
+    const cryptoTransaction = await this.cryptoTransactionsService.findByTransactionId(transaction.id);
+
+    // Get transaction expire time from system settings
+    const transactionExpireMinutes = await this.systemSettingsService.getNumber('transaction_expire_time') ?? 5;
+
+    // If crypto transaction already exist, return existing one
+    if (cryptoTransaction.length == 1) {
+      return new TransactionSummaryResponseDto(transaction, cryptoTransaction[0].currency || '', signature, cryptoPrice, transactionExpireMinutes);
+    }
+
+    // Update transaction status to PENDING
+    await this.updateStatus(transaction, TransactionStatus.PENDING);
+
+
+    // Call to quantoz to initiate the transcation and add record in crytpotransaction table
+    const flag = await this.featureFlagService.getFlag('quantoz_simulation');
+
+    if (flag && flag.active) {
+
+      // Call to quantoz to simulate the transcation
+      const simulationResult = await this.quantozService.merchantSimulate(
+        transaction.fiatBaseAmount || 0,
+        dto.cryptoCurrency,
+        transaction.customer?.email || '',
+        transaction.systemReference,
+        transaction.id,
+      );
+      const cryptoAmount = simulationResult?.expectedCryptoAmount;
+
+      if (cryptoAmount === undefined) {
+        throw new BadRequestException('Could not simulate transaction with Quantoz');
+      }
+
+      transaction.cryptoTransaction = await this.cryptoTransactionsService.upsertRecord(
+        new SaveCryptoTransactionDto(transaction, dto.cryptoCurrency, simulationResult, cryptoPrice, this.quantozService));
+
+    }
+    else {
+
+      // Call to quantoz merchant send endpoint
+      const sendResult = await this.quantozService.merchantSend(
+        transaction.fiatBaseAmount || 0,
+        dto.cryptoCurrency,
+        transaction.customer?.email || '',
+        transaction.systemReference,
+        transaction.id,
+      );
+      const cryptoAmount = sendResult?.expectedCryptoAmount;
+
+      if (cryptoAmount === undefined) {
+        throw new BadRequestException('Could not perform transaction with Quantoz');
+      }
+
+      // Save crypto transaction in database
+      transaction.cryptoTransaction = await this.cryptoTransactionsService.upsertRecord(
+        new SaveCryptoTransactionDto(transaction, dto.cryptoCurrency, sendResult, cryptoPrice, this.quantozService));
+
+    }
+    return new TransactionSummaryResponseDto(transaction, dto.cryptoCurrency, signature, cryptoPrice, transactionExpireMinutes);
   }
 
   async getTransaction(transaction: Transaction): Promise<TransactionResponseDto> {
@@ -156,20 +220,21 @@ export class TransactionsService {
 
   async updateStatus(transaction: Transaction, status: TransactionStatus): Promise<TransactionResponseDto> {
     transaction.status = status;
-    await this.transactionRepository.updateTransaction(transaction);
+    await this.transactionRepository.updateTransactionStatus(transaction.systemReference, status);
 
+    // Broadcast status update to all connected clients
     this.broadcastService.emitStatusUpdate(transaction.systemReference, status, transaction.redirectUrl);
 
-    // Trigger callback
+    // Send callback to merchant
     this.callbackService.sendCallback(transaction);
 
     return new TransactionResponseDto(transaction);
   }
 
-  async updateStatusByRef(ref: string, status: TransactionStatus): Promise<TransactionResponseDto> {
-    const transaction = await this.findWithValidation(ref, false);
-    return this.updateStatus(transaction, status);
-  }
+  // async updateStatusByRef(ref: string, status: TransactionStatus): Promise<TransactionResponseDto> {
+  //   const transaction = await this.findWithValidation(ref, false);
+  //   return this.updateStatus(transaction, status);
+  // }
 
   async findWithValidation(ref: string, checkStatus = true): Promise<Transaction> {
     const transaction = await this.transactionRepository.findByReference(ref);
@@ -180,5 +245,50 @@ export class TransactionsService {
     validateTransactionState(transaction, checkStatus);
 
     return transaction;
+  }
+
+  async handleQuantozWebhook(payload: QuantozWebhookResponse): Promise<void> {
+
+    // Log the webhook to third_party_logs
+    await this.thirdPartyLogsService.createLog({
+      transactionId: (await this.cryptoTransactionsService.findTranctionbyTransactionCode(payload.TransactionCode))?.transaction?.id,
+      httpRequest: payload,
+      httpResponse: { status: 'Received' },
+      httpMethod: HttpMethod.POST,
+      httpCode: HttpStatus.OK,
+      type: ThirdPartyLogType.WEBHOOK,
+    });
+
+    const cryptoTransaction = await this.cryptoTransactionsService.updateTransactionByTransactionCode(
+      payload.TransactionCode, {
+      status: this.quantozService.mapStatus(payload.Status),
+      hash: payload.ReceiveCryptoTxId, // Quantoz might provide hash here or in another field
+    });
+
+    if (cryptoTransaction && cryptoTransaction.transaction) {
+      const transaction = cryptoTransaction.transaction;
+
+      if (transaction) {
+
+        // Map CryptoStatus to TransactionStatus
+        let newStatus = transaction.status;
+        const cryptoStatus = cryptoTransaction.status;
+
+        if (cryptoStatus === CryptoStatus.sellCompleted || cryptoStatus === CryptoStatus.toPayout) {
+          newStatus = TransactionStatus.SUCCEEDED;
+        } else if (cryptoStatus === CryptoStatus.sellCancelled || cryptoStatus === CryptoStatus.toCancel) {
+          newStatus = TransactionStatus.CANCELLED;
+        } else if (cryptoStatus === CryptoStatus.sellInitiated || cryptoStatus === CryptoStatus.confirming) {
+          newStatus = TransactionStatus.PENDING;
+        }
+
+        // Update transaction status if needed
+        if (newStatus !== transaction.status) {
+
+          // TODO: What staus that we need to update against transaction ?
+          await this.updateStatus(transaction, newStatus);
+        }
+      }
+    }
   }
 }

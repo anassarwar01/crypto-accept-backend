@@ -28,7 +28,7 @@ export class CreateThirdPartyLogs1700678412000 implements MigrationInterface {
             name: 'type',
             type: 'enum',
             enumName: 'third_party_type_enum',
-            enum: ['HTTP', 'CALLBACK'],
+            enum: ['HTTP', 'CALLBACK', 'WEBHOOK'],
             isNullable: true,
           },
           {

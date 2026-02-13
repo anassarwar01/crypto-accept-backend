@@ -34,16 +34,14 @@ export class Merchant {
   allowedSources: Record<string, any>[];
 
   @CreateDateColumn({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
     name: 'created_at',
+    type: 'timestamp',
   })
   createdAt: Date;
 
   @UpdateDateColumn({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
     name: 'updated_at',
+    type: 'timestamp',
   })
   updatedAt: Date;
 

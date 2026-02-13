@@ -31,13 +31,20 @@ export class CreateCryptoTransactions1700678408000 implements MigrationInterface
             scale: 8,
             isNullable: true,
           },
+          {
+            name: 'rate',
+            type: 'decimal',
+            precision: 14,
+            scale: 8,
+            isNullable: true,
+          },
           { name: 'hash', type: 'varchar', isNullable: true },
           { name: 'wallet_address', type: 'varchar', isNullable: true },
           {
             name: 'status',
             type: 'enum',
             enumName: 'crypto_status_enum',
-            enum: ['initiated', 'pending', 'confirmed', 'failed', 'cancelled'],
+            enum: ['sellInitiated', 'sellCompleted', 'blocked', 'deleted', 'toPayout', 'confirming', 'payoutConfirming', 'sellCancelled', 'payoutOnHold', 'buyIncasso', 'sendDelay', 'toCancel',],
             isNullable: true,
           },
           {

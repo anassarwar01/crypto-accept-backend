@@ -13,7 +13,8 @@ export class CreateCustomers1700678406000 implements MigrationInterface {
             generationStrategy: 'uuid',
             default: 'uuid_generate_v4()',
           },
-          { name: 'name', type: 'varchar', isNullable: true },
+          { name: 'first_name', type: 'varchar', isNullable: true },
+          { name: 'last_name', type: 'varchar', isNullable: true },
           { name: 'email', type: 'varchar', isNullable: false, isUnique: true },
           {
             name: 'created_at',

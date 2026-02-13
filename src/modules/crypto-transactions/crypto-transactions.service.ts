@@ -21,7 +21,15 @@ export class CryptoTransactionsService {
             record = this.cryptoTransactionRepository.create(data);
         }
 
-        return this.cryptoTransactionRepository.save(record);
+        try {
+            return await this.cryptoTransactionRepository.save(record);
+        } catch (error) {
+            // Handle race condition where record was created between find and save
+            if (error.code === '23505') { // Postgres unique_violation
+                return (await this.cryptoTransactionRepository.findOneBy({ transactionId: data.transactionId })) as CryptoTransaction;
+            }
+            throw error;
+        }
     }
 
     async findByTransactionId(transactionId: string): Promise<CryptoTransaction[]> {
@@ -30,5 +38,20 @@ export class CryptoTransactionsService {
 
     async updateStatus(id: string, status: any): Promise<void> {
         await this.cryptoTransactionRepository.update(id, { status });
+    }
+
+    async updateTransactionByTransactionCode(transactionCode: string, data: Partial<CryptoTransaction>): Promise<CryptoTransaction | null> {
+        await this.cryptoTransactionRepository.update({ transactionCode }, data);
+        return await this.cryptoTransactionRepository.findOne({
+            where: { transactionCode },
+            relations: ['transaction'],
+        });
+    }
+
+    async findTranctionbyTransactionCode(transactionCode: string): Promise<CryptoTransaction | null> {
+        return this.cryptoTransactionRepository.findOne({
+            where: { transactionCode },
+            relations: ['transaction'],
+        });
     }
 }

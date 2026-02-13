@@ -1,0 +1,14 @@
+export enum QuantozStatus {
+    SELL_INITIATED = 'SELLINITIATED',
+    SELL_COMPLETED = 'SELLCOMPLETED',
+    BLOCKED = 'BLOCKED',
+    DELETED = 'DELETED',
+    TO_PAYOUT = 'ToPayout',
+    CONFIRMING = 'Confirming',
+    PAYOUT_CONFIRMING = 'PayoutConfirming',
+    SELL_CANCELLED = 'SELLCANCELLED',
+    PAYOUT_ON_HOLD = 'PayoutOnHold',
+    BUY_INCASSO = 'BuyIncasso',
+    SEND_DELAY = 'SendDelay',
+    TO_CANCEL = 'ToCancel',
+}

@@ -9,29 +9,31 @@ import {
 } from '@nestjs/websockets';
 import { createHmac } from 'crypto';
 import { ConfigService } from '@nestjs/config';
-import { ModuleRef } from '@nestjs/core';
 import { Server, Socket } from 'socket.io';
-import { Logger, Inject, forwardRef, OnModuleInit } from '@nestjs/common';
+import { Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { decodeReference, encodeReference } from '../../common/utils/reference-coder';
 import { TransactionsService } from '../transactions.service';
 import { TransactionStatus } from '@transactions/enums/transaction.enums';
-import { Transaction } from '../entities/transaction.entity';
 import { FeatureFlagService } from '../../feature-flags/feature-flag.service';
 import { TransactionsBroadcastService } from '../transactions-broadcast.service';
+import { Subscription } from 'rxjs';
 
 @WebSocketGateway({
-    cors: {
-        origin: '*',
-    },
-    namespace: process.env.WEBSOCKET_NAMESPACE
+    cors: process.env.APP_ENV === 'development' ? '*' : process.env.FRONTEND_URL,
+    namespace: process.env.WEBSOCKET_NAMESPACE,
 })
 export class TransactionsGateway
-    implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit {
+    implements
+    OnGatewayConnection,
+    OnGatewayDisconnect,
+    OnModuleInit,
+    OnModuleDestroy {
     @WebSocketServer()
     server: Server;
 
-    private logger: Logger = new Logger('TransactionsGateway');
+    private readonly logger = new Logger(TransactionsGateway.name);
     private readonly signatureSecret: string;
+    private broadcastSubscription?: Subscription;
 
     constructor(
         private readonly configService: ConfigService,
@@ -39,14 +41,24 @@ export class TransactionsGateway
         private readonly featureFlagService: FeatureFlagService,
         private readonly broadcastService: TransactionsBroadcastService,
     ) {
-        this.signatureSecret = this.configService.get<string>('SOCKET_SIGNATURE_SECRET') || 'default-secret-change-me';
+        this.signatureSecret =
+            this.configService.get<string>('SOCKET_SIGNATURE_SECRET') ??
+            'default-secret-change-me';
     }
 
+    /* -------------------------------- Lifecycle -------------------------------- */
+
     onModuleInit() {
-        // Listen for status updates from the service and broadcast them
-        this.broadcastService.statusUpdates$.subscribe(({ ref, status, redirectUrl }) => {
-            this.sendStatusUpdate(ref, status, redirectUrl);
-        });
+        this.broadcastSubscription =
+            this.broadcastService.statusUpdates$.subscribe(
+                ({ ref, status, redirectUrl }) => {
+                    this.sendStatusUpdate(ref, status, redirectUrl);
+                },
+            );
+    }
+
+    onModuleDestroy() {
+        this.broadcastSubscription?.unsubscribe(); // prevent memory leak
     }
 
     handleConnection(client: Socket) {
@@ -57,97 +69,126 @@ export class TransactionsGateway
         this.logger.log(`Client disconnected: ${client.id}`);
     }
 
+    /* -------------------------------- Subscribe -------------------------------- */
+
     @SubscribeMessage('subscribe')
     async handleSubscribe(
         @ConnectedSocket() client: Socket,
         @MessageBody() data: any,
     ) {
-        let parsedData = data;
-        if (typeof data === 'string') {
-            try {
-                parsedData = JSON.parse(data);
-            } catch (e) {
-                return { event: 'error', data: 'Invalid JSON' };
-            }
-        }
-
-        const { ref: encodedRef, signature } = parsedData;
-
-        if (!encodedRef || !signature) {
-            this.logger.error(`Missing ref or signature in subscription: ${JSON.stringify(parsedData)}`);
-            return { event: 'error', data: 'Missing ref or signature' };
-        }
-
-        // Verify signature against the ENCODED ref
-        const expectedSignature = createHmac('sha256', this.signatureSecret)
-            .update(encodedRef)
-            .digest('hex');
-
-        if (signature !== expectedSignature) {
-            this.logger.error(`Invalid signature for ref ${encodedRef}: expected ${expectedSignature}, got ${signature}`);
-            return { event: 'error', data: 'Invalid signature' };
-        }
-
-        // Decode the reference to get the real UUID for the room
-        const ref = decodeReference(encodedRef);
-
-        let transaction: Transaction;
         try {
-            // Use centralized validation logic (same as RefMiddleware)
-            transaction = await this.transactionsService.findWithValidation(ref);
-        } catch (e) {
-            this.logger.error(`Validation failed for sub ${ref}: ${e.message}`);
-            return { event: 'error', data: e.message };
-        }
+            const parsedData =
+                typeof data === 'string' ? JSON.parse(data) : data;
 
-        client.join(ref);
-        this.logger.log(`Client ${client.id} joined room: ${ref} (Verified)`);
+            const { ref: encodedRef, signature } = parsedData;
 
-        // Update transaction status to PENDING after successful subscription
-        this.transactionsService.updateStatus(transaction, TransactionStatus.PENDING).then(async () => {
-            // Check for simulation flag
-            const flag = await this.featureFlagService.getFlag('quantoz_simulation');
-            if (flag && flag.active) {
-                this.logger.log(`Quantoz simulation active for ${ref}. Simulating status change...`);
-
-                // Simulate async process (5 seconds)
-                setTimeout(async () => {
-                    this.logger.log(`Random Value: ${Math.random()}`);
-                    const randomStatus = TransactionStatus.SUCCEEDED;
-                    this.logger.log(`Simulation: Updating ${ref} to ${randomStatus}`);
-                    await this.transactionsService.updateStatus(transaction, randomStatus);
-                }, 5000);
+            if (!encodedRef || !signature) {
+                return { event: 'error', data: 'Missing ref or signature' };
             }
-        }).catch(err => {
-            this.logger.error(`Failed to update transaction ${ref} to PENDING on subscription: ${err.message}`);
-        });
 
-        return { event: 'subscribed', data: { ref: encodedRef } };
+            this.validateSignature(encodedRef, signature);
+
+            const ref = decodeReference(encodedRef);
+
+            const transaction =
+                await this.transactionsService.findWithValidation(ref);
+
+            client.join(ref);
+            this.logger.log(`Client ${client.id} joined room ${ref}`);
+
+            await this.transactionsService.updateStatus(
+                transaction,
+                TransactionStatus.PENDING,
+            );
+
+            await this.handleSimulation(ref, transaction);
+
+            return { event: 'subscribed', data: { ref: encodedRef } };
+        } catch (error) {
+            this.logger.error(`Subscription error: ${error.message}`);
+            return { event: 'error', data: error.message };
+        }
     }
+
+    /* ------------------------------- Unsubscribe ------------------------------- */
 
     @SubscribeMessage('unsubscribe')
     handleUnsubscribe(
         @ConnectedSocket() client: Socket,
-        @MessageBody() data: { ref: string },
+        @MessageBody() data: any,
     ) {
-        const encodedRef = typeof data === 'string' ? JSON.parse(data).ref : data.ref;
-        const ref = decodeReference(encodedRef);
-        this.logger.log(`Client ${client.id} unsubscribing from transaction: ${ref}`);
-        client.leave(ref);
-        return { event: 'unsubscribed', data: { ref: encodedRef } };
+        try {
+            const parsedData =
+                typeof data === 'string' ? JSON.parse(data) : data;
+
+            const ref = decodeReference(parsedData.ref);
+
+            client.leave(ref);
+            this.logger.log(`Client ${client.id} left room ${ref}`);
+
+            return { event: 'unsubscribed', data: { ref: parsedData.ref } };
+        } catch (error) {
+            this.logger.error(`Unsubscribe error: ${error.message}`);
+            return { event: 'error', data: 'Invalid unsubscribe payload' };
+        }
     }
 
-    async sendStatusUpdate(ref: string, status: string, redirectUrl?: string) {
-        // ref is the real UUID here
-        const sockets = await this.server.in(ref).fetchSockets();
+    /* ------------------------------ Status Update ------------------------------ */
+
+    async sendStatusUpdate(
+        ref: string,
+        status: string,
+        redirectUrl?: string,
+    ) {
         const encodedRef = encodeReference(ref);
+        const sockets = await this.server.in(ref).fetchSockets();
+
         this.logger.log(
-            `Broadcasting statusUpdate for ${ref} (${encodedRef}) to ${sockets.length} clients in room`,
+            `Broadcasting statusUpdated for ${ref} to ${sockets.length} clients`,
         );
+
+        if (sockets.length === 0) return;
+
         this.server.to(ref).emit('statusUpdated', {
             ref: encodedRef,
             status,
             redirectUrl,
         });
+    }
+
+    /* --------------------------------- Helpers -------------------------------- */
+
+    private validateSignature(encodedRef: string, signature: string) {
+        const expectedSignature = createHmac(
+            'sha256',
+            this.signatureSecret,
+        )
+            .update(encodedRef)
+            .digest('hex');
+
+        if (signature !== expectedSignature) {
+            throw new Error('Invalid signature');
+        }
+    }
+
+    private async handleSimulation(ref: string, transaction: any) {
+        const flag =
+            await this.featureFlagService.getFlag('quantoz_simulation');
+
+        if (!flag?.active) return;
+
+        this.logger.log(`Simulation active for ${ref}`);
+
+        setTimeout(async () => {
+            try {
+                await this.transactionsService.updateStatus(
+                    transaction,
+                    TransactionStatus.SUCCEEDED,
+                );
+                this.logger.log(`Simulation updated ${ref} to SUCCEEDED`);
+            } catch (err) {
+                this.logger.error(`Simulation error: ${err.message}`);
+            }
+        }, 5000);
     }
 }

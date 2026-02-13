@@ -1,54 +1,69 @@
 import { Injectable, HttpException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-// no Observable utilities required; using axiosRef directly
+import { ConfigService } from '@nestjs/config';
 import { isAxiosError } from 'axios';
+import { ThirdPartyLogsService } from '../../third-party-logs/third-party-logs.service';
+import { HttpMethod, ThirdPartyLogType } from '../../third-party-logs/entities/third-party-log.entity';
+import { CryptoStatus } from '../../crypto-transactions/enums/crypto-transaction.enums';
+import { QuantozStatus } from './enums/quantoz.enums';
+import { QuantozEstimatedPrice, QuantozMerchantResponse } from './interfaces/quantoz.interfaces';
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 interface QuantozApiResponse<T = any> {
-  headerCode: number;
+  headerCode?: number;
+  message?: string;
   errors?: any[];
   values?: T;
 }
 
 @Injectable()
 export class QuantozService {
-  private readonly BASE_URL = process.env.QUANTOZ_BASE_URL;
-  private readonly API_KEY = process.env.QUANTOZ_API_KEY;
+  private readonly BASE_URL: string;
+  private readonly CALLBACK_BASE_URL: string;
 
-  private readonly API_ENDPOINTS = {
-    CUSTOMER_STATUS: 'customer/status/',
-    CREATE_CUSTOMER: 'customer/create',
-    UPDATE_CUSTOMER: 'customer',
-    ESTIMATED_PRICES: 'prices/',
-    INITIATE_BUY: 'customer/broker/buy/initiate',
-    BUY_CONFIRM: 'customer/buy/confirm',
-    SEND_INTERNAL: 'customer/send/internal',
-    SELL_INITIATE: 'customer/sell/initiate',
-    SELL_SIMULATE: 'customer/sell/simulate',
-    CREATE_ACCOUNT: 'customer/account',
-  };
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly thirdPartyLogsService: ThirdPartyLogsService,
+    private readonly configService: ConfigService,
+  ) {
+    this.BASE_URL = this.configService.get<string>('QUANTOZ_BASE_URL') as string;
+    this.CALLBACK_BASE_URL = this.configService.get<string>('QUANTOZ_CALLBACK_BASE_URL') as string;
+  }
 
-  constructor(private readonly httpService: HttpService) {}
+  private get API_ENDPOINTS() {
+    return {
+      ESTIMATED_PRICES: `${this.BASE_URL}/api/prices/`,
+      MERCHANT_SIMULATE: `${this.BASE_URL}/api/merchant/simulate`,
+      MERCHANT_SEND: `${this.BASE_URL}/api/merchant/send`,
+    };
+  }
 
   private getHeaders() {
     return {
       'Content-Type': 'application/json',
       Accept: 'application/json',
-      Authorization: `Bearer ${this.API_KEY}`,
     };
   }
 
+  private getAccountCode(crypto: string): string {
+    const envKey = `QUANTOZ_ACCOUNT_CODE_${crypto.toUpperCase()}`;
+    const accountCode = this.configService.get<string>(envKey);
+    if (!accountCode) {
+      throw new HttpException(`Account code not configured for crypto: ${crypto}`, 500);
+    }
+    return accountCode;
+  }
+
   private async request<T = any>(
-    method: 'GET' | 'POST' | 'PUT',
+    method: HttpMethod,
     url: string,
     data?: any,
+    transactionId?: string,
   ): Promise<T> {
+    let axiosResponse: any;
     try {
-      // Explicitly type the observable as Observable<AxiosResponse<QuantozApiResponse<T>>>
-      // Use the underlying axios instance to avoid Observable -> Promise conversion
-
-      const axiosResponse = await this.httpService.axiosRef.request<
+      axiosResponse = await this.httpService.axiosRef.request<
         QuantozApiResponse<T>
       >({
         method,
@@ -57,15 +72,34 @@ export class QuantozService {
         headers: this.getHeaders(),
       });
 
-      // Now TypeScript knows axiosResponse.data has the correct shape
+      await this.thirdPartyLogsService.createLog({
+        transactionId,
+        httpRequest: { url, data, headers: this.getHeaders() },
+        httpResponse: axiosResponse.data,
+        httpMethod: method,
+        httpCode: axiosResponse.status,
+        type: ThirdPartyLogType.HTTP,
+      });
+
       return this.prepareResponse(axiosResponse.data);
     } catch (error: unknown) {
+      const status = isAxiosError(error) ? error.response?.status || 500 : 500;
+      const responseData = isAxiosError(error) ? error.response?.data : { message: (error as Error).message };
+
+      await this.thirdPartyLogsService.createLog({
+        transactionId,
+        httpRequest: { url, data, headers: this.getHeaders() },
+        httpResponse: responseData,
+        httpMethod: method,
+        httpCode: status,
+        type: ThirdPartyLogType.HTTP,
+      });
+
       if (isAxiosError(error) && error.response) {
         const errResponse = error.response;
         const message = (errResponse.data ?? 'Quantoz API error') as
           | string
           | Record<string, any>;
-        const status = errResponse.status ?? 500;
         throw new HttpException(message, status);
       }
       throw new HttpException('Quantoz API error', 500);
@@ -73,7 +107,12 @@ export class QuantozService {
   }
 
   private prepareResponse<T = any>(response: QuantozApiResponse<T>): T {
-    if (response.headerCode === 200 && !response.errors?.length) {
+    const isSuccess =
+      (response.headerCode === 200 ||
+        response.message === 'Successfully processed your request') &&
+      !response.errors?.length;
+
+    if (isSuccess) {
       return response.values as T;
     }
     throw new HttpException('Something went wrong in Quantoz API', 500);
@@ -83,54 +122,81 @@ export class QuantozService {
   // Public API methods
   // ----------------------
 
-  async getCustomerStatus(customerCode: string): Promise<any> {
-    const url = `${this.BASE_URL}/${this.API_ENDPOINTS.CUSTOMER_STATUS}${customerCode}`;
-    return this.request('GET', url);
+  async getEstimatedPrices(currency: string = 'EUR', cryptoCurrency: string, transactionId?: string): Promise<QuantozEstimatedPrice> {
+    const url = `${this.API_ENDPOINTS.ESTIMATED_PRICES}${currency}/${cryptoCurrency}`;
+    return this.request<QuantozEstimatedPrice>(HttpMethod.GET, url, undefined, transactionId);
   }
 
-  async createCustomer(data: any): Promise<any> {
-    const url = `${this.BASE_URL}/${this.API_ENDPOINTS.CREATE_CUSTOMER}`;
-    // Add encryption if required: data = encrypt(data)
-    return this.request('POST', url, data);
+  async merchantSimulate(
+    fiatAmount: number,
+    crypto: string,
+    email: string,
+    paymentReference: string,
+    transactionId?: string,
+  ): Promise<QuantozMerchantResponse> {
+    const url = this.API_ENDPOINTS.MERCHANT_SIMULATE;
+    const data = {
+      accountCode: this.getAccountCode(crypto),
+      merchantCustomerCode: '30128A74-2A08-4855-A536-F83F11036396',
+      crypto,
+      paymentMethodCode: 'MERCHANT_COLLECT_01',
+      fiatAmount,
+      merchantCustomerEmailAddress: email,
+      callbackUrl: `${this.CALLBACK_BASE_URL}/webhooks/quantoz`,
+      paymentReference,
+    };
+    return this.request<QuantozMerchantResponse>(HttpMethod.POST, url, data, transactionId);
   }
 
-  async updateCustomer(data: any): Promise<any> {
-    const url = `${this.BASE_URL}/${this.API_ENDPOINTS.UPDATE_CUSTOMER}`;
-    return this.request('PUT', url, data);
+  async merchantSend(
+    fiatAmount: number,
+    crypto: string,
+    email: string,
+    paymentReference: string,
+    transactionId?: string,
+  ): Promise<QuantozMerchantResponse> {
+    const url = this.API_ENDPOINTS.MERCHANT_SEND;
+    const data = {
+      accountCode: this.getAccountCode(crypto),
+      merchantCustomerCode: '30128A74-2A08-4855-A536-F83F11036396',
+      crypto,
+      paymentMethodCode: 'MERCHANT_COLLECT_01',
+      fiatAmount,
+      merchantCustomerEmailAddress: email,
+      callbackUrl: `${this.CALLBACK_BASE_URL}/webhooks/quantoz`,
+      paymentReference,
+    };
+    return this.request<QuantozMerchantResponse>(HttpMethod.POST, url, data, transactionId);
   }
 
-  async initiateBuy(data: any): Promise<any> {
-    const url = `${this.BASE_URL}/${this.API_ENDPOINTS.INITIATE_BUY}`;
-    return this.request('POST', url, data);
-  }
-
-  async buyConfirm(data: any): Promise<any> {
-    const url = `${this.BASE_URL}/${this.API_ENDPOINTS.BUY_CONFIRM}`;
-    return this.request('POST', url, data);
-  }
-
-  async sellCrypto(data: any): Promise<any> {
-    const url = `${this.BASE_URL}/${this.API_ENDPOINTS.SELL_INITIATE}`;
-    return this.request('POST', url, data);
-  }
-
-  async sellSimulate(data: any): Promise<any> {
-    const url = `${this.BASE_URL}/${this.API_ENDPOINTS.SELL_SIMULATE}`;
-    return this.request('POST', url, data);
-  }
-
-  async createAccount(data: any): Promise<any> {
-    const url = `${this.BASE_URL}/${this.API_ENDPOINTS.CREATE_ACCOUNT}`;
-    return this.request('POST', url, data);
-  }
-
-  async getEstimatedPrices(currency: string, crypto: string): Promise<any> {
-    const url = `${this.BASE_URL}/${this.API_ENDPOINTS.ESTIMATED_PRICES}${currency}/${crypto}`;
-    return this.request('GET', url);
-  }
-
-  async sendCrypto(data: any): Promise<any> {
-    const url = `${this.BASE_URL}/${this.API_ENDPOINTS.SEND_INTERNAL}`;
-    return this.request('POST', url, data);
+  mapStatus(externalStatus: string): CryptoStatus {
+    switch (externalStatus) {
+      case QuantozStatus.SELL_INITIATED:
+        return CryptoStatus.sellInitiated;
+      case QuantozStatus.SELL_COMPLETED:
+        return CryptoStatus.sellCompleted;
+      case QuantozStatus.BLOCKED:
+        return CryptoStatus.blocked;
+      case QuantozStatus.DELETED:
+        return CryptoStatus.deleted;
+      case QuantozStatus.TO_PAYOUT:
+        return CryptoStatus.toPayout;
+      case QuantozStatus.CONFIRMING:
+        return CryptoStatus.confirming;
+      case QuantozStatus.PAYOUT_CONFIRMING:
+        return CryptoStatus.payoutConfirming;
+      case QuantozStatus.SELL_CANCELLED:
+        return CryptoStatus.sellCancelled;
+      case QuantozStatus.PAYOUT_ON_HOLD:
+        return CryptoStatus.payoutOnHold;
+      case QuantozStatus.BUY_INCASSO:
+        return CryptoStatus.buyIncasso;
+      case QuantozStatus.SEND_DELAY:
+        return CryptoStatus.sendDelay;
+      case QuantozStatus.TO_CANCEL:
+        return CryptoStatus.toCancel;
+      default:
+        return externalStatus as CryptoStatus;
+    }
   }
 }

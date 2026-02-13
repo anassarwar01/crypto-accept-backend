@@ -21,6 +21,7 @@ import { TransactionSummaryDto } from './dto/transaction-summary.dto';
 import { TransactionStatus } from './enums/transaction.enums';
 import { InjectMerchantIdInterceptor } from './interceptors/inject-merchant-id.interceptor';
 import { getClientIp } from '../common/utils/helper';
+import { Idempotent } from '../common/decorators/idempotent.decorator';
 
 @ApiTags('Transactions')
 @Controller('transactions')
@@ -69,6 +70,7 @@ export class TransactionsController {
   }
 
   @Post('summary')
+  // @Idempotent()
   @ApiHeader({
     name: 'ref',
     description: 'System Reference',
@@ -100,19 +102,19 @@ export class TransactionsController {
     return this.transactionsService.getTransaction(transaction);
   }
 
-  @Post('test/status-update')
-  @ApiHeader({
-    name: 'ref',
-    description: 'System Reference',
-    required: true,
-  })
-  @ApiOperation({ summary: 'Test endpoint to update transaction status and trigger WebSocket' })
-  @HttpCode(HttpStatus.OK)
-  async updateStatus(
-    @Req() request: any,
-    @Body('status') status: TransactionStatus,
-  ) {
-    const transaction = request.transaction;
-    return this.transactionsService.updateStatus(transaction, status);
-  }
+  // @Post('test/status-update')
+  // @ApiHeader({
+  //   name: 'ref',
+  //   description: 'System Reference',
+  //   required: true,
+  // })
+  // @ApiOperation({ summary: 'Test endpoint to update transaction status and trigger WebSocket' })
+  // @HttpCode(HttpStatus.OK)
+  // async updateStatus(
+  //   @Req() request: any,
+  //   @Body('status') status: TransactionStatus,
+  // ) {
+  //   const transaction = request.transaction;
+  //   return this.transactionsService.updateStatus(transaction, status);
+  // }
 }

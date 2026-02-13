@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Subject } from 'rxjs';
+import { Subject, Observable } from 'rxjs';
 import { TransactionStatus } from './enums/transaction.enums';
 
 export interface TransactionStatusUpdate {
@@ -12,11 +12,10 @@ export interface TransactionStatusUpdate {
 export class TransactionsBroadcastService {
     private readonly statusUpdateSubject = new Subject<TransactionStatusUpdate>();
 
-    // Observable for the Gateway to subscribe to
-    statusUpdates$ = this.statusUpdateSubject.asObservable();
+    // Expose as readonly observable
+    public readonly statusUpdates$: Observable<TransactionStatusUpdate> = this.statusUpdateSubject.asObservable();
 
-    // Method for the Service to call
-    emitStatusUpdate(ref: string, status: TransactionStatus, redirectUrl?: string) {
+    emitStatusUpdate(ref: string, status: TransactionStatus, redirectUrl?: string): void {
         this.statusUpdateSubject.next({ ref, status, redirectUrl });
     }
 }
