@@ -80,10 +80,16 @@ export class TransactionSummaryResponseDto {
     })
     signature: string;
 
+    @ApiProperty({
+        example: 5,
+        description: 'Transaction expiration time in minutes from system settings',
+    })
+    transactionTime: number;
+
     @ApiProperty()
     orderItems: OrderItem[];
 
-    constructor(transaction: Transaction, cryptoCurrency: string, signature: string, cryptoPrice: QuantozEstimatedPrice) {
+    constructor(transaction: Transaction, cryptoCurrency: string, signature: string, cryptoPrice: QuantozEstimatedPrice, transactionExpireMinutes: number) {
         this.status = transaction.status;
         this.fiatAmount = transaction.fiatConvertedAmount || 0;
         this.fiatCurrency = transaction.fiatCurrency || '';
@@ -92,6 +98,8 @@ export class TransactionSummaryResponseDto {
         this.fee = '' + cryptoPrice?.estimatedPrices?.estimatedNetworkFastFee || '0';
         this.walletAddress = transaction.cryptoTransaction?.walletAddress || '';
         this.signature = signature;
+        this.transactionTime = transactionExpireMinutes;
+
         this.orderItems = transaction.orderItems?.map(item => ({
             name: item.name,
             quantity: item.quantity,

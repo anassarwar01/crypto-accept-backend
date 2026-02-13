@@ -155,9 +155,12 @@ export class TransactionsService {
     // Return transcaiton if already exist in crypto transaction
     const cryptoTransaction = await this.cryptoTransactionsService.findByTransactionId(transaction.id);
 
+    // Get transaction expire time from system settings
+    const transactionExpireMinutes = await this.systemSettingsService.getNumber('transaction_expire_time') ?? 5;
+
     // If crypto transaction already exist, return existing one
     if (cryptoTransaction.length == 1) {
-      return new TransactionSummaryResponseDto(transaction, cryptoTransaction[0].currency || '', signature, cryptoPrice);
+      return new TransactionSummaryResponseDto(transaction, cryptoTransaction[0].currency || '', signature, cryptoPrice, transactionExpireMinutes);
     }
 
     // Update transaction status to PENDING
@@ -208,7 +211,7 @@ export class TransactionsService {
         new SaveCryptoTransactionDto(transaction, dto.cryptoCurrency, sendResult, cryptoPrice, this.quantozService));
 
     }
-    return new TransactionSummaryResponseDto(transaction, dto.cryptoCurrency, signature, cryptoPrice);
+    return new TransactionSummaryResponseDto(transaction, dto.cryptoCurrency, signature, cryptoPrice, transactionExpireMinutes);
   }
 
   async getTransaction(transaction: Transaction): Promise<TransactionResponseDto> {
