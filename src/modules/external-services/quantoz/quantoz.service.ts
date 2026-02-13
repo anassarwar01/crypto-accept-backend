@@ -7,6 +7,7 @@ import { HttpMethod, ThirdPartyLogType } from '../../third-party-logs/entities/t
 import { CryptoStatus } from '../../crypto-transactions/enums/crypto-transaction.enums';
 import { QuantozStatus } from './enums/quantoz.enums';
 import { QuantozEstimatedPrice, QuantozMerchantResponse } from './interfaces/quantoz.interfaces';
+import { MESSAGES } from '@helper/constant/messages';
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
@@ -102,7 +103,14 @@ export class QuantozService {
         let message: string | Record<string, any> = 'Quantoz API error';
 
         if (errData?.errors && Array.isArray(errData.errors) && errData.errors.length > 0) {
-          message = errData.errors[0] as string;
+          const errorCode = errData.errors[0] as string;
+          switch (errorCode) {
+            case 'CryptoAmountBelowMinimumSellAmount':
+              message = MESSAGES.CryptoAmountBelowMinimumSellAmount;
+              break;
+            default:
+              message = errorCode;
+          }
         } else {
           message = (errData?.message ?? 'Quantoz API error');
         }
