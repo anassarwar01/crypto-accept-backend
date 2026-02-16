@@ -41,6 +41,9 @@ export interface QuantozWebhookResponse {
     CryptoPaymentAddress: string,
     ExpectedCryptoAmount: number,
     MerchantCustomerCode: string,
-    MerchantCustomerEmailAddress: string
+    MerchantCustomerEmailAddress: string,
+    Merchant?: {
+        ReceiveCryptoTxId: string;
+    },
     ReceiveCryptoTxId: string,
 }
