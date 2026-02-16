@@ -96,6 +96,12 @@ export class TransactionsGateway
             client.join(ref);
             this.logger.log(`Client ${client.id} joined room ${ref}`);
 
+            if (transaction.status === TransactionStatus.PENDING) {
+                await this.transactionsService.updateStatus(
+                    transaction,
+                    TransactionStatus.PENDING,
+                );
+            }
 
             await this.handleSimulation(ref, transaction);
 
