@@ -151,6 +151,7 @@ export class TransactionsGateway
 
         this.server.to(ref).emit('statusUpdated', {
             ref: encodedRef,
+            // shortCode: transaction.shortCode,
             status,
             redirectUrl,
         });
@@ -181,14 +182,30 @@ export class TransactionsGateway
 
         setTimeout(async () => {
             try {
+                // 1️⃣ Set to CONFIRMING immediately
+                await this.transactionsService.updateStatus(
+                    transaction,
+                    TransactionStatus.CONFIRMING,
+                );
+                this.logger.log(`Simulation updated ${ref} to CONFIRMING`);
+            } catch (err) {
+                this.logger.error(`Simulation confirming error: ${err.message}`);
+                return;
+            }
+        }, 5000);
+
+        // 2️⃣ After delay, set to SUCCEEDED
+        setTimeout(async () => {
+            try {
                 await this.transactionsService.updateStatus(
                     transaction,
                     TransactionStatus.SUCCEEDED,
                 );
                 this.logger.log(`Simulation updated ${ref} to SUCCEEDED`);
             } catch (err) {
-                this.logger.error(`Simulation error: ${err.message}`);
+                this.logger.error(`Simulation success error: ${err.message}`);
             }
-        }, 5000);
+        }, 10000);
     }
+
 }
