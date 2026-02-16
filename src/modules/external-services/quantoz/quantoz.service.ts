@@ -4,6 +4,8 @@ import { ConfigService } from '@nestjs/config';
 import { isAxiosError } from 'axios';
 import { ThirdPartyLogsService } from '../../third-party-logs/third-party-logs.service';
 import { HttpMethod, ThirdPartyLogType } from '../../third-party-logs/entities/third-party-log.entity';
+import { SystemSettingsService } from '../../system-settings/system-settings.service';
+import { EncryptionUtil } from '../../common/utils/encryption.util';
 import { CryptoStatus } from '../../crypto-transactions/enums/crypto-transaction.enums';
 import { QuantozStatus } from './enums/quantoz.enums';
 import { QuantozEstimatedPrice, QuantozMerchantResponse } from './interfaces/quantoz.interfaces';
@@ -27,6 +29,7 @@ export class QuantozService {
     private readonly httpService: HttpService,
     private readonly thirdPartyLogsService: ThirdPartyLogsService,
     private readonly configService: ConfigService,
+    private readonly systemSettingsService: SystemSettingsService,
   ) {
     this.BASE_URL = this.configService.get<string>('QUANTOZ_BASE_URL') as string;
     this.CALLBACK_BASE_URL = this.configService.get<string>('QUANTOZ_CALLBACK_BASE_URL') as string;
@@ -62,6 +65,19 @@ export class QuantozService {
     data?: any,
     transactionId?: string,
   ): Promise<T> {
+    const encryptionEnabled = (await this.systemSettingsService.getValue('QUANTOZ_ENCRYPTION_ENABLED')) === 'true';
+
+    let requestData = data;
+    if (encryptionEnabled && data) {
+      const key = this.configService.get<string>('QUANTOZ_ENCRYPTION_KEY');
+      const iv = this.configService.get<string>('QUANTOZ_ENCRYPTION_IV');
+      if (key && iv) {
+        requestData = {
+          payload: EncryptionUtil.encrypt(JSON.stringify(data), key, iv),
+        };
+      }
+    }
+
     let axiosResponse: any;
     try {
       axiosResponse = await this.httpService.axiosRef.request<
@@ -69,20 +85,31 @@ export class QuantozService {
       >({
         method,
         url,
-        data,
+        data: requestData,
         headers: this.getHeaders(),
       });
+      console.log('quantoz-response-raw', axiosResponse.data);
+
+      let responseData = axiosResponse.data;
+      if (encryptionEnabled && typeof responseData === 'string') {
+        const key = this.configService.get<string>('QUANTOZ_ENCRYPTION_KEY');
+        const iv = this.configService.get<string>('QUANTOZ_ENCRYPTION_IV');
+        if (key && iv) {
+          const decrypted = EncryptionUtil.decrypt(responseData, key, iv);
+          responseData = JSON.parse(decrypted);
+        }
+      }
 
       await this.thirdPartyLogsService.createLog({
         transactionId,
         httpRequest: { url, data, headers: this.getHeaders() },
-        httpResponse: axiosResponse.data,
+        httpResponse: responseData,
         httpMethod: method,
         httpCode: axiosResponse.status,
         type: ThirdPartyLogType.HTTP,
       });
 
-      return this.prepareResponse(axiosResponse.data);
+      return this.prepareResponse(responseData);
     } catch (error: unknown) {
       const status = isAxiosError(error) ? error.response?.status || 500 : 500;
       const responseData = isAxiosError(error) ? error.response?.data : { message: (error as Error).message };
