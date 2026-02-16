@@ -69,7 +69,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
             tap(async (response) => {
                 // 3. Cache the successful response matching the transaction expiration
                 // Fetch expire time (fallback to 15 mins if not set)
-                const expireMinutes = await this.systemSettingsService.getNumber('transaction_expire_time') || 15;
+                const expireMinutes = await this.systemSettingsService.getNumber('transaction_expire_time') || 5;
                 const ttlSeconds = expireMinutes * 60;
 
                 await this.redis.set(redisKey, JSON.stringify(response), 'EX', ttlSeconds);
