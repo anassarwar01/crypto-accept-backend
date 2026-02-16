@@ -27,6 +27,9 @@ export function validateTransactionState(transaction: Transaction, checkStatus =
             case TransactionStatus.PENDING:
                 // Valid state for most operations
                 break;
+            case TransactionStatus.CONFIRMING:
+                // Valid state for most operations
+                break;
             case TransactionStatus.EXPIRED:
                 throw new BadRequestException(MESSAGES.TRANSACTION_EXPIRED);
             case TransactionStatus.SUCCEEDED:

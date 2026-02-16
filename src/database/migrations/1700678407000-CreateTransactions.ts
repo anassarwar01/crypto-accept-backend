@@ -51,6 +51,7 @@ export class CreateTransactions1700678407000 implements MigrationInterface {
             enum: [
               'transfer.initiated',
               'transfer.pending',
+              'transfer.confirming',
               'transfer.succeeded',
               'transfer.failed',
               'transfer.cancelled',

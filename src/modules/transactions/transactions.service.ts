@@ -298,18 +298,21 @@ export class TransactionsService {
         let newStatus = transaction.status;
         const cryptoStatus = cryptoTransaction.status;
 
-        if (cryptoStatus === CryptoStatus.sellCompleted || cryptoStatus === CryptoStatus.toPayout) {
+        // What staus that we need to update against transaction ?
+        if (cryptoStatus === CryptoStatus.sellInitiated) {
+          newStatus = TransactionStatus.PENDING;
+        } else if (cryptoStatus === CryptoStatus.confirming) {
+          newStatus = TransactionStatus.CONFIRMING;
+        } else if (cryptoStatus === CryptoStatus.sellCompleted || cryptoStatus === CryptoStatus.toPayout) {
           newStatus = TransactionStatus.SUCCEEDED;
         } else if (cryptoStatus === CryptoStatus.sellCancelled || cryptoStatus === CryptoStatus.toCancel) {
           newStatus = TransactionStatus.CANCELLED;
-        } else if (cryptoStatus === CryptoStatus.sellInitiated || cryptoStatus === CryptoStatus.confirming) {
-          newStatus = TransactionStatus.PENDING;
         }
 
         // Update transaction status if needed
         if (newStatus !== transaction.status) {
 
-          // TODO: What staus that we need to update against transaction ?
+          // Send status in websocket response
           await this.updateStatus(transaction, newStatus);
         }
       }

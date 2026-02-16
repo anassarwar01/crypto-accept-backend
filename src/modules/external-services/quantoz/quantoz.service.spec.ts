@@ -5,6 +5,9 @@ import { ConfigService } from '@nestjs/config';
 import { QuantozService } from './quantoz.service';
 import { AxiosError } from 'axios';
 import { ThirdPartyLogsService } from '../../third-party-logs/third-party-logs.service';
+import { SystemSettingsService } from '../../system-settings/system-settings.service';
+import { EncryptionUtil } from '../../common/utils/encryption.util';
+import { MESSAGES } from '@helper/constant/messages';
 
 describe('QuantozService', () => {
     let service: QuantozService;
@@ -22,6 +25,10 @@ describe('QuantozService', () => {
         createLog: jest.fn().mockResolvedValue({}),
     };
 
+    const mockSystemSettingsService = {
+        getValue: jest.fn().mockResolvedValue('false'),
+    };
+
     const mockConfigService = {
         get: jest.fn((key: string) => {
             const config: Record<string, string> = {
@@ -32,6 +39,8 @@ describe('QuantozService', () => {
                 QUANTOZ_ACCOUNT_CODE_LTC: 'M_643075',
                 QUANTOZ_ACCOUNT_CODE_ALGO: 'M_296150',
                 QUANTOZ_ACCOUNT_CODE_XLM: 'M_296150',
+                QUANTOZ_ENCRYPTION_KEY: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+                QUANTOZ_ENCRYPTION_IV: '0123456789abcdef01234567',
             };
             return config[key];
         }),
@@ -52,6 +61,10 @@ describe('QuantozService', () => {
                 {
                     provide: ConfigService,
                     useValue: mockConfigService,
+                },
+                {
+                    provide: SystemSettingsService,
+                    useValue: mockSystemSettingsService,
                 },
             ],
         }).compile();
@@ -217,13 +230,59 @@ describe('QuantozService', () => {
 
             mockAxiosRef.request.mockRejectedValue(axiosError);
 
-            await expect(service.getEstimatedPrices('EUR', 'BTC')).rejects.toThrow('Crypto amount is below the minimum allowed limit.');
+            await expect(service.getEstimatedPrices('EUR', 'BTC')).rejects.toThrow(MESSAGES.CryptoAmountBelowMinimumSellAmount);
         });
 
         it('should handle non-axios errors', async () => {
             mockAxiosRef.request.mockRejectedValue(new Error('Network error'));
 
             await expect(service.getEstimatedPrices('EUR', 'BTC')).rejects.toThrow(HttpException);
+        });
+    });
+
+    describe('encryption', () => {
+        it('should encrypt request data when enabled', async () => {
+            mockSystemSettingsService.getValue.mockResolvedValue('true');
+            const mockResponse = {
+                data: {
+                    message: 'Successfully processed your request',
+                    values: { foo: 'bar' },
+                },
+            };
+            mockAxiosRef.request.mockResolvedValue(mockResponse);
+
+            await service.getEstimatedPrices('EUR', 'BTC');
+
+            const lastCallArgs = mockAxiosRef.request.mock.calls[0][0];
+            expect(lastCallArgs.data).toBeUndefined(); // GET request data is undefined
+
+            // For POST request
+            await service.merchantSimulate(100, 'ALGO', 'test@test.com', 'REF123');
+            const postCallArgs = mockAxiosRef.request.mock.calls[1][0];
+            expect(postCallArgs.data).toHaveProperty('payload');
+            expect(typeof postCallArgs.data.payload).toBe('string');
+        });
+
+        it('should decrypt response data when enabled and response is a string', async () => {
+            mockSystemSettingsService.getValue.mockResolvedValue('true');
+
+            const rawData = {
+                message: 'Successfully processed your request',
+                values: { price: 50000 },
+            };
+            const encrypted = EncryptionUtil.encrypt(
+                JSON.stringify(rawData),
+                '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+                '0123456789abcdef01234567'
+            );
+
+            mockAxiosRef.request.mockResolvedValue({
+                data: encrypted,
+                status: 200
+            });
+
+            const result = await service.getEstimatedPrices('EUR', 'BTC');
+            expect(result).toEqual({ price: 50000 });
         });
     });
 });
