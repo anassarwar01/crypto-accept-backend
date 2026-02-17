@@ -59,6 +59,12 @@ export class CreateCryptoTransactions1700678408000 implements MigrationInterface
             default: 'CURRENT_TIMESTAMP',
             isNullable: false,
           },
+          {
+            name: 'deleted_at',
+            type: 'timestamp',
+            isNullable: true,
+          },
+
         ],
         foreignKeys: [
           {

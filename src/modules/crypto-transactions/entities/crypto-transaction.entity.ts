@@ -7,6 +7,7 @@ import {
     JoinColumn,
     Index,
     OneToOne,
+    DeleteDateColumn,
 } from 'typeorm';
 import { Transaction } from '../../transactions/entities/transaction.entity';
 import { CryptoCurrency, CryptoStatus } from '../enums/crypto-transaction.enums';
@@ -79,6 +80,13 @@ export class CryptoTransaction {
         type: 'timestamp',
     })
     updatedAt: Date;
+
+    @DeleteDateColumn({
+        name: 'deleted_at',
+        type: 'timestamp',
+        nullable: true,
+    })
+    deletedAt?: Date;
 
     // Relations
     @OneToOne(() => Transaction, (tx) => tx.cryptoTransaction, { onDelete: 'CASCADE' })
