@@ -160,26 +160,35 @@ export class TransactionsService {
       throw new BadRequestException('Could not get estimated prices from Quantoz');
     }
 
-    // Return transcaiton if already exist in crypto transaction
-    const cryptoTransaction = await this.cryptoTransactionsService.findByTransactionId(transaction.id);
+    // Check for an active crypto transaction
+    const activeCryptoTransaction = await this.cryptoTransactionsService.findActiveByTransactionId(transaction.id);
+    let idToDelete: string | null = null;
+
+    if (activeCryptoTransaction) {
+      if (activeCryptoTransaction.currency === dto.cryptoCurrency) {
+        // If same currency, return existing one
+        const transactionExpireMinutes = await this.systemSettingsService.getNumber('transaction_expire_time') ?? 5;
+        const fallbackWalletAddress = this.getWalletAddress(dto.cryptoCurrency);
+
+        return new TransactionSummaryResponseDto(
+          transaction,
+          activeCryptoTransaction.currency || '',
+          signature,
+          cryptoPrice,
+          transactionExpireMinutes,
+          fallbackWalletAddress,
+        );
+      } else {
+        // Record the ID for deferred deletion
+        idToDelete = activeCryptoTransaction.id;
+      }
+    }
 
     // Get transaction expire time from system settings
     const transactionExpireMinutes = await this.systemSettingsService.getNumber('transaction_expire_time') ?? 5;
 
     // Get fallback wallet address from environment
     const fallbackWalletAddress = this.getWalletAddress(dto.cryptoCurrency);
-
-    // If crypto transaction already exist, return existing one
-    if (cryptoTransaction.length == 1) {
-      return new TransactionSummaryResponseDto(
-        transaction,
-        cryptoTransaction[0].currency || '',
-        signature,
-        cryptoPrice,
-        transactionExpireMinutes,
-        fallbackWalletAddress,
-      );
-    }
 
     // Update transaction status to PENDING
     await this.updateStatus(transaction, TransactionStatus.PENDING);
@@ -227,6 +236,12 @@ export class TransactionsService {
       transaction.cryptoTransaction = await this.cryptoTransactionsService.upsertRecord(
         new SaveCryptoTransactionDto(transaction, dto.cryptoCurrency, sendResult, cryptoPrice, this.quantozService));
 
+    }
+
+    // DEFERRED DELETION: Only delete the previous choice if we successfully established the new one
+    // AND it's not the same ID we just created/updated (safety check)
+    if (idToDelete && idToDelete !== transaction.cryptoTransaction?.id) {
+      await this.cryptoTransactionsService.softDeleteById(idToDelete);
     }
     return new TransactionSummaryResponseDto(
       transaction,
