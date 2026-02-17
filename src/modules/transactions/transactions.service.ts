@@ -112,6 +112,9 @@ export class TransactionsService {
       new SaveTransactionDto(request, customerEntity, merchantId, fiatBaseAmount, fiatAmount, expireMinutes).toEntity(),
     );
 
+    // Send callback to merchant
+    this.callbackService.sendCallback(transaction);
+
     // Generate order request URL
     const paymentUrl = this.configService.get<string>('FRONTEND_DOMAIN') || '';
 
@@ -262,7 +265,7 @@ export class TransactionsService {
     await this.transactionRepository.updateTransactionStatus(transaction.systemReference, status);
 
     // Broadcast status update to all connected clients
-    this.broadcastService.emitStatusUpdate(transaction.systemReference, status, transaction.redirectUrl);
+    this.broadcastService.emitStatusUpdate(transaction.systemReference, status, transaction.redirectUrl, transaction.shortCode);
 
     // Send callback to merchant
     this.callbackService.sendCallback(transaction);
