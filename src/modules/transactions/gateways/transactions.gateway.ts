@@ -51,8 +51,8 @@ export class TransactionsGateway
     onModuleInit() {
         this.broadcastSubscription =
             this.broadcastService.statusUpdates$.subscribe(
-                ({ ref, status, redirectUrl }) => {
-                    this.sendStatusUpdate(ref, status, redirectUrl);
+                ({ ref, status, redirectUrl, shortCode }) => {
+                    this.sendStatusUpdate(ref, status, redirectUrl, shortCode);
                 },
             );
     }
@@ -96,12 +96,13 @@ export class TransactionsGateway
             client.join(ref);
             this.logger.log(`Client ${client.id} joined room ${ref}`);
 
-            if (transaction.status === TransactionStatus.PENDING) {
-                await this.transactionsService.updateStatus(
-                    transaction,
-                    TransactionStatus.PENDING,
-                );
-            }
+            // Send current status immediately to the joining client
+            client.emit('statusUpdated', {
+                ref: encodedRef,
+                orderId: transaction.shortCode,
+                status: transaction.status,
+                redirectUrl: transaction.redirectUrl,
+            });
 
             await this.handleSimulation(ref, transaction);
 
@@ -141,6 +142,7 @@ export class TransactionsGateway
         ref: string,
         status: string,
         redirectUrl?: string,
+        shortCode?: string,
     ) {
         const encodedRef = encodeReference(ref);
         const sockets = await this.server.in(ref).fetchSockets();
@@ -153,7 +155,7 @@ export class TransactionsGateway
 
         this.server.to(ref).emit('statusUpdated', {
             ref: encodedRef,
-            // shortCode: transaction.shortCode,
+            orderId: shortCode,
             status,
             redirectUrl,
         });

@@ -27,10 +27,10 @@ export class TransactionsCallbackService {
         }
 
         const payload = {
-            systemReference: transaction.systemReference,
-            merchantReference: transaction.merchantReference,
+            orderId: transaction.shortCode,
+            // merchantReference: transaction.merchantReference,
             status: transaction.status,
-            fiatAmount: transaction.fiatConvertedAmount,
+            fiatAmount: Number(transaction.fiatConvertedAmount || 0).toFixed(2),
             fiatCurrency: transaction.fiatCurrency,
             timestamp: new Date().toISOString(),
         };
