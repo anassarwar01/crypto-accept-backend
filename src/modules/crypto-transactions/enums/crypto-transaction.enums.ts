@@ -4,6 +4,7 @@ export enum CryptoCurrency {
     ALGO = 'ALGO',
     XLM = 'XLM',
     LTC = 'LTC',
+    USDC_ETH = 'USDC-ETH',
 }
 
 export enum CryptoStatus {
