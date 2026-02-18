@@ -13,33 +13,14 @@ export class IpregistryService extends BaseHttpService {
 
     constructor(
         protected readonly httpService: HttpService,
-        private readonly thirdPartyLogsService: ThirdPartyLogsService,
+        protected readonly thirdPartyLogsService: ThirdPartyLogsService,
     ) {
-        super(httpService);
+        super(httpService, thirdPartyLogsService);
     }
 
     async getIpInfo(ip: string): Promise<any> {
         const url = `${this.BASE_URL}/${ip}?key=${this.API_KEY}`;
-        let response;
-        let errorResponse;
-        let httpCode = 200;
-
-        try {
-            response = await this.request('GET', url);
-            return response;
-        } catch (error: any) {
-            httpCode = error.getStatus ? error.getStatus() : 500;
-            errorResponse = error.getResponse ? error.getResponse() : error.message;
-            throw error;
-        } finally {
-            await this.thirdPartyLogsService.createLog({
-                type: ThirdPartyLogType.HTTP,
-                httpMethod: HttpMethod.GET,
-                httpRequest: { url: url.replace(this.API_KEY, '***'), ip },
-                httpResponse: response || errorResponse,
-                httpCode: httpCode,
-            });
-        }
+        return await this.request('GET', url);
     }
 
     /**

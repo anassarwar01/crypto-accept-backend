@@ -11,6 +11,8 @@ import { ErrorLogsService } from '../../error-logs/error-logs.service';
 import { RequestLogsService } from '../../request-logs/request-logs.service';
 import { HttpMethod } from '../../request-logs/entities/request-log.entity';
 import { ApiResponse } from '../../../helper/dto/response.dto';
+import { RedirectException } from '../exceptions/redirect.exception';
+import { getClientIp } from '../utils/helper';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -49,12 +51,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
         }
 
         const redirectUrl = request.body?.redirectUrl || request.query?.redirectUrl || request['transaction']?.redirectUrl || null;
+        const responseUrl = exception instanceof RedirectException ? exception.url : redirectUrl;
 
         const responseBody = new ApiResponse(
             httpStatus,
             message,
             errors,
-            redirectUrl
+            responseUrl
         );
 
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -68,7 +71,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
             method: request.method,
             url: request.url,
             requestBody: request.body,
-            //rawBody: request.rawBody, // Capture raw body when JSON parsing fails
             queryParams: request.query,
             merchantId: merchantId,
             userId: userId,
@@ -87,20 +89,19 @@ export class AllExceptionsFilter implements ExceptionFilter {
             );
         }
 
-        // Sanitize body (remove sensitive data like passwords)
+        // Sanitize body
         const sanitizedBody = { ...request.body };
         if (sanitizedBody.password) sanitizedBody.password = '***';
         if (sanitizedBody.apiKey) sanitizedBody.apiKey = '***';
         if (sanitizedBody.api_key) sanitizedBody.api_key = '***';
 
-        // Save to database asynchronously (don't block the response)
+        // Save to database asynchronously
         try {
             await this.errorLogsService.logError(logData);
 
-            // Also log the failed request to request_logs for full history
             await this.requestLogsService.logRequest({
                 userAgent: request.get('user-agent') || '',
-                ipAddress: request.ip,
+                ipAddress: getClientIp(request),
                 route: request.url,
                 httpMethod: request.method as HttpMethod,
                 httpRequest: {
@@ -115,6 +116,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
             } as any);
         } catch (err) {
             this.logger.error('Failed to log error/request to DB', err);
+        }
+
+        if (exception instanceof RedirectException) {
+            return httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
         }
 
         httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);

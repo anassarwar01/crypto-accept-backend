@@ -9,26 +9,21 @@ import { createHmac } from 'crypto';
  * @returns string Client IP address
  */
 export function getClientIp(request: Request | any): string {
-    let realIp = '';
+    // Check if the application environment is local
+    if (process.env.APP_ENV === 'local') {
+        return request.ip || request.socket?.remoteAddress || '';
+    }
 
-    // Check X-Forwarded-For header
+    // Use the value from X-Forwarded-For header for other environments
     const xForwardedFor = request.headers['x-forwarded-for'];
     if (xForwardedFor) {
-        realIp = Array.isArray(xForwardedFor)
+        return Array.isArray(xForwardedFor)
             ? xForwardedFor[0]
             : xForwardedFor.split(',')[0].trim();
     }
-    // Check Cloudflare header
-    else if (request.headers['cf-connecting-ip']) {
-        const cfIp = request.headers['cf-connecting-ip'];
-        realIp = Array.isArray(cfIp) ? cfIp[0] : cfIp;
-    }
-    // Fallback to socket address
-    else {
-        realIp = request.socket?.remoteAddress || request.connection?.remoteAddress || '';
-    }
 
-    return realIp;
+    // Fallback if header is missing
+    return request.ip || request.socket?.remoteAddress || '';
 }
 
 export function generateSignature(ref: string, signatureSecret: string): string {

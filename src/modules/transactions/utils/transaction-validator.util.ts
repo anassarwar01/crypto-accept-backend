@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { Transaction } from '../entities/transaction.entity';
 import { TransactionStatus } from '../enums/transaction.enums';
 import { MESSAGES } from '@helper/constant/messages';
+import { RedirectException } from '../../common/exceptions/redirect.exception';
 
 /**
  * Validates if a transaction is in a valid state for common operations.
@@ -28,7 +29,9 @@ export function validateTransactionState(transaction: Transaction, checkStatus =
                 // Valid state for most operations
                 break;
             case TransactionStatus.CONFIRMING:
-                // Valid state for most operations
+                if (transaction.redirectUrl) {
+                    throw new RedirectException(transaction.redirectUrl);
+                }
                 break;
             case TransactionStatus.EXPIRED:
                 throw new BadRequestException(MESSAGES.TRANSACTION_EXPIRED);
