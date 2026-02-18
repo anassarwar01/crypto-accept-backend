@@ -273,7 +273,7 @@ export class TransactionsGateway
         let ipAddress = '127.0.0.1';
 
         if (client) {
-            if (process.env.APP_ENV === 'local' || process.env.APP_ENV === 'development') {
+            if (process.env.APP_ENV === 'local') {
                 ipAddress = client.handshake.address;
             } else {
                 const xForwardedFor = client.handshake.headers['x-forwarded-for'];

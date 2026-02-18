@@ -8,6 +8,7 @@ import {
 import { Observable } from 'rxjs';
 import { concatMap } from 'rxjs/operators';
 import { RequestLogsService } from '../../request-logs/request-logs.service';
+import { HttpMethod } from '../../request-logs/entities/request-log.entity';
 import { getClientIp } from '../utils/helper';
 
 @Injectable()
