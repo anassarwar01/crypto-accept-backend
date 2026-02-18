@@ -9,8 +9,8 @@ import { createHmac } from 'crypto';
  * @returns string Client IP address
  */
 export function getClientIp(request: Request | any): string {
-    // Check if the application environment is local or development
-    if (process.env.APP_ENV === 'local' || process.env.APP_ENV === 'development') {
+    // Check if the application environment is local
+    if (process.env.APP_ENV === 'local') {
         return request.ip || request.socket?.remoteAddress || '';
     }
 
