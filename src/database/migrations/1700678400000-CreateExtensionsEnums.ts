@@ -31,7 +31,7 @@ export class CreateExtensionsEnums1700678400000 implements MigrationInterface {
       `CREATE TYPE "crypto_status_enum" AS ENUM ('sellInitiated', 'sellCompleted', 'blocked', 'deleted', 'toPayout', 'confirming', 'payoutConfirming', 'sellCancelled', 'payoutOnHold', 'buyIncasso', 'sendDelay', 'toCancel')`,
     );
     await queryRunner.query(
-      `CREATE TYPE "http_method_enum" AS ENUM ('GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD')`,
+      `CREATE TYPE "http_method_enum" AS ENUM ('GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD', 'WS')`,
     );
     await queryRunner.query(
       `CREATE TYPE "third_party_type_enum" AS ENUM ('HTTP', 'CALLBACK', 'WEBHOOK')`,

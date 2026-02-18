@@ -17,6 +17,8 @@ import { TransactionStatus } from '@transactions/enums/transaction.enums';
 import { FeatureFlagService } from '../../feature-flags/feature-flag.service';
 import { TransactionsBroadcastService } from '../transactions-broadcast.service';
 import { Subscription } from 'rxjs';
+import { RequestLogsService } from '../../request-logs/request-logs.service';
+import { HttpMethod } from '../../request-logs/entities/request-log.entity';
 
 @WebSocketGateway({
     cors: process.env.APP_ENV === 'development' ? '*' : process.env.FRONTEND_DOMAIN,
@@ -40,6 +42,7 @@ export class TransactionsGateway
         private readonly transactionsService: TransactionsService,
         private readonly featureFlagService: FeatureFlagService,
         private readonly broadcastService: TransactionsBroadcastService,
+        private readonly requestLogsService: RequestLogsService,
     ) {
         this.signatureSecret =
             this.configService.get<string>('SOCKET_SIGNATURE_SECRET') ??
@@ -63,10 +66,12 @@ export class TransactionsGateway
 
     handleConnection(client: Socket) {
         this.logger.log(`Client connected: ${client.id}`);
+        this.logWsEvent(client, 'connection', null, { status: 'connected' });
     }
 
     handleDisconnect(client: Socket) {
         this.logger.log(`Client disconnected: ${client.id}`);
+        this.logWsEvent(client, 'disconnection', null, { status: 'disconnected' });
     }
 
     /* -------------------------------- Subscribe -------------------------------- */
@@ -97,7 +102,7 @@ export class TransactionsGateway
             this.logger.log(`Client ${client.id} joined room ${ref}`);
 
             // Send current status immediately to the joining client
-            client.emit('statusUpdated', {
+            client.emit('serverEvent', {
                 ref: encodedRef,
                 orderId: transaction.shortCode,
                 status: transaction.status,
@@ -106,10 +111,14 @@ export class TransactionsGateway
 
             await this.handleSimulation(ref, transaction);
 
-            return { event: 'subscribed', data: { ref: encodedRef } };
+            const response = { event: 'subscribed', data: { ref: encodedRef } };
+            this.logWsEvent(client, 'subscribe', parsedData, response);
+            return response;
         } catch (error) {
             this.logger.error(`Subscription error: ${error.message}`);
-            return { event: 'error', data: error.message };
+            const errorResponse = { event: 'error', data: error.message };
+            this.logWsEvent(client, 'subscribe', data, errorResponse, 400);
+            return errorResponse;
         }
     }
 
@@ -129,10 +138,53 @@ export class TransactionsGateway
             client.leave(ref);
             this.logger.log(`Client ${client.id} left room ${ref}`);
 
-            return { event: 'unsubscribed', data: { ref: parsedData.ref } };
+            const response = { event: 'unsubscribed', data: { ref: parsedData.ref } };
+            this.logWsEvent(client, 'unsubscribe', parsedData, response);
+            return response;
         } catch (error) {
             this.logger.error(`Unsubscribe error: ${error.message}`);
-            return { event: 'error', data: 'Invalid unsubscribe payload' };
+            const errorResponse = { event: 'error', data: 'Invalid unsubscribe payload' };
+            this.logWsEvent(client, 'unsubscribe', data, errorResponse, 400);
+            return errorResponse;
+        }
+    }
+
+    @SubscribeMessage('clientEvent')
+    async handleClientEvent(
+        @ConnectedSocket() client: Socket,
+        @MessageBody() data: any,
+    ) {
+        try {
+            const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+            const { ref: encodedRef, status } = parsedData;
+
+            this.logger.log(`Received clientEvent from ${client.id}:`, parsedData);
+
+            let result = { status: 'received' };
+
+            if (encodedRef && status) {
+                const ref = decodeReference(encodedRef);
+                const transaction = await this.transactionsService.findWithValidation(ref, false);
+
+                if (transaction) {
+                    await this.transactionsService.updateStatus(transaction, status as TransactionStatus);
+                    result.status = 'updated';
+                }
+            }
+
+            const response = {
+                ...result,
+                timestamp: new Date().toISOString(),
+                echo: parsedData,
+            };
+
+            this.logWsEvent(client, 'clientEvent', parsedData, response);
+
+            // Respond back to the sender
+            client.emit('serverAck', response);
+        } catch (error) {
+            this.logger.error(`clientEvent error: ${error.message}`);
+            client.emit('error', { event: 'clientEvent', message: error.message || 'Invalid payload' });
         }
     }
 
@@ -148,17 +200,22 @@ export class TransactionsGateway
         const sockets = await this.server.in(ref).fetchSockets();
 
         this.logger.log(
-            `Broadcasting statusUpdated for ${ref} to ${sockets.length} clients`,
+            `Broadcasting serverEvent for ${ref} to ${sockets.length} clients`,
         );
 
         if (sockets.length === 0) return;
 
-        this.server.to(ref).emit('statusUpdated', {
+        const response = {
             ref: encodedRef,
             orderId: shortCode,
             status,
             redirectUrl,
-        });
+        };
+
+        this.server.to(ref).emit('serverEvent', response);
+
+        // Log broadcast event once
+        this.logWsEvent(null, `broadcast:serverEvent`, { ref }, response);
     }
 
     /* --------------------------------- Helpers -------------------------------- */
@@ -210,6 +267,20 @@ export class TransactionsGateway
                 this.logger.error(`Simulation success error: ${err.message}`);
             }
         }, 10000);
+    }
+
+    private logWsEvent(client: Socket | null, event: string, requestData: any, responseData: any, code: number = 200) {
+        this.requestLogsService.logRequest({
+            userAgent: client?.handshake?.headers['user-agent'] || 'WebSocket Server',
+            ipAddress: client?.handshake?.address || '127.0.0.1',
+            route: `ws:${event}`,
+            httpRequest: requestData,
+            httpResponse: responseData,
+            httpMethod: HttpMethod.WS,
+            httpCode: code,
+        }).catch(err => {
+            this.logger.error(`Failed to log WebSocket event ${event}: ${err.message}`);
+        });
     }
 
 }

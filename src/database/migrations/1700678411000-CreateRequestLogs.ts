@@ -22,7 +22,7 @@ export class CreateRequestLogs1700678411000 implements MigrationInterface {
             name: 'http_method',
             type: 'enum',
             enumName: 'http_method_enum',
-            enum: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
+            enum: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD', 'WS'],
             isNullable: true,
           },
           { name: 'http_code', type: 'int', isNullable: true },

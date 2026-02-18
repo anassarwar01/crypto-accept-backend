@@ -34,6 +34,7 @@ import { TransactionsBroadcastService } from './transactions-broadcast.service';
 import { HttpModule } from '@nestjs/axios';
 import { ThirdPartyLogsModule } from '../third-party-logs/third-party-logs.module';
 import { TransactionsCallbackService } from './transactions-callback.service';
+import { RequestLogsModule } from '../request-logs/request-logs.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { TransactionsCallbackService } from './transactions-callback.service';
     QuantozModule,
     HttpModule,
     ThirdPartyLogsModule,
+    RequestLogsModule,
   ],
   controllers: [TransactionsController, QuantozWebhookController],
   providers: [
