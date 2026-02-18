@@ -270,9 +270,26 @@ export class TransactionsGateway
     }
 
     private logWsEvent(client: Socket | null, event: string, requestData: any, responseData: any, code: number = 200) {
+        let ipAddress = '127.0.0.1';
+
+        if (client) {
+            if (process.env.APP_ENV === 'local' || process.env.APP_ENV === 'development') {
+                ipAddress = client.handshake.address;
+            } else {
+                const xForwardedFor = client.handshake.headers['x-forwarded-for'];
+                if (xForwardedFor) {
+                    ipAddress = Array.isArray(xForwardedFor)
+                        ? xForwardedFor[0]
+                        : xForwardedFor.split(',')[0].trim();
+                } else {
+                    ipAddress = client.handshake.address;
+                }
+            }
+        }
+
         this.requestLogsService.logRequest({
             userAgent: client?.handshake?.headers['user-agent'] || 'WebSocket Server',
-            ipAddress: client?.handshake?.address || '127.0.0.1',
+            ipAddress,
             route: `ws:${event}`,
             httpRequest: requestData,
             httpResponse: responseData,

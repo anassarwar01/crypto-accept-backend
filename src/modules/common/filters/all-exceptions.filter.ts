@@ -12,6 +12,7 @@ import { RequestLogsService } from '../../request-logs/request-logs.service';
 import { HttpMethod } from '../../request-logs/entities/request-log.entity';
 import { ApiResponse } from '../../../helper/dto/response.dto';
 import { RedirectException } from '../exceptions/redirect.exception';
+import { getClientIp } from '../utils/helper';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -100,7 +101,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
             await this.requestLogsService.logRequest({
                 userAgent: request.get('user-agent') || '',
-                ipAddress: request.ip,
+                ipAddress: getClientIp(request),
                 route: request.url,
                 httpMethod: request.method as HttpMethod,
                 httpRequest: {
