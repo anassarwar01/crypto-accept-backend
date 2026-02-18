@@ -8,8 +8,7 @@ import {
 import { Observable } from 'rxjs';
 import { concatMap } from 'rxjs/operators';
 import { RequestLogsService } from '../../request-logs/request-logs.service';
-import { HttpMethod } from '../../request-logs/entities/request-log.entity';
-import { ApiResponse } from '../../../helper/dto/response.dto';
+import { getClientIp } from '../utils/helper';
 
 @Injectable()
 export class RequestLoggingInterceptor implements NestInterceptor {
@@ -19,7 +18,8 @@ export class RequestLoggingInterceptor implements NestInterceptor {
 
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
         const request = context.switchToHttp().getRequest();
-        const { method, url, body, query, ip } = request;
+        const { method, url, body, query } = request;
+        const ip = getClientIp(request);
         const userAgent = request.get('user-agent') || '';
 
         // Sanitize body (remove sensitive data like passwords)
