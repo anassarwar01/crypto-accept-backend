@@ -1,7 +1,7 @@
-import { Injectable, HttpException } from '@nestjs/common';
+import { Injectable, HttpException, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { isAxiosError } from 'axios';
+import { isAxiosError, Method } from 'axios';
 import { ThirdPartyLogsService } from '../../third-party-logs/third-party-logs.service';
 import { HttpMethod, ThirdPartyLogType } from '../../third-party-logs/entities/third-party-log.entity';
 import { SystemSettingsService } from '../../system-settings/system-settings.service';
@@ -10,6 +10,7 @@ import { CryptoStatus } from '../../crypto-transactions/enums/crypto-transaction
 import { QuantozStatus } from './enums/quantoz.enums';
 import { QuantozEstimatedPrice, QuantozMerchantResponse } from './interfaces/quantoz.interfaces';
 import { MESSAGES } from '@helper/constant/messages';
+import { BaseHttpService } from '../../common/services/base-http.service';
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
@@ -21,16 +22,18 @@ interface QuantozApiResponse<T = any> {
 }
 
 @Injectable()
-export class QuantozService {
+export class QuantozService extends BaseHttpService {
+  protected readonly logger = new Logger(QuantozService.name);
   private readonly BASE_URL: string;
   private readonly CALLBACK_BASE_URL: string;
 
   constructor(
-    private readonly httpService: HttpService,
-    private readonly thirdPartyLogsService: ThirdPartyLogsService,
+    protected readonly httpService: HttpService,
+    protected readonly thirdPartyLogsService: ThirdPartyLogsService,
     private readonly configService: ConfigService,
     private readonly systemSettingsService: SystemSettingsService,
   ) {
+    super(httpService, thirdPartyLogsService);
     this.BASE_URL = this.configService.get<string>('QUANTOZ_BASE_URL') as string;
     this.CALLBACK_BASE_URL = this.configService.get<string>('QUANTOZ_CALLBACK_BASE_URL') as string;
   }
@@ -59,7 +62,7 @@ export class QuantozService {
     return accountCode;
   }
 
-  private async request<T = any>(
+  protected async _request<T = any>(
     method: HttpMethod,
     url: string,
     data?: any,
@@ -78,19 +81,18 @@ export class QuantozService {
       }
     }
 
-    let axiosResponse: any;
     try {
-      axiosResponse = await this.httpService.axiosRef.request<
-        QuantozApiResponse<T>
-      >({
-        method,
+      let responseData = await this.request<QuantozApiResponse<T>>(
+        method as Method,
         url,
-        data: requestData,
-        headers: this.getHeaders(),
-      });
-      console.log('quantoz-response-raw', axiosResponse.data);
+        requestData,
+        this.getHeaders(),
+        transactionId,
+        ThirdPartyLogType.HTTP
+      );
 
-      let responseData = axiosResponse.data;
+      console.log('quantoz-response-raw', responseData);
+
       if (encryptionEnabled && typeof responseData === 'string') {
         const key = this.configService.get<string>('QUANTOZ_ENCRYPTION_KEY');
         const iv = this.configService.get<string>('QUANTOZ_ENCRYPTION_IV');
@@ -100,33 +102,10 @@ export class QuantozService {
         }
       }
 
-      await this.thirdPartyLogsService.createLog({
-        transactionId,
-        httpRequest: { url, data, headers: this.getHeaders() },
-        httpResponse: responseData,
-        httpMethod: method,
-        httpCode: axiosResponse.status,
-        type: ThirdPartyLogType.HTTP,
-      });
-
       return this.prepareResponse(responseData);
     } catch (error: unknown) {
-      const status = isAxiosError(error) ? error.response?.status || 500 : 500;
-      const responseData = isAxiosError(error) ? error.response?.data : { message: (error as Error).message };
-
-      await this.thirdPartyLogsService.createLog({
-        transactionId,
-        httpRequest: { url, data, headers: this.getHeaders() },
-        httpResponse: responseData,
-        httpMethod: method,
-        httpCode: status,
-        type: ThirdPartyLogType.HTTP,
-      });
-
       if (isAxiosError(error) && error.response) {
-        const errResponse = error.response;
-        const errData = errResponse.data as QuantozApiResponse;
-
+        const errData = error.response.data as QuantozApiResponse;
         let message: string | Record<string, any> = 'Quantoz API error';
 
         if (errData?.errors && Array.isArray(errData.errors) && errData.errors.length > 0) {
@@ -141,10 +120,9 @@ export class QuantozService {
         } else {
           message = (errData?.message ?? 'Quantoz API error');
         }
-
-        throw new HttpException(message, status);
+        throw new HttpException(message, error.response.status || 500);
       }
-      throw new HttpException('Quantoz API error', 500);
+      throw error;
     }
   }
 
@@ -166,7 +144,7 @@ export class QuantozService {
 
   async getEstimatedPrices(currency: string = 'EUR', cryptoCurrency: string, transactionId?: string): Promise<QuantozEstimatedPrice> {
     const url = `${this.API_ENDPOINTS.ESTIMATED_PRICES}${currency}/${cryptoCurrency}`;
-    return this.request<QuantozEstimatedPrice>(HttpMethod.GET, url, undefined, transactionId);
+    return this._request<QuantozEstimatedPrice>(HttpMethod.GET, url, undefined, transactionId);
   }
 
   async merchantSimulate(
@@ -187,7 +165,7 @@ export class QuantozService {
       callbackUrl: `${this.CALLBACK_BASE_URL}/webhooks/quantoz`,
       paymentReference,
     };
-    return this.request<QuantozMerchantResponse>(HttpMethod.POST, url, data, transactionId);
+    return this._request<QuantozMerchantResponse>(HttpMethod.POST, url, data, transactionId);
   }
 
   async merchantSend(
@@ -208,7 +186,7 @@ export class QuantozService {
       callbackUrl: `${this.CALLBACK_BASE_URL}/webhooks/quantoz`,
       paymentReference,
     };
-    return this.request<QuantozMerchantResponse>(HttpMethod.POST, url, data, transactionId);
+    return this._request<QuantozMerchantResponse>(HttpMethod.POST, url, data, transactionId);
   }
 
   mapStatus(externalStatus: string): CryptoStatus {

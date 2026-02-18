@@ -2,14 +2,19 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
 import { BaseHttpService } from '../../common/services/base-http.service';
 
+import { ThirdPartyLogsService } from '../../third-party-logs/third-party-logs.service';
+
 @Injectable()
 export class FixerService extends BaseHttpService {
   protected readonly logger = new Logger(FixerService.name);
   private readonly BASE_URL = process.env.FIXER_BASE_URL;
   private readonly API_KEY = process.env.FIXER_API_KEY;
 
-  constructor(protected readonly httpService: HttpService) {
-    super(httpService);
+  constructor(
+    protected readonly httpService: HttpService,
+    protected readonly thirdPartyLogsService: ThirdPartyLogsService,
+  ) {
+    super(httpService, thirdPartyLogsService);
   }
 
   private getHeaders() {

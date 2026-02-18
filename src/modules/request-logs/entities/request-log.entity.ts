@@ -14,6 +14,7 @@ export enum HttpMethod {
     DELETE = 'DELETE',
     OPTIONS = 'OPTIONS',
     HEAD = 'HEAD',
+    WS = 'WS',
 }
 
 @Entity('request_logs')
