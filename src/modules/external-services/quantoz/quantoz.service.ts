@@ -104,8 +104,18 @@ export class QuantozService extends BaseHttpService {
 
       return this.prepareResponse(responseData);
     } catch (error: unknown) {
+      let errData: QuantozApiResponse | null = null;
+      let status: number = 500;
+
       if (isAxiosError(error) && error.response) {
-        const errData = error.response.data as QuantozApiResponse;
+        errData = error.response.data as QuantozApiResponse;
+        status = error.response.status;
+      } else if (error instanceof HttpException) {
+        errData = error.getResponse() as QuantozApiResponse;
+        status = error.getStatus();
+      }
+
+      if (errData) {
         let message: string | Record<string, any> = 'Quantoz API error';
 
         if (errData?.errors && Array.isArray(errData.errors) && errData.errors.length > 0) {
@@ -120,7 +130,7 @@ export class QuantozService extends BaseHttpService {
         } else {
           message = (errData?.message ?? 'Quantoz API error');
         }
-        throw new HttpException(message, error.response.status || 500);
+        throw new HttpException(message, status);
       }
       throw error;
     }
