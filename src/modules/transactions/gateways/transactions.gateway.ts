@@ -14,6 +14,7 @@ import { Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { decodeReference, encodeReference } from '../../common/utils/reference-coder';
 import { TransactionsService } from '../transactions.service';
 import { TransactionStatus } from '@transactions/enums/transaction.enums';
+import { EXPLORER_LINKS } from '../../crypto-transactions/enums/crypto-transaction.enums';
 import { FeatureFlagService } from '../../feature-flags/feature-flag.service';
 import { TransactionsBroadcastService } from '../transactions-broadcast.service';
 import { Subscription } from 'rxjs';
@@ -54,8 +55,8 @@ export class TransactionsGateway
     onModuleInit() {
         this.broadcastSubscription =
             this.broadcastService.statusUpdates$.subscribe(
-                ({ ref, status, redirectUrl, shortCode }) => {
-                    this.sendStatusUpdate(ref, status, redirectUrl, shortCode);
+                ({ ref, status, redirectUrl, shortCode, hash, currency }) => {
+                    this.sendStatusUpdate(ref, status, redirectUrl, shortCode, hash, currency);
                 },
             );
     }
@@ -107,6 +108,10 @@ export class TransactionsGateway
                 orderId: transaction.shortCode,
                 status: transaction.status,
                 redirectUrl: transaction.redirectUrl,
+                explorerLink: this.getExplorerLink(
+                    transaction.cryptoTransaction?.hash,
+                    transaction.cryptoTransaction?.currency,
+                ),
             });
 
             await this.handleSimulation(ref, transaction);
@@ -195,6 +200,8 @@ export class TransactionsGateway
         status: string,
         redirectUrl?: string,
         shortCode?: string,
+        hash?: string,
+        currency?: string,
     ) {
         const encodedRef = encodeReference(ref);
         const sockets = await this.server.in(ref).fetchSockets();
@@ -210,6 +217,7 @@ export class TransactionsGateway
             orderId: shortCode,
             status,
             redirectUrl,
+            explorerLink: this.getExplorerLink(hash, currency),
         };
 
         this.server.to(ref).emit('serverEvent', response);
@@ -231,6 +239,13 @@ export class TransactionsGateway
         if (signature !== expectedSignature) {
             throw new Error('Invalid signature');
         }
+    }
+
+    private getExplorerLink(hash?: string, currency?: string): string {
+        if (!hash || !currency) return '';
+
+        const baseUrl = EXPLORER_LINKS[currency];
+        return baseUrl ? `${baseUrl}${hash}` : '';
     }
 
     private async handleSimulation(ref: string, transaction: any) {

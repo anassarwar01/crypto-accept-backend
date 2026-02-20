@@ -22,3 +22,11 @@ export enum CryptoStatus {
     toCancel = 'toCancel',
 }
 
+export const EXPLORER_LINKS = {
+    [CryptoCurrency.BTC]: 'https://www.blockchain.com/btc/tx/',
+    [CryptoCurrency.LTC]: 'https://blockchair.com/litecoin/transaction/',
+    [CryptoCurrency.ETH]: 'https://etherscan.io/tx/',
+    [CryptoCurrency.XLM]: 'https://stellarchain.io/tx/',
+    [CryptoCurrency.ALGO]: 'https://explorer.perawallet.app/tx/',
+    [CryptoCurrency.USDC_ETH]: 'https://etherscan.io/tx/',
+};
