@@ -265,7 +265,14 @@ export class TransactionsService {
     await this.transactionRepository.updateTransactionStatus(transaction.systemReference, status);
 
     // Broadcast status update to all connected clients
-    this.broadcastService.emitStatusUpdate(transaction.systemReference, status, transaction.redirectUrl, transaction.shortCode);
+    this.broadcastService.emitStatusUpdate(
+      transaction.systemReference,
+      status,
+      transaction.redirectUrl,
+      transaction.shortCode,
+      transaction.cryptoTransaction?.hash,
+      transaction.cryptoTransaction?.currency,
+    );
 
     // Send callback to merchant
     this.callbackService.sendCallback(transaction);
@@ -323,7 +330,7 @@ export class TransactionsService {
           newStatus = TransactionStatus.CONFIRMING;
         } else if (cryptoStatus === CryptoStatus.sellCompleted || cryptoStatus === CryptoStatus.toPayout) {
           newStatus = TransactionStatus.SUCCEEDED;
-        } else if (cryptoStatus === CryptoStatus.sellCancelled || cryptoStatus === CryptoStatus.toCancel) {
+        } else {
           newStatus = TransactionStatus.CANCELLED;
         }
 

@@ -7,6 +7,8 @@ export interface TransactionStatusUpdate {
     status: TransactionStatus;
     redirectUrl?: string;
     shortCode?: string;
+    hash?: string;
+    currency?: string;
 }
 
 @Injectable()
@@ -16,7 +18,7 @@ export class TransactionsBroadcastService {
     // Expose as readonly observable
     public readonly statusUpdates$: Observable<TransactionStatusUpdate> = this.statusUpdateSubject.asObservable();
 
-    emitStatusUpdate(ref: string, status: TransactionStatus, redirectUrl?: string, shortCode?: string): void {
-        this.statusUpdateSubject.next({ ref, status, redirectUrl, shortCode });
+    emitStatusUpdate(ref: string, status: TransactionStatus, redirectUrl?: string, shortCode?: string, hash?: string, currency?: string): void {
+        this.statusUpdateSubject.next({ ref, status, redirectUrl, shortCode, hash, currency });
     }
 }

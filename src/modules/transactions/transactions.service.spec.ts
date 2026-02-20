@@ -17,6 +17,7 @@ import { TransactionsBroadcastService } from './transactions-broadcast.service';
 import { CryptoTransactionsService } from '../crypto-transactions/crypto-transactions.service';
 import { QuantozService } from '../external-services/quantoz/quantoz.service';
 import { TransactionsCallbackService } from './transactions-callback.service';
+import { ThirdPartyLogsService } from '../third-party-logs/third-party-logs.service';
 
 describe('TransactionsService', () => {
   let service: TransactionsService;
@@ -28,6 +29,8 @@ describe('TransactionsService', () => {
     createTransaction: jest.fn(),
     findOne: jest.fn(),
     updateTransaction: jest.fn(),
+    updateTransactionStatus: jest.fn(),
+    findByReference: jest.fn(),
   };
 
   const mockConversionRatesService = {
@@ -75,14 +78,21 @@ describe('TransactionsService', () => {
   const mockCryptoTransactionsService = {
     upsertRecord: jest.fn(),
     findOneByTransactionId: jest.fn(),
+    findActiveByTransactionId: jest.fn(),
+    softDeleteById: jest.fn(),
   };
 
   const mockQuantozService = {
     getEstimatedPrices: jest.fn(),
     merchantSimulate: jest.fn(),
+    mapStatus: jest.fn(),
   };
   const mockTransactionsCallbackService = {
     sendCallback: jest.fn(),
+  };
+
+  const mockThirdPartyLogsService = {
+    createLog: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -102,6 +112,7 @@ describe('TransactionsService', () => {
         { provide: CryptoTransactionsService, useValue: mockCryptoTransactionsService },
         { provide: QuantozService, useValue: mockQuantozService },
         { provide: TransactionsCallbackService, useValue: mockTransactionsCallbackService },
+        { provide: ThirdPartyLogsService, useValue: mockThirdPartyLogsService },
       ],
     }).compile();
 
@@ -166,6 +177,7 @@ describe('TransactionsService', () => {
         shortCode: 'SC123',
         merchantId: 'merch_123',
         customerId: 'cust_123',
+        fiatBaseAmount: 100,
         fiatConvertedAmount: 100,
         status: TransactionStatus.INITIATED,
         customer: { email: 'test@example.com' },
@@ -173,8 +185,9 @@ describe('TransactionsService', () => {
       } as any;
 
       const dto = { cryptoCurrency: 'ALGO' };
-
+      mockCryptoTransactionsService.findActiveByTransactionId.mockResolvedValue(null);
       mockFeatureFlagService.getFlag.mockResolvedValue({ active: true });
+      mockQuantozService.getEstimatedPrices.mockResolvedValue({ cryptoAmount: 1100 } as any);
       mockQuantozService.merchantSimulate.mockResolvedValue({
         expectedCryptoAmount: 1100,
         merchantCustomerCode: 'cust_123'
@@ -199,13 +212,15 @@ describe('TransactionsService', () => {
           amount: 1100,
         })
       );
-      expect(result.cryptoAmount).toBe(1100);
+      expect(result.cryptoAmount).toBe('1100');
     });
 
     it('should throw error if simulation fails', async () => {
       const transaction = { id: 'trans_123' } as any;
       const dto = { cryptoCurrency: 'ALGO' };
 
+      mockCryptoTransactionsService.findActiveByTransactionId.mockResolvedValue(null);
+      mockQuantozService.getEstimatedPrices.mockResolvedValue({ cryptoAmount: 1100 } as any);
       mockQuantozService.merchantSimulate.mockResolvedValue(null);
 
       await expect(service.getSummary(transaction, dto)).rejects.toThrow(BadRequestException);
@@ -222,7 +237,14 @@ describe('TransactionsService', () => {
 
       expect(result).toBeDefined();
       expect(transaction.status).toBe(status);
-      expect(mockBroadcastService.emitStatusUpdate).toHaveBeenCalledWith(transaction.systemReference, status, undefined);
+      expect(mockBroadcastService.emitStatusUpdate).toHaveBeenCalledWith(
+        transaction.systemReference,
+        status,
+        transaction.redirectUrl,
+        transaction.shortCode,
+        transaction.cryptoTransaction?.hash,
+        transaction.cryptoTransaction?.currency,
+      );
     });
   });
 });
