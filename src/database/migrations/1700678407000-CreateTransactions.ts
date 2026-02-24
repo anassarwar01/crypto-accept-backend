@@ -31,7 +31,7 @@ export class CreateTransactions1700678407000 implements MigrationInterface {
             isNullable: true,
           },
           {
-            name: 'fiat_converted_amount',
+            name: 'fiat_amount',
             type: 'decimal',
             precision: 10,
             scale: 2,

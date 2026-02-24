@@ -178,7 +178,7 @@ describe('TransactionsService', () => {
         merchantId: 'merch_123',
         customerId: 'cust_123',
         fiatBaseAmount: 100,
-        fiatConvertedAmount: 100,
+        fiatAmount: 100,
         status: TransactionStatus.INITIATED,
         customer: { email: 'test@example.com' },
         callbackUrl: 'http://callback.com',

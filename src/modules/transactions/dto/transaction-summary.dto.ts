@@ -98,7 +98,7 @@ export class TransactionSummaryResponseDto {
         fallbackWalletAddress: string,
     ) {
         this.status = transaction.status;
-        this.fiatAmount = transaction.fiatConvertedAmount || 0;
+        this.fiatAmount = transaction.fiatAmount || 0;
         this.fiatCurrency = transaction.fiatCurrency || '';
         this.cryptoCurrency = cryptoCurrency;
         this.cryptoAmount = '' + transaction.cryptoTransaction?.amount || '0';
