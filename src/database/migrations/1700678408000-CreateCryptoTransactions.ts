@@ -32,6 +32,13 @@ export class CreateCryptoTransactions1700678408000 implements MigrationInterface
             isNullable: true,
           },
           {
+            name: 'received_amount',
+            type: 'decimal',
+            precision: 14,
+            scale: 8,
+            isNullable: true,
+          },
+          {
             name: 'rate',
             type: 'decimal',
             precision: 14,

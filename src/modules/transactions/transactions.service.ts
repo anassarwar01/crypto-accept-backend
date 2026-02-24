@@ -89,8 +89,8 @@ export class TransactionsService {
     // Link customer to merchant
     await this.merchantCustomersService.linkCustomer(merchantId, customerEntity.id);
 
-    // Calculate total fiat amount from order items
-    const fiatAmount = request.orderItems?.reduce((acc, item) => acc + (item.price * item.quantity), 0) || 0;
+    // Use fiat amount from request
+    const fiatAmount = request.fiatAmount;
 
     // Calculate fiat base amount (system base currency is stored in DB)
     // Calculate fiat base amount
@@ -154,7 +154,7 @@ export class TransactionsService {
 
     // Call to quantoz crypto price endpoint
     const cryptoPrice = await this.quantozService.getEstimatedPrices(
-      (await this.systemSettingsService.getValue('base_currency')) || this.configService.get<string>('base_currency') || 'EUR',
+      transaction.fiatCurrency,
       dto.cryptoCurrency,
       transaction.id,
     );
@@ -312,6 +312,7 @@ export class TransactionsService {
       payload.TransactionCode, {
       status: this.quantozService.mapStatus(payload.Status),
       hash: payload.Merchant?.ReceiveCryptoTxId, // Quantoz might provide hash here or in another field
+      receivedAmount: payload.Merchant?.ReceivedCryptoAmount,
     });
 
     if (cryptoTransaction && cryptoTransaction.transaction) {

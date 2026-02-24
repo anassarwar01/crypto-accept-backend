@@ -50,6 +50,14 @@ export class CryptoTransaction {
         precision: 14,
         scale: 8,
         nullable: true,
+        name: 'received_amount',
+    })
+    receivedAmount: number;
+
+    @Column('decimal', {
+        precision: 14,
+        scale: 8,
+        nullable: true,
         name: 'rate',
     })
     rate: number;
