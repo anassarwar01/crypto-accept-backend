@@ -15,7 +15,7 @@ export class TransactionResponseDto {
     status: string;
 
     constructor(transaction: Transaction) {
-        this.fiatAmount = transaction.fiatConvertedAmount || 0;
+        this.fiatAmount = transaction.fiatAmount || 0;
         this.fiatCurrency = transaction.fiatCurrency || '';
         this.status = transaction.status;
     }

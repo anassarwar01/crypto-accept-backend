@@ -27,12 +27,15 @@ export class TransactionsCallbackService {
         }
 
         const payload = {
+            requestId: transaction.merchantReference,
+            systemReference: transaction.systemReference,
             orderId: transaction.shortCode,
-            // merchantReference: transaction.merchantReference,
             status: transaction.status,
-            fiatAmount: Number(transaction.fiatConvertedAmount || 0).toFixed(2),
+            fiatAmount: Number(transaction.fiatAmount || 0).toFixed(2),
             fiatCurrency: transaction.fiatCurrency,
-            timestamp: new Date().toISOString(),
+            cryptoAmount: transaction.fiatAmount,
+            cryptoCurrency: transaction.fiatCurrency,
+            createdAt: transaction.createdAt.toISOString(),
         };
 
         const signature = this.generateSignature(payload);

@@ -65,17 +65,23 @@ export class CreateTransactionDto {
     @IsEnum(FiatCurrency, { message: 'Invalid currency' })
     fiatCurrency: FiatCurrency;
 
+    @ApiProperty({ example: 10 })
+    @IsNumber()
+    @Min(1)
+    @Max(1000)
+    fiatAmount: number;
+
     @ApiProperty({ type: () => CustomerDto })
     @ValidateNested()
     @Type(() => CustomerDto)
     customer: CustomerDto;
 
-    @ApiProperty({ type: [OrderItemDto] })
+    @ApiPropertyOptional({ type: [OrderItemDto] })
+    @IsOptional()
     @IsArray()
-    @ArrayMinSize(1)
     @ValidateNested({ each: true })
     @Type(() => OrderItemDto)
-    orderItems: OrderItemDto[];
+    orderItems?: OrderItemDto[];
 
     @ApiPropertyOptional({
         format: 'uri',
@@ -119,7 +125,7 @@ export class SaveTransactionDto {
     merchantId: string;
     customerId: string;
     fiatBaseAmount: number;
-    fiatConvertedAmount: number;
+    fiatAmount: number;
     fiatCurrency: FiatCurrency;
     merchantReference: string;
     expiresAt: Date;
@@ -138,7 +144,7 @@ export class SaveTransactionDto {
     ) {
         this.merchantId = merchantId;
         this.customerId = customer.id;
-        this.fiatConvertedAmount = fiatAmount;
+        this.fiatAmount = fiatAmount;
         this.fiatBaseAmount = fiatBaseAmount;
         this.fiatCurrency = request.fiatCurrency;
         this.merchantReference = request.requestId;
@@ -157,7 +163,7 @@ export class SaveTransactionDto {
             merchantReference: this.merchantReference,
             shortCode: [...Array(3)].map(() => String.fromCharCode(65 + Math.floor(Math.random() * 26))).join('') + '-' + Math.floor(100000 + Math.random() * 900000),
             fiatBaseAmount: this.fiatBaseAmount,
-            fiatConvertedAmount: this.fiatConvertedAmount,
+            fiatAmount: this.fiatAmount,
             fiatCurrency: this.fiatCurrency,
             orderItems: this.orderItems,
             expiresAt: this.expiresAt,

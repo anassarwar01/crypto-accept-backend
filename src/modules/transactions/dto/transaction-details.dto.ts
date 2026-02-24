@@ -27,7 +27,7 @@ export class FiatDetailsDto {
 
     constructor(transaction: Transaction) {
         this.fiatCurrency = transaction.fiatCurrency || '';
-        this.fiatAmount = transaction.fiatConvertedAmount || 0;
+        this.fiatAmount = transaction.fiatAmount || 0;
         // this.merchantReference = transaction.merchantReference;
         // this.status = transaction.status;
         // this.ref = transaction.systemReference;

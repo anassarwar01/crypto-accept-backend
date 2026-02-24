@@ -54,9 +54,9 @@ export class Transaction {
     precision: 10,
     scale: 2,
     nullable: true,
-    name: 'fiat_converted_amount',
+    name: 'fiat_amount',
   })
-  fiatConvertedAmount?: number;
+  fiatAmount?: number;
 
   @Column({
     type: 'enum',
