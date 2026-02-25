@@ -46,6 +46,7 @@ async function bootstrap() {
     .addServer(`${process.env.BACKEND_DOMAIN}`)
     .setDescription('API docs for my NestJS app')
     .setVersion('1.0')
+    .addServer('/backend')
     // .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'x-api-key')
     .build();
 
