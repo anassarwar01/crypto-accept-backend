@@ -132,10 +132,7 @@ export class TransactionsService {
       const result = await this.ipregistryService.checkAccess(ip, allowedCountries);
 
       if (!result.allowed) {
-        transaction.status = TransactionStatus.CANCELLED;
-        await this.transactionRepository.updateTransaction(transaction);
-        // Trigger callback for automated cancellation
-        this.callbackService.sendCallback(transaction);
+        await this.updateStatus(transaction, TransactionStatus.CANCELLED);
         throw new ForbiddenException(result.reason || 'Access denied based on your location or security settings.');
       }
     }
@@ -193,8 +190,6 @@ export class TransactionsService {
     // Get fallback wallet address from environment
     const fallbackWalletAddress = this.getWalletAddress(dto.cryptoCurrency);
 
-    // Update transaction status to PENDING
-    await this.updateStatus(transaction, TransactionStatus.PENDING);
 
     // Call to quantoz to initiate the transcation and add record in crytpotransaction table
     const flag = await this.featureFlagService.getFlag('quantoz_simulation');
@@ -246,6 +241,9 @@ export class TransactionsService {
     if (idToDelete && idToDelete !== transaction.cryptoTransaction?.id) {
       await this.cryptoTransactionsService.softDeleteById(idToDelete);
     }
+    // Update transaction status to PENDING at the very end to ensure callback has crypto details
+    await this.updateStatus(transaction, TransactionStatus.PENDING);
+
     return new TransactionSummaryResponseDto(
       transaction,
       dto.cryptoCurrency,
@@ -263,6 +261,10 @@ export class TransactionsService {
   async updateStatus(transaction: Transaction, status: TransactionStatus): Promise<TransactionResponseDto> {
     transaction.status = status;
     await this.transactionRepository.updateTransactionStatus(transaction.systemReference, status);
+
+    // Always reload latest active crypto transaction from DB to ensure data freshness for callback and broadcast
+    const activeCrypto = await this.cryptoTransactionsService.findActiveByTransactionId(transaction.id);
+    transaction.cryptoTransaction = activeCrypto as any;
 
     // Broadcast status update to all connected clients
     this.broadcastService.emitStatusUpdate(
@@ -331,6 +333,10 @@ export class TransactionsService {
           newStatus = TransactionStatus.CONFIRMING;
         } else if (cryptoStatus === CryptoStatus.sellCompleted || cryptoStatus === CryptoStatus.toPayout) {
           newStatus = TransactionStatus.SUCCEEDED;
+        } else if (cryptoStatus === CryptoStatus.blocked) {
+          newStatus = TransactionStatus.FAILED;
+        } else if ([CryptoStatus.deleted, CryptoStatus.sellCancelled, CryptoStatus.toCancel].includes(cryptoStatus)) {
+          newStatus = TransactionStatus.CANCELLED;
         } else {
           newStatus = TransactionStatus.CANCELLED;
         }

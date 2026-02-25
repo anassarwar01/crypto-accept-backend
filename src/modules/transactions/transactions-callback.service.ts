@@ -33,8 +33,8 @@ export class TransactionsCallbackService {
             status: transaction.status,
             fiatAmount: Number(transaction.fiatAmount || 0).toFixed(2),
             fiatCurrency: transaction.fiatCurrency,
-            cryptoAmount: transaction.fiatAmount,
-            cryptoCurrency: transaction.fiatCurrency,
+            cryptoAmount: transaction.cryptoTransaction?.amount ?? null,
+            cryptoCurrency: transaction.cryptoTransaction?.currency ?? null,
             createdAt: transaction.createdAt.toISOString(),
         };
 

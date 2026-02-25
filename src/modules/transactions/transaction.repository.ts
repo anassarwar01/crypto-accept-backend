@@ -43,20 +43,18 @@ export class TransactionRepository {
         });
     }
 
-    async expireOverdueTransactions(): Promise<number> {
+    async findOverdueTransactions(): Promise<Transaction[]> {
         const now = new Date();
-        const result = await this.repository
-            .createQueryBuilder()
-            .update(Transaction)
-            .set({ status: TransactionStatus.EXPIRED })
-            .where('expires_at < :now', { now })
-            .andWhere('status IN (:...statuses)', {
+        return this.repository
+            .createQueryBuilder('transaction')
+            .leftJoinAndSelect('transaction.customer', 'customer')
+            .where('transaction.expires_at < :now', { now })
+            .andWhere('transaction.status IN (:...statuses)', {
                 statuses: [TransactionStatus.INITIATED, TransactionStatus.PENDING],
             })
-            .execute();
-
-        return result.affected || 0;
+            .getMany();
     }
+
 
     async updateTransactionStatus(systemReference: string, status: TransactionStatus) {
         return this.repository.update({ systemReference }, { status });
