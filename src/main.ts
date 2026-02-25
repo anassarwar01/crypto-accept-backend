@@ -53,15 +53,15 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
 
   // Improved middleware to redirect /api to /api/ while preserving proxy subpaths
-  app.use('/api', (req, res, next) => {
-    // If the path is exactly /api (within this middleware context) and it doesn't end with a slash in originalUrl
-    if ((req.path === '/' || req.path === '') && !req.originalUrl.endsWith('/')) {
-      // Redirect to the same originalUrl but with a trailing slash
-      // This ensures the browser treats 'api/' as the base for relative asset requests
-      return res.redirect(301, req.originalUrl + '/');
-    }
-    next();
-  });
+  // app.use('/api', (req, res, next) => {
+  //   // If the path is exactly /api (within this middleware context) and it doesn't end with a slash in originalUrl
+  //   if ((req.path === '/' || req.path === '') && !req.originalUrl.endsWith('/')) {
+  //     // Redirect to the same originalUrl but with a trailing slash
+  //     // This ensures the browser treats 'api/' as the base for relative asset requests
+  //     return res.redirect(301, req.originalUrl + '/');
+  //   }
+  //   next();
+  // });
 
   SwaggerModule.setup('api', app, document, {
     swaggerOptions: {
