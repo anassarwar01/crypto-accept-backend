@@ -80,6 +80,8 @@ describe('TransactionsService', () => {
     findOneByTransactionId: jest.fn(),
     findActiveByTransactionId: jest.fn(),
     softDeleteById: jest.fn(),
+    findTranctionbyTransactionCode: jest.fn(),
+    updateTransactionByTransactionCode: jest.fn(),
   };
 
   const mockQuantozService = {
@@ -116,6 +118,8 @@ describe('TransactionsService', () => {
       ],
     }).compile();
 
+    jest.clearAllMocks();
+
     service = module.get<TransactionsService>(TransactionsService);
     transactionRepository = module.get(TransactionRepository);
     customersService = module.get(CustomersService);
@@ -130,6 +134,7 @@ describe('TransactionsService', () => {
     const createDto: CreateTransactionDto = {
       customer: { email: 'test@test.com', firstName: 'John', lastName: 'Doe' },
       fiatCurrency: FiatCurrency.USD,
+      fiatAmount: 100,
       orderItems: [{ name: 'Test Item', quantity: 1, price: 100 }],
       requestId: 'req_123',
       redirectUrl: 'http://redirect.com',
@@ -185,7 +190,14 @@ describe('TransactionsService', () => {
       } as any;
 
       const dto = { cryptoCurrency: 'ALGO' };
-      mockCryptoTransactionsService.findActiveByTransactionId.mockResolvedValue(null);
+      mockCryptoTransactionsService.findActiveByTransactionId
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          id: 'ctx_new',
+          amount: 1100,
+          currency: 'ALGO',
+        } as any);
+
       mockFeatureFlagService.getFlag.mockResolvedValue({ active: true });
       mockQuantozService.getEstimatedPrices.mockResolvedValue({ cryptoAmount: 1100 } as any);
       mockQuantozService.merchantSimulate.mockResolvedValue({
@@ -193,7 +205,9 @@ describe('TransactionsService', () => {
         merchantCustomerCode: 'cust_123'
       });
       mockCryptoTransactionsService.upsertRecord.mockResolvedValue({
+        id: 'ctx_new',
         amount: 1100,
+        currency: 'ALGO',
         walletAddress: 'wallet_abc'
       } as any);
 
@@ -207,6 +221,12 @@ describe('TransactionsService', () => {
         'ref_123',
         'trans_123'
       );
+
+      // Order of operations is important
+      const upsertCall = mockCryptoTransactionsService.upsertRecord.mock.invocationCallOrder[0];
+      const updateStatusCall = mockTransactionRepository.updateTransactionStatus.mock.invocationCallOrder[0];
+      expect(upsertCall).toBeLessThan(updateStatusCall);
+
       expect(mockCryptoTransactionsService.upsertRecord).toHaveBeenCalledWith(
         expect.objectContaining({
           amount: 1100,
@@ -245,6 +265,87 @@ describe('TransactionsService', () => {
         transaction.cryptoTransaction?.hash,
         transaction.cryptoTransaction?.currency,
       );
+    });
+
+    it('should reload active crypto transaction if missing before update', async () => {
+      const transaction = { id: 'trans_123', systemReference: 'ref_123', status: TransactionStatus.INITIATED, shortCode: 'SC123' } as any;
+      const activeCrypto = { id: 'ctx_active', amount: 0.1, currency: 'BTC', hash: 'hash123' } as any;
+
+      mockTransactionRepository.updateTransactionStatus.mockResolvedValue(undefined as any);
+      mockCryptoTransactionsService.findActiveByTransactionId.mockResolvedValue(activeCrypto);
+
+      await service.updateStatus(transaction, TransactionStatus.PENDING);
+
+      expect(mockCryptoTransactionsService.findActiveByTransactionId).toHaveBeenCalledWith('trans_123');
+      expect(transaction.cryptoTransaction).toEqual(activeCrypto);
+      expect(mockTransactionsCallbackService.sendCallback).toHaveBeenCalledWith(transaction);
+      expect(mockBroadcastService.emitStatusUpdate).toHaveBeenCalledWith(
+        'ref_123',
+        TransactionStatus.PENDING,
+        undefined,
+        'SC123',
+        'hash123',
+        'BTC',
+      );
+    });
+  });
+
+  describe('handleQuantozWebhook', () => {
+    it('should map blocked status to FAILED and trigger callback', async () => {
+      const payload = {
+        TransactionCode: 'tx_123',
+        Status: 'BLOCKED',
+        Merchant: { ReceiveCryptoTxId: 'hash_123', ReceivedCryptoAmount: 0.1 }
+      } as any;
+
+      const transaction = { id: 'trans_123', systemReference: 'ref_123', status: TransactionStatus.PENDING } as any;
+      const cryptoTransaction = { id: 'ctx_123', status: 'sellInitiated', transaction } as any;
+
+      mockCryptoTransactionsService.findTranctionbyTransactionCode.mockResolvedValue(cryptoTransaction);
+      mockCryptoTransactionsService.updateTransactionByTransactionCode.mockResolvedValue({
+        ...cryptoTransaction,
+        status: 'blocked'
+      });
+      mockQuantozService.mapStatus.mockReturnValue('blocked');
+
+      // Spy on updateStatus which we know calls sendCallback
+      const updateStatusSpy = jest.spyOn(service, 'updateStatus').mockImplementation(async (t, s) => {
+        t.status = s;
+        return { status: s } as any;
+      });
+
+      await service.handleQuantozWebhook(payload);
+
+      expect(updateStatusSpy).toHaveBeenCalledWith(transaction, TransactionStatus.FAILED);
+      updateStatusSpy.mockRestore();
+    });
+
+    it('should map SELLCANCELLED status to CANCELLED and trigger callback', async () => {
+      const payload = {
+        TransactionCode: 'tx_123',
+        Status: 'SELLCANCELLED',
+        Merchant: { ReceiveCryptoTxId: 'hash_123', ReceivedCryptoAmount: 0 }
+      } as any;
+
+      const transaction = { id: 'trans_123', systemReference: 'ref_123', status: TransactionStatus.PENDING } as any;
+      const cryptoTransaction = { id: 'ctx_123', status: 'sellInitiated', transaction } as any;
+
+      mockCryptoTransactionsService.findTranctionbyTransactionCode.mockResolvedValue(cryptoTransaction);
+      mockCryptoTransactionsService.updateTransactionByTransactionCode.mockResolvedValue({
+        ...cryptoTransaction,
+        status: 'sellCancelled'
+      });
+      mockQuantozService.mapStatus.mockReturnValue('sellCancelled');
+
+      const updateStatusSpy = jest.spyOn(service, 'updateStatus').mockImplementation(async (t, s) => {
+        t.status = s;
+        return { status: s } as any;
+      });
+
+      await service.handleQuantozWebhook(payload);
+
+      expect(updateStatusSpy).toHaveBeenCalledWith(transaction, TransactionStatus.CANCELLED);
+      updateStatusSpy.mockRestore();
     });
   });
 });
