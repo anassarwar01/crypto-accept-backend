@@ -53,22 +53,27 @@ async function bootstrap() {
   // Register only the models you want
   const document = SwaggerModule.createDocument(app, config);
 
-  // Improved middleware to redirect /api to /api/ while preserving proxy subpaths
+  // Robust middleware to redirect /api to /api/ while preserving proxy subpaths
   // app.use('/api', (req, res, next) => {
-  //   // If the path is exactly /api (within this middleware context) and it doesn't end with a slash in originalUrl
   //   if ((req.path === '/' || req.path === '') && !req.originalUrl.endsWith('/')) {
-  //     // Redirect to the same originalUrl but with a trailing slash
-  //     // This ensures the browser treats 'api/' as the base for relative asset requests
   //     return res.redirect(301, req.originalUrl + '/');
   //   }
   //   next();
   // });
 
-  SwaggerModule.setup('api', app, document, {
+  SwaggerModule.setup('backend/api', app, document, {
     swaggerOptions: {
       persistAuthorization: true,
+      // Force relative URL for the spec to help UI find it regardless of subpath
+      url: './api-json',
     },
     customSiteTitle: 'My API Docs',
+    // Use relative paths for assets to ensure they resolve correctly behind a proxy
+    customCssUrl: './swagger-ui.css',
+    customJs: [
+      './swagger-ui-bundle.js',
+      './swagger-ui-standalone-preset.js',
+    ],
   });
 
   const port = process.env.APP_PORT || 3000;
