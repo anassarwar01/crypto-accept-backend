@@ -9,6 +9,8 @@ import { IoAdapter } from '@nestjs/platform-socket.io';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  // Enable trust proxy for being behind reverse proxies (like Nginx, ngrok, etc.)
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
 
   // Global validation pipe
   app.useGlobalPipes(
@@ -28,8 +30,9 @@ async function bootstrap() {
   });
 
   // CORS
+  const isDevelopment = process.env.NODE_ENV === 'development';
   app.enableCors({
-    origin: '*',
+    origin: isDevelopment ? '*' : process.env.FRONTEND_DOMAIN?.split(',') || [],
     methods: 'GET,POST,PUT,DELETE,OPTIONS',
     credentials: true,
   });
@@ -48,10 +51,24 @@ async function bootstrap() {
 
   // Register only the models you want
   const document = SwaggerModule.createDocument(app, config);
-  // Keep schemas for reference resolution, but you can filter specific ones if needed
-  // delete document.components?.schemas; // removes the Schemas section
 
-  SwaggerModule.setup('api', app, document);
+  // Improved middleware to redirect /api to /api/ while preserving proxy subpaths
+  app.use('/api', (req, res, next) => {
+    // If the path is exactly /api (within this middleware context) and it doesn't end with a slash in originalUrl
+    if ((req.path === '/' || req.path === '') && !req.originalUrl.endsWith('/')) {
+      // Redirect to the same originalUrl but with a trailing slash
+      // This ensures the browser treats 'api/' as the base for relative asset requests
+      return res.redirect(301, req.originalUrl + '/');
+    }
+    next();
+  });
+
+  SwaggerModule.setup('api', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+    customSiteTitle: 'My API Docs',
+  });
 
   const port = process.env.APP_PORT || 3000;
 
