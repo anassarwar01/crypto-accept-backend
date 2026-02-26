@@ -15,6 +15,7 @@ import { TransactionsService } from './transactions.service';
 import { CryptoTransactionsService } from '../crypto-transactions/crypto-transactions.service';
 import { AuthMiddleware } from '../common/middleware/auth.middleware';
 import { Transaction } from './entities/transaction.entity';
+import { TransactionStatusHistory } from './entities/transaction-status-history.entity';
 import { CryptoTransaction } from '../crypto-transactions/entities/crypto-transaction.entity';
 import { TransactionRepository } from './transaction.repository';
 import { RefMiddleware } from '../common/middleware/ref.middleware';
@@ -38,7 +39,7 @@ import { RequestLogsModule } from '../request-logs/request-logs.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Transaction, CryptoTransaction]),
+    TypeOrmModule.forFeature([Transaction, CryptoTransaction, TransactionStatusHistory]),
     CustomersModule,
     UsersModule,
     CommonModule,

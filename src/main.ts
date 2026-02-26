@@ -9,6 +9,8 @@ import { IoAdapter } from '@nestjs/platform-socket.io';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  // Enable trust proxy for being behind reverse proxies (like Nginx, ngrok, etc.)
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
 
   // Global validation pipe
   app.useGlobalPipes(
@@ -28,8 +30,9 @@ async function bootstrap() {
   });
 
   // CORS
+  const isDevelopment = process.env.NODE_ENV === 'development';
   app.enableCors({
-    origin: '*',
+    origin: isDevelopment ? '*' : process.env.FRONTEND_DOMAIN?.split(',') || [],
     methods: 'GET,POST,PUT,DELETE,OPTIONS',
     credentials: true,
   });
@@ -43,15 +46,35 @@ async function bootstrap() {
     .addServer(`${process.env.BACKEND_DOMAIN}`)
     .setDescription('API docs for my NestJS app')
     .setVersion('1.0')
+    .addServer('/backend')
     // .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'x-api-key')
     .build();
 
   // Register only the models you want
   const document = SwaggerModule.createDocument(app, config);
-  // Keep schemas for reference resolution, but you can filter specific ones if needed
-  // delete document.components?.schemas; // removes the Schemas section
 
-  SwaggerModule.setup('api', app, document);
+  // Robust middleware to redirect /api to /api/ while preserving proxy subpaths
+  // app.use('/api', (req, res, next) => {
+  //   if ((req.path === '/' || req.path === '') && !req.originalUrl.endsWith('/')) {
+  //     return res.redirect(301, req.originalUrl + '/');
+  //   }
+  //   next();
+  // });
+
+  SwaggerModule.setup('backend/api', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+      // Force relative URL for the spec to help UI find it regardless of subpath
+      url: './api-json',
+    },
+    customSiteTitle: 'My API Docs',
+    // Use relative paths for assets to ensure they resolve correctly behind a proxy
+    customCssUrl: './swagger-ui.css',
+    customJs: [
+      './swagger-ui-bundle.js',
+      './swagger-ui-standalone-preset.js',
+    ],
+  });
 
   const port = process.env.APP_PORT || 3000;
 

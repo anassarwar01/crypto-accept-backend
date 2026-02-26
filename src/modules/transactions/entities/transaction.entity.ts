@@ -8,10 +8,12 @@ import {
   JoinColumn,
   Index,
   OneToOne,
+  OneToMany,
 } from 'typeorm';
 import { Merchant } from '@merchants/entities/merchant.entity';
 import { Customer } from '@customers/entities/customer.entity';
 import { CryptoTransaction } from '@crypto-transactions/entities/crypto-transaction.entity';
+import { TransactionStatusHistory } from './transaction-status-history.entity';
 import { FiatCurrency, TransactionStatus } from '@transactions/enums/transaction.enums';
 
 @Entity('transactions')
@@ -109,4 +111,7 @@ export class Transaction {
     eager: true,
   })
   cryptoTransaction: CryptoTransaction;
+
+  @OneToMany(() => TransactionStatusHistory, (history) => history.transaction)
+  statusHistory: TransactionStatusHistory[];
 }
