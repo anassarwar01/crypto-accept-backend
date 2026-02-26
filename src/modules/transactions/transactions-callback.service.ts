@@ -6,6 +6,9 @@ import { createHmac } from 'crypto';
 import { Transaction } from './entities/transaction.entity';
 import { ThirdPartyLogsService } from '../third-party-logs/third-party-logs.service';
 import { ThirdPartyLogType, HttpMethod } from '../third-party-logs/entities/third-party-log.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { TransactionStatusHistory } from './entities/transaction-status-history.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class TransactionsCallbackService {
@@ -16,6 +19,8 @@ export class TransactionsCallbackService {
         private readonly httpService: HttpService,
         private readonly configService: ConfigService,
         private readonly thirdPartyLogsService: ThirdPartyLogsService,
+        @InjectRepository(TransactionStatusHistory)
+        private readonly statusHistoryRepository: Repository<TransactionStatusHistory>,
     ) {
         this.signatureSecret = this.configService.get<string>('SOCKET_SIGNATURE_SECRET') || 'default-secret-change-me';
     }
@@ -37,6 +42,23 @@ export class TransactionsCallbackService {
             cryptoCurrency: transaction.cryptoTransaction?.currency ?? null,
             createdAt: transaction.createdAt.toISOString(),
         };
+
+        // Log transaction status
+        await this.statusHistoryRepository.save({
+            transactionId: transaction.id,
+            status: transaction.status,
+            metadata: {
+                requestId: transaction.merchantReference,
+                systemReference: transaction.systemReference,
+                orderId: transaction.shortCode,
+                status: transaction.status,
+                fiatAmount: Number(transaction.fiatAmount || 0).toFixed(2),
+                fiatCurrency: transaction.fiatCurrency,
+                cryptoAmount: transaction.cryptoTransaction?.amount ?? null,
+                cryptoCurrency: transaction.cryptoTransaction?.currency ?? null,
+                createdAt: transaction.createdAt.toISOString(),
+            }
+        });
 
         const signature = this.generateSignature(payload);
 
