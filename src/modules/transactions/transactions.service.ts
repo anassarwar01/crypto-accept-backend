@@ -330,7 +330,7 @@ export class TransactionsService {
         if (cryptoStatus === CryptoStatus.sellInitiated) {
           newStatus = TransactionStatus.PENDING;
         } else if (cryptoStatus === CryptoStatus.confirming) {
-          if (payload.Confirmations?.Count == 1) {
+          if (payload.Confirmations?.Count && payload.Confirmations?.Count >= 1) {
             newStatus = TransactionStatus.SUCCEEDED;
           }
           else {
