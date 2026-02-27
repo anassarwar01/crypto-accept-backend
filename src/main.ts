@@ -26,7 +26,7 @@ async function bootstrap() {
 
   // Global prefix
   app.setGlobalPrefix('api/v1', {
-    exclude: ['webhooks/(.*)'],
+    exclude: ['webhooks/(.*)', 'checkout', 'checkout-json'],
   });
 
   // CORS
@@ -67,20 +67,20 @@ async function bootstrap() {
   //   next();
   // });
 
-  SwaggerModule.setup('backend/api', app, document, {
-    swaggerOptions: {
-      persistAuthorization: true,
-      // Force relative URL for the spec to help UI find it regardless of subpath
-      url: './api-json',
-    },
-    customSiteTitle: 'My API Docs',
-    // Use relative paths for assets to ensure they resolve correctly behind a proxy
-    customCssUrl: './swagger-ui.css',
-    customJs: [
-      './swagger-ui-bundle.js',
-      './swagger-ui-standalone-preset.js',
-    ],
-  });
+  // SwaggerModule.setup('backend/api', app, document, {
+  //   swaggerOptions: {
+  //     persistAuthorization: true,
+  //     // Force relative URL for the spec to help UI find it regardless of subpath
+  //     url: './api-json',
+  //   },
+  //   customSiteTitle: 'My API Docs',
+  //   // Use relative paths for assets to ensure they resolve correctly behind a proxy
+  //   customCssUrl: './swagger-ui.css',
+  //   customJs: [
+  //     './swagger-ui-bundle.js',
+  //     './swagger-ui-standalone-preset.js',
+  //   ],
+  // });
 
   const port = process.env.APP_PORT || 3000;
 
