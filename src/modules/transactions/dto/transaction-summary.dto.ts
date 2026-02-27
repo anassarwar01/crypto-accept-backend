@@ -74,6 +74,9 @@ export class TransactionSummaryResponseDto {
     @ApiProperty()
     walletAddress: string;
 
+    @ApiProperty()
+    transactionCode: string;
+
     @ApiProperty({
         example: 'abc123signature...',
         description: 'The signature required for Socket.IO subscription',
@@ -105,8 +108,8 @@ export class TransactionSummaryResponseDto {
         this.fee = '' + cryptoPrice?.estimatedPrices?.estimatedNetworkFastFee || '0';
         this.walletAddress = transaction.cryptoTransaction?.walletAddress || fallbackWalletAddress;
         this.signature = signature;
+        this.transactionCode = transaction.cryptoTransaction?.transactionCode || '';
         this.transactionTime = transactionExpireMinutes;
-
         this.orderItems = transaction.orderItems?.map(item => ({
             name: item.name,
             quantity: item.quantity,
