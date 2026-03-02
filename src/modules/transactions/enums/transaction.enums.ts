@@ -213,5 +213,10 @@ export enum TransactionStatus {
     FAILED = 'transfer.failed',
     CANCELLED = 'transfer.cancelled',
     EXPIRED = 'transfer.expired',
+    ON_HOLD = 'transfer.onHold'
+}
+export enum TransactionPlatform {
+    CHECKOUT = 'checkout',
+    S2S = 's2s',
 }
 

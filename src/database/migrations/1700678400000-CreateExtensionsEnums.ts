@@ -15,6 +15,7 @@ export class CreateExtensionsEnums1700678400000 implements MigrationInterface {
         'transfer.initiated',
         'transfer.pending',
         'transfer.confirming',
+        'transfer.onHold',
         'transfer.succeeded',
         'transfer.failed',
         'transfer.cancelled',

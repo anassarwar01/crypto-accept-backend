@@ -347,6 +347,8 @@ export class TransactionsService {
           newStatus = TransactionStatus.FAILED;
         } else if ([CryptoStatus.deleted, CryptoStatus.sellCancelled, CryptoStatus.toCancel].includes(cryptoStatus)) {
           newStatus = TransactionStatus.CANCELLED;
+        } else if (cryptoStatus === CryptoStatus.payoutOnHold) {
+          newStatus = TransactionStatus.ON_HOLD;
         } else {
           newStatus = TransactionStatus.CANCELLED;
         }
