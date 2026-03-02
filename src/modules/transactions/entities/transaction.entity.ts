@@ -14,7 +14,7 @@ import { Merchant } from '@merchants/entities/merchant.entity';
 import { Customer } from '@customers/entities/customer.entity';
 import { CryptoTransaction } from '@crypto-transactions/entities/crypto-transaction.entity';
 import { TransactionStatusHistory } from './transaction-status-history.entity';
-import { FiatCurrency, TransactionStatus } from '@transactions/enums/transaction.enums';
+import { FiatCurrency, TransactionStatus, TransactionPlatform } from '@transactions/enums/transaction.enums';
 
 @Entity('transactions')
 export class Transaction {
@@ -75,6 +75,13 @@ export class Transaction {
     name: 'status',
   })
   status: TransactionStatus;
+
+  @Column({
+    type: 'enum',
+    enum: TransactionPlatform,
+    name: 'platform',
+  })
+  platform: TransactionPlatform;
 
   @Column({ type: 'timestamp', nullable: true, name: 'expires_at' })
   expiresAt?: Date;

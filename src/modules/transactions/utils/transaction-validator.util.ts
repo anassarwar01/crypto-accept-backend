@@ -33,6 +33,8 @@ export function validateTransactionState(transaction: Transaction, checkStatus =
                     throw new RedirectException(transaction.redirectUrl);
                 }
                 break;
+            case TransactionStatus.ON_HOLD:
+                throw new BadRequestException(MESSAGES.TRANSACTION_ON_HOLD);
             case TransactionStatus.EXPIRED:
                 throw new BadRequestException(MESSAGES.TRANSACTION_EXPIRED);
             case TransactionStatus.SUCCEEDED:
