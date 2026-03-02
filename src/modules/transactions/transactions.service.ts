@@ -145,113 +145,118 @@ export class TransactionsService {
     transaction: Transaction,
     dto: TransactionSummaryDto,
   ): Promise<TransactionSummaryResponseDto> {
+    try {
+      // Generate signature for the connection of websocket
+      const signature = generateSignature(encodeReference(transaction.systemReference), this.signatureSecret);
 
-    // Generate signature for the connection of websocket
-    const signature = generateSignature(encodeReference(transaction.systemReference), this.signatureSecret);
+      // Call to quantoz crypto price endpoint
+      const cryptoPrice = await this.quantozService.getEstimatedPrices(
+        transaction.fiatCurrency,
+        dto.cryptoCurrency,
+        transaction.id,
+      );
 
-    // Call to quantoz crypto price endpoint
-    const cryptoPrice = await this.quantozService.getEstimatedPrices(
-      transaction.fiatCurrency,
-      dto.cryptoCurrency,
-      transaction.id,
-    );
+      if (cryptoPrice === undefined) {
+        throw new BadRequestException('Could not get estimated prices from Quantoz');
+      }
 
-    if (cryptoPrice === undefined) {
-      throw new BadRequestException('Could not get estimated prices from Quantoz');
-    }
+      // Check for an active crypto transaction
+      const activeCryptoTransaction = await this.cryptoTransactionsService.findActiveByTransactionId(transaction.id);
+      let idToDelete: string | null = null;
 
-    // Check for an active crypto transaction
-    const activeCryptoTransaction = await this.cryptoTransactionsService.findActiveByTransactionId(transaction.id);
-    let idToDelete: string | null = null;
+      if (activeCryptoTransaction) {
+        if (activeCryptoTransaction.currency === dto.cryptoCurrency) {
+          // If same currency, return existing one
+          const transactionExpireMinutes = await this.systemSettingsService.getNumber('transaction_expire_time') ?? 5;
+          const fallbackWalletAddress = this.getWalletAddress(dto.cryptoCurrency);
 
-    if (activeCryptoTransaction) {
-      if (activeCryptoTransaction.currency === dto.cryptoCurrency) {
-        // If same currency, return existing one
-        const transactionExpireMinutes = await this.systemSettingsService.getNumber('transaction_expire_time') ?? 5;
-        const fallbackWalletAddress = this.getWalletAddress(dto.cryptoCurrency);
+          return new TransactionSummaryResponseDto(
+            transaction,
+            activeCryptoTransaction.currency || '',
+            signature,
+            cryptoPrice,
+            transactionExpireMinutes,
+            fallbackWalletAddress,
+          );
+        } else {
+          // Record the ID for deferred deletion
+          idToDelete = activeCryptoTransaction.id;
+        }
+      }
 
-        return new TransactionSummaryResponseDto(
-          transaction,
-          activeCryptoTransaction.currency || '',
-          signature,
-          cryptoPrice,
-          transactionExpireMinutes,
-          fallbackWalletAddress,
+      // Get transaction expire time from system settings
+      const transactionExpireMinutes = await this.systemSettingsService.getNumber('transaction_expire_time') ?? 5;
+
+      // Get fallback wallet address from environment
+      const fallbackWalletAddress = this.getWalletAddress(dto.cryptoCurrency);
+
+
+      // Call to quantoz to initiate the transcation and add record in crytpotransaction table
+      const flag = await this.featureFlagService.getFlag('quantoz_simulation');
+
+      if (flag && flag.active) {
+
+        // Call to quantoz to simulate the transcation
+        const simulationResult = await this.quantozService.merchantSimulate(
+          transaction.fiatBaseAmount || 0,
+          dto.cryptoCurrency,
+          transaction.customer?.email || '',
+          transaction.systemReference,
+          transaction.id,
         );
-      } else {
-        // Record the ID for deferred deletion
-        idToDelete = activeCryptoTransaction.id;
+        const cryptoAmount = simulationResult?.expectedCryptoAmount;
+
+        if (cryptoAmount === undefined) {
+          throw new BadRequestException('Could not simulate transaction with Quantoz');
+        }
+
+        transaction.cryptoTransaction = await this.cryptoTransactionsService.upsertRecord(
+          new SaveCryptoTransactionDto(transaction, dto.cryptoCurrency, simulationResult, cryptoPrice, this.quantozService));
+
       }
-    }
+      else {
 
-    // Get transaction expire time from system settings
-    const transactionExpireMinutes = await this.systemSettingsService.getNumber('transaction_expire_time') ?? 5;
+        // Call to quantoz merchant send endpoint
+        const sendResult = await this.quantozService.merchantSend(
+          transaction.fiatBaseAmount || 0,
+          dto.cryptoCurrency,
+          transaction.customer?.email || '',
+          transaction.systemReference,
+          transaction.id,
+        );
+        const cryptoAmount = sendResult?.expectedCryptoAmount;
 
-    // Get fallback wallet address from environment
-    const fallbackWalletAddress = this.getWalletAddress(dto.cryptoCurrency);
+        if (cryptoAmount === undefined) {
+          throw new BadRequestException('Could not perform transaction with Quantoz');
+        }
 
+        // Save crypto transaction in database
+        transaction.cryptoTransaction = await this.cryptoTransactionsService.upsertRecord(
+          new SaveCryptoTransactionDto(transaction, dto.cryptoCurrency, sendResult, cryptoPrice, this.quantozService));
 
-    // Call to quantoz to initiate the transcation and add record in crytpotransaction table
-    const flag = await this.featureFlagService.getFlag('quantoz_simulation');
+      }
 
-    if (flag && flag.active) {
+      // DEFERRED DELETION: Only delete the previous choice if we successfully established the new one
+      // AND it's not the same ID we just created/updated (safety check)
+      if (idToDelete && idToDelete !== transaction.cryptoTransaction?.id) {
+        await this.cryptoTransactionsService.softDeleteById(idToDelete);
+      }
+      // Update transaction status to PENDING at the very end to ensure callback has crypto details
+      await this.updateStatus(transaction, TransactionStatus.PENDING);
 
-      // Call to quantoz to simulate the transcation
-      const simulationResult = await this.quantozService.merchantSimulate(
-        transaction.fiatBaseAmount || 0,
+      return new TransactionSummaryResponseDto(
+        transaction,
         dto.cryptoCurrency,
-        transaction.customer?.email || '',
-        transaction.systemReference,
-        transaction.id,
+        signature,
+        cryptoPrice,
+        transactionExpireMinutes,
+        fallbackWalletAddress,
       );
-      const cryptoAmount = simulationResult?.expectedCryptoAmount;
-
-      if (cryptoAmount === undefined) {
-        throw new BadRequestException('Could not simulate transaction with Quantoz');
-      }
-
-      transaction.cryptoTransaction = await this.cryptoTransactionsService.upsertRecord(
-        new SaveCryptoTransactionDto(transaction, dto.cryptoCurrency, simulationResult, cryptoPrice, this.quantozService));
-
+    } catch (error) {
+      // If any error occurs during the Quantoz flow or processing, mark transaction as FAILED
+      await this.updateStatus(transaction, TransactionStatus.FAILED);
+      throw error;
     }
-    else {
-
-      // Call to quantoz merchant send endpoint
-      const sendResult = await this.quantozService.merchantSend(
-        transaction.fiatBaseAmount || 0,
-        dto.cryptoCurrency,
-        transaction.customer?.email || '',
-        transaction.systemReference,
-        transaction.id,
-      );
-      const cryptoAmount = sendResult?.expectedCryptoAmount;
-
-      if (cryptoAmount === undefined) {
-        throw new BadRequestException('Could not perform transaction with Quantoz');
-      }
-
-      // Save crypto transaction in database
-      transaction.cryptoTransaction = await this.cryptoTransactionsService.upsertRecord(
-        new SaveCryptoTransactionDto(transaction, dto.cryptoCurrency, sendResult, cryptoPrice, this.quantozService));
-
-    }
-
-    // DEFERRED DELETION: Only delete the previous choice if we successfully established the new one
-    // AND it's not the same ID we just created/updated (safety check)
-    if (idToDelete && idToDelete !== transaction.cryptoTransaction?.id) {
-      await this.cryptoTransactionsService.softDeleteById(idToDelete);
-    }
-    // Update transaction status to PENDING at the very end to ensure callback has crypto details
-    await this.updateStatus(transaction, TransactionStatus.PENDING);
-
-    return new TransactionSummaryResponseDto(
-      transaction,
-      dto.cryptoCurrency,
-      signature,
-      cryptoPrice,
-      transactionExpireMinutes,
-      fallbackWalletAddress,
-    );
   }
 
   async getTransaction(transaction: Transaction): Promise<TransactionResponseDto> {
@@ -342,6 +347,8 @@ export class TransactionsService {
           newStatus = TransactionStatus.FAILED;
         } else if ([CryptoStatus.deleted, CryptoStatus.sellCancelled, CryptoStatus.toCancel].includes(cryptoStatus)) {
           newStatus = TransactionStatus.CANCELLED;
+        } else if (cryptoStatus === CryptoStatus.payoutOnHold) {
+          newStatus = TransactionStatus.ON_HOLD;
         } else {
           newStatus = TransactionStatus.CANCELLED;
         }

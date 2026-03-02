@@ -26,7 +26,7 @@ async function bootstrap() {
 
   // Global prefix
   app.setGlobalPrefix('api/v1', {
-    exclude: ['webhooks/(.*)'],
+    exclude: ['webhooks/(.*)', 'checkout', 'checkout-json'],
   });
 
   // CORS
@@ -42,16 +42,22 @@ async function bootstrap() {
 
   // Swagger configuration
   const config = new DocumentBuilder()
-    .setTitle('My API')
+    .setTitle('Checkout API Documentation')
     .addServer(`${process.env.BACKEND_DOMAIN}`)
-    .setDescription('API docs for my NestJS app')
+    .setDescription('API docs for Checkout')
     .setVersion('1.0')
-    .addServer('/backend')
     // .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'x-api-key')
     .build();
 
   // Register only the models you want
   const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('checkout', app, document, {
+    customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui.min.css',
+    customJs: [
+      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-bundle.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-standalone-preset.min.js',
+    ],
+  });
 
   // Robust middleware to redirect /api to /api/ while preserving proxy subpaths
   // app.use('/api', (req, res, next) => {
@@ -61,20 +67,20 @@ async function bootstrap() {
   //   next();
   // });
 
-  SwaggerModule.setup('backend/api', app, document, {
-    swaggerOptions: {
-      persistAuthorization: true,
-      // Force relative URL for the spec to help UI find it regardless of subpath
-      url: './api-json',
-    },
-    customSiteTitle: 'My API Docs',
-    // Use relative paths for assets to ensure they resolve correctly behind a proxy
-    customCssUrl: './swagger-ui.css',
-    customJs: [
-      './swagger-ui-bundle.js',
-      './swagger-ui-standalone-preset.js',
-    ],
-  });
+  // SwaggerModule.setup('backend/api', app, document, {
+  //   swaggerOptions: {
+  //     persistAuthorization: true,
+  //     // Force relative URL for the spec to help UI find it regardless of subpath
+  //     url: './api-json',
+  //   },
+  //   customSiteTitle: 'My API Docs',
+  //   // Use relative paths for assets to ensure they resolve correctly behind a proxy
+  //   customCssUrl: './swagger-ui.css',
+  //   customJs: [
+  //     './swagger-ui-bundle.js',
+  //     './swagger-ui-standalone-preset.js',
+  //   ],
+  // });
 
   const port = process.env.APP_PORT || 3000;
 
