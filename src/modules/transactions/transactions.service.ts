@@ -446,9 +446,11 @@ export class TransactionsService {
     const flag = await this.featureFlagService.getFlag('quantoz_simulation');
     let quantozResult;
 
+    const amountToQuantoz = Math.round(Number(transaction.fiatAmount || 0) * 100) / 100;
+
     if (flag && flag.active) {
       quantozResult = await this.quantozService.merchantSimulate(
-        transaction.fiatBaseAmount || 0,
+        amountToQuantoz,
         request.cryptoCurrency,
         transaction.customer?.email || '',
         transaction.systemReference,
@@ -456,7 +458,7 @@ export class TransactionsService {
       );
     } else {
       quantozResult = await this.quantozService.merchantSend(
-        transaction.fiatBaseAmount || 0,
+        amountToQuantoz,
         request.cryptoCurrency,
         transaction.customer?.email || '',
         transaction.systemReference,
