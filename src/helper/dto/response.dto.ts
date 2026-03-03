@@ -1,10 +1,22 @@
+import { ApiProperty } from '@nestjs/swagger';
+
 export class ApiResponse<T> {
+  @ApiProperty({ example: 200 })
   code: number;
+
+  @ApiProperty({ example: 'success' })
   status: string;
+
+  @ApiProperty({ example: 'Request successful' })
   message: string;
+
+  @ApiProperty()
   data?: T;
+
+  @ApiProperty({ required: false })
   redirectUrl?: string;
-  timestamp: string;
+
+  // timestamp: string;
 
   constructor(statusCode: number, message: string, data?: T, redirectUrl?: string) {
     this.code = statusCode;

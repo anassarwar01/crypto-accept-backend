@@ -24,6 +24,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { TransactionsModule } from './modules/transactions/transactions.module';
+import { AcceptTransactionsModule } from './modules/transactions/S2S/accept-transactions.module';
 import helmet from 'helmet';
 
 async function bootstrap() {
@@ -180,7 +181,7 @@ async function bootstrap() {
       .build();
 
     const s2sDocument = SwaggerModule.createDocument(app, s2sConfig, {
-      include: [TransactionsModule],
+      include: [AcceptTransactionsModule],
     });
 
     /**
@@ -195,12 +196,6 @@ async function bootstrap() {
 
     s2sDocument.paths = filteredPaths;
 
-    /**
-     * Remove global schemas to simplify S2S documentation
-     */
-    if (s2sDocument.components) {
-      delete s2sDocument.components.schemas;
-    }
 
     SwaggerModule.setup('s2s', app, s2sDocument);
   }
