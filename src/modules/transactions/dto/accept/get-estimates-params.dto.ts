@@ -16,7 +16,7 @@ export class GetEstimatesParamsDto {
         description: 'Crypto currency',
         example: 'BTC'
     })
-    @IsEnum(CryptoCurrency, { message: 'Invalid cryptoCurrency' })
+    @IsEnum(CryptoCurrency, { message: 'cryptoCurrency must be one of the following values: BTC, ETH, LTC, USDC-ETH' })
     @IsNotIn(['XLM', 'ALGO'], { message: 'The selected crypto currency is not supported' })
     cryptoCurrency: CryptoCurrency;
 }
