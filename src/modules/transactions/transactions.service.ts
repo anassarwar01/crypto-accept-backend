@@ -446,7 +446,7 @@ export class TransactionsService {
     const flag = await this.featureFlagService.getFlag('quantoz_simulation');
     let quantozResult;
 
-    const amountToQuantoz = Math.round(Number(transaction.fiatAmount || 0) * 100) / 100;
+    const amountToQuantoz = Math.round(Number(transaction.fiatBaseAmount || 0) * 100) / 100;
 
     if (flag && flag.active) {
       quantozResult = await this.quantozService.merchantSimulate(
