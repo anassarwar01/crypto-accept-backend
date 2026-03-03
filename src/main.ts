@@ -169,8 +169,8 @@ async function bootstrap() {
      * Only includes TransactionsModule
      */
     const s2sConfig = new DocumentBuilder()
-      .setTitle('S2S API Documentation')
-      .setDescription('Server-to-Server Transaction APIs')
+      .setTitle('Merchant Transaction API Documentation')
+      .setDescription('This is a pre-release BETA version of the API for the purposes of early visibility of merchants who are starting integration work.')
       .setVersion('1.0')
       .addApiKey(
         { type: 'apiKey', name: 'x-api-key', in: 'header' },
