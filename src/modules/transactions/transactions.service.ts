@@ -480,11 +480,11 @@ export class TransactionsService {
     // 6. Map to response DTO
     const responseData: AcceptTransactionResponseDataDto = {
       requestId: transaction.merchantReference,
-      fiatAmount: Number(transaction.fiatAmount).toFixed(2),
+      fiatAmount: Number(transaction.fiatAmount),
       fiatCurrency: transaction.fiatCurrency || '',
       cryptoCurrency: request.cryptoCurrency,
-      cryptoAmount: String(transaction.cryptoTransaction.amount),
-      cryptoProcessingFee: String(cryptoPrice.estimatedPrices?.estimatedNetworkFastFee || 0),
+      cryptoAmount: Number(transaction.cryptoTransaction.amount),
+      cryptoProcessingFee: Number(cryptoPrice.estimatedPrices?.estimatedNetworkFastFee || 0),
       status: transaction.status,
       toBlockchainAddress: transaction.cryptoTransaction.walletAddress,
     };

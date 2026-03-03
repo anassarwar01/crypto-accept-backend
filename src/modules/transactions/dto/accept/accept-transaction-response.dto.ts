@@ -4,8 +4,8 @@ export class AcceptTransactionResponseDataDto {
     @ApiProperty({ example: '89156124691' })
     requestId: string;
 
-    @ApiProperty({ example: '1.00' })
-    fiatAmount: string;
+    @ApiProperty({ example: 1.00 })
+    fiatAmount: number;
 
     @ApiProperty({ example: 'USD' })
     fiatCurrency: string;
@@ -13,11 +13,11 @@ export class AcceptTransactionResponseDataDto {
     @ApiProperty({ example: 'ALGO' })
     cryptoCurrency: string;
 
-    @ApiProperty({ example: '12.32409382' })
-    cryptoAmount: string;
+    @ApiProperty({ example: 12.32409382 })
+    cryptoAmount: number;
 
-    @ApiProperty({ example: '0.00184' })
-    cryptoProcessingFee: string;
+    @ApiProperty({ example: 0.00184 })
+    cryptoProcessingFee: number;
 
     @ApiProperty({ example: 'transfer.initiated' })
     status: string;

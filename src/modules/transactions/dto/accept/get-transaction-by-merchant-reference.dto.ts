@@ -28,10 +28,10 @@ export class GetTransactionByMerchantReferenceResponseDTO {
     status: string;
 
     @ApiProperty({
-        example: '100',
+        example: 100.00,
         description: 'The fiat amount of the transaction',
     })
-    fiatAmount: string;
+    fiatAmount: number;
 
     @ApiProperty({
         example: 'USD',
@@ -40,10 +40,10 @@ export class GetTransactionByMerchantReferenceResponseDTO {
     fiatCurrency: string;
 
     @ApiProperty({
-        example: '0.001',
+        example: 0.001,
         description: 'The crypto amount of the transaction',
     })
-    cryptoAmount: string;
+    cryptoAmount: number;
 
     @ApiProperty({
         example: 'BTC',
@@ -74,9 +74,9 @@ export class GetTransactionByMerchantReferenceResponseDTO {
         this.systemReference = transaction.systemReference;
         this.orderId = transaction.shortCode;
         this.status = transaction.status;
-        this.fiatAmount = Number(transaction.fiatAmount || 0).toFixed(2);
+        this.fiatAmount = Number(transaction.fiatAmount || 0);
         this.fiatCurrency = transaction.fiatCurrency || '';
-        this.cryptoAmount = transaction.cryptoTransaction?.amount ? String(transaction.cryptoTransaction.amount) : '';
+        this.cryptoAmount = transaction.cryptoTransaction?.amount ? Number(transaction.cryptoTransaction.amount) : 0;
         this.cryptoCurrency = transaction.cryptoTransaction?.currency ? String(transaction.cryptoTransaction.currency) : '';
         this.createdAt = transaction.createdAt.toISOString();
         this.toBlockchainAddress = transaction.cryptoTransaction?.walletAddress || '';
