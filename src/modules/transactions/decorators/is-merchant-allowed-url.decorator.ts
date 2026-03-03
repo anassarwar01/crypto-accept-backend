@@ -66,8 +66,7 @@ export class IsMerchantAllowedUrlConstraint
     }
 
     defaultMessage(args: ValidationArguments) {
-        const type = args.constraints[0];
-        return `${type} URL $value is not allowed by merchant settings.`;
+        return `${args.property} $value is not allowed.`;
     }
 }
 

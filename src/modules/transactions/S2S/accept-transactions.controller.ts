@@ -1,8 +1,10 @@
-import { Controller, Get, Param, Req, UseInterceptors } from '@nestjs/common';
-import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Req, UseInterceptors } from '@nestjs/common';
+import { ApiBody, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { TransactionsService } from '../transactions.service';
 import { InjectMerchantIdInterceptor } from '../interceptors/inject-merchant-id.interceptor';
 import { GetEstimatesParamsDto } from '../dto/accept/get-estimates-params.dto';
+import { CreateAcceptTransactionDto } from '../dto/accept/create-accept-transaction.dto';
+import { AcceptTransactionResponseDataDto } from '../dto/accept/accept-transaction-response.dto';
 
 @ApiTags('Get Transactions')
 @Controller('accept')
@@ -26,5 +28,16 @@ export class AcceptTransactionsController {
     @ApiOperation({ summary: 'Get transaction details by requestId' })
     async getByRequestId(@Param('requestId') requestId: string, @Req() request: any) {
         return this.transactionsService.getDetailsByMerchantReference(requestId, request.merchantId);
+    }
+
+    // Create transaction and get crypto details 
+    @Post('transactions')
+    @HttpCode(HttpStatus.OK)
+    @UseInterceptors(InjectMerchantIdInterceptor)
+    @ApiHeader({ name: 'x-api-key', required: true })
+    @ApiOperation({ summary: 'Create transaction and get crypto details' })
+    @ApiBody({ type: CreateAcceptTransactionDto })
+    async createAcceptTransaction(@Body() dto: CreateAcceptTransactionDto, @Req() request: any): Promise<AcceptTransactionResponseDataDto> {
+        return this.transactionsService.createAcceptTransaction(dto, request.merchantId);
     }
 }

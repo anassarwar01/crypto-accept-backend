@@ -19,7 +19,7 @@ import { TransactionResponseDto } from './dto/transaction.dto';
 import { CryptoTransactionsService } from '../crypto-transactions/crypto-transactions.service';
 import { FeatureFlagService } from '../feature-flags/feature-flag.service';
 import { IpregistryService } from '../external-services/ipregistry/ipregistry.service';
-import { TransactionStatus } from './enums/transaction.enums';
+import { TransactionStatus, TransactionPlatform } from './enums/transaction.enums';
 import { CryptoCurrency, CryptoStatus } from '../crypto-transactions/enums/crypto-transaction.enums';
 import { TransactionsBroadcastService } from './transactions-broadcast.service';
 import { TransactionsCallbackService } from './transactions-callback.service';
@@ -34,6 +34,9 @@ import { validateTransactionState } from './utils/transaction-validator.util';
 import { ThirdPartyLogsService } from '../third-party-logs/third-party-logs.service';
 import { ThirdPartyLogType, HttpMethod } from '../third-party-logs/entities/third-party-log.entity';
 import { GetTransactionByMerchantReferenceResponseDTO } from './dto/accept/get-transaction-by-merchant-reference.dto';
+import { CreateAcceptTransactionDto } from './dto/accept/create-accept-transaction.dto';
+import { AcceptTransactionResponseDataDto } from './dto/accept/accept-transaction-response.dto';
+import { SaveAcceptTransactionDto } from './dto/accept/save-transaction.dto';
 
 @Injectable()
 export class TransactionsService {
@@ -377,6 +380,102 @@ export class TransactionsService {
 
   async getEstimates(fiatCurrency: string, cryptoCurrency: string) {
     return this.quantozService.getEstimatedPrices(fiatCurrency, cryptoCurrency);
+  }
+
+  async createAcceptTransaction(request: CreateAcceptTransactionDto, merchantId: string): Promise<AcceptTransactionResponseDataDto> {
+    // 1. Get or create customer
+    const customer = await this.customerService.getCustomerByEmail(
+      new GetCustomerDTO(request as any),
+    );
+
+    let customerEntity: Customer;
+    if (!customer) {
+      customerEntity = await this.customerService.createCustomer(
+        new CreateCustomerDTO(request as any),
+      );
+    } else {
+      customerEntity = customer;
+    }
+
+    // 2. Link customer to merchant
+    await this.merchantCustomersService.linkCustomer(merchantId, customerEntity.id);
+
+    // 3. Convert fiat amounts
+    const fiatAmount = Number(request.fiatAmount);
+    let fiatBaseAmount = fiatAmount;
+    const baseCurrency = (await this.systemSettingsService.getValue('base_currency')) || this.configService.get<string>('base_currency') || 'EUR';
+
+    if (request.fiatCurrency !== baseCurrency) {
+      const rate = await this.conversionRatesService.getRate(baseCurrency, request.fiatCurrency);
+      if (rate && rate > 0) {
+        fiatBaseAmount = fiatAmount / rate;
+      }
+    }
+
+    // 4. Create transaction
+    let expireMinutes = await this.systemSettingsService.getNumber('transaction_expire_time') ?? 5;
+
+    const saveDto = new SaveAcceptTransactionDto(request, customerEntity, merchantId, fiatBaseAmount, fiatAmount, expireMinutes);
+
+    const transaction = await this.transactionRepository.createTransaction(saveDto.toEntity());
+
+    // 5. Quantoz Integration (equivalent to getSummary logic)
+    const cryptoPrice = await this.quantozService.getEstimatedPrices(
+      transaction.fiatCurrency,
+      request.cryptoCurrency,
+      transaction.id,
+    );
+
+    if (cryptoPrice === undefined) {
+      throw new BadRequestException('Could not get estimated prices from Quantoz');
+    }
+
+    const flag = await this.featureFlagService.getFlag('quantoz_simulation');
+    let quantozResult;
+
+    if (flag && flag.active) {
+      quantozResult = await this.quantozService.merchantSimulate(
+        transaction.fiatBaseAmount || 0,
+        request.cryptoCurrency,
+        transaction.customer?.email || '',
+        transaction.systemReference,
+        transaction.id,
+      );
+    } else {
+      quantozResult = await this.quantozService.merchantSend(
+        transaction.fiatBaseAmount || 0,
+        request.cryptoCurrency,
+        transaction.customer?.email || '',
+        transaction.systemReference,
+        transaction.id,
+      );
+    }
+
+    if (!quantozResult || quantozResult.expectedCryptoAmount === undefined) {
+      await this.updateStatus(transaction, TransactionStatus.FAILED);
+      throw new BadRequestException('Could not initiate transaction with Quantoz');
+    }
+
+    // Save crypto transaction
+    transaction.cryptoTransaction = await this.cryptoTransactionsService.upsertRecord(
+      new SaveCryptoTransactionDto(transaction, request.cryptoCurrency, quantozResult, cryptoPrice, this.quantozService)
+    );
+
+    // Update status to PENDING
+    await this.updateStatus(transaction, TransactionStatus.PENDING);
+
+    // 6. Map to response DTO
+    const responseData: AcceptTransactionResponseDataDto = {
+      fiatAmount: Number(transaction.fiatAmount).toFixed(2),
+      fiatCurrency: transaction.fiatCurrency || '',
+      cryptoCurrency: request.cryptoCurrency,
+      cryptoAmount: String(transaction.cryptoTransaction.amount),
+      cryptoProcessingFee: String(cryptoPrice.estimatedPrices?.estimatedNetworkFastFee || 0),
+      status: transaction.status,
+      toBlockchainAddress: transaction.cryptoTransaction.walletAddress,
+    };
+
+    return responseData;
   }
 
   /** End S2S Endpoints */
