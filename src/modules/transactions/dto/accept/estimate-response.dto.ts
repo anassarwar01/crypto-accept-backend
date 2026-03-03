@@ -1,16 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class AcceptEstimatePricesDto {
-    @ApiProperty({ example: 63423.51528 })
+    @ApiProperty({ example: 63423.52 })
     buy: number;
 
-    @ApiProperty({ example: 62792.43553 })
+    @ApiProperty({ example: 62792.44 })
     sell: number;
 
-    @ApiProperty({ example: 0.18932 })
+    @ApiProperty({ example: 0.18932000 })
     estimatedNetworkSlowFee: number;
 
-    @ApiProperty({ example: 0.20523 })
+    @ApiProperty({ example: 0.20523000 })
     estimatedNetworkFastFee: number;
 
     @ApiProperty({ example: '2026-02-24T09:30:00.0556585' })

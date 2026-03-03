@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEnum, IsUrl, IsOptional, ValidateNested, MinLength, MaxLength, IsNotIn } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, IsUrl, IsOptional, ValidateNested, MinLength, MaxLength, IsNotIn, IsNumber } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { FiatCurrency } from '../../enums/transaction.enums';
@@ -25,10 +25,10 @@ export class CreateAcceptTransactionDto {
     @IsEnum(FiatCurrency)
     fiatCurrency: FiatCurrency;
 
-    @ApiProperty({ example: '23.04', description: 'The fiat amount as a string' })
-    @IsString()
+    @ApiProperty({ example: 23.00, description: 'The fiat amount as a decimal' })
+    @IsNumber({ maxDecimalPlaces: 2 })
     @IsNotEmpty()
-    fiatAmount: string;
+    fiatAmount: number;
 
     @ApiProperty({ enum: CryptoCurrency, example: 'BTC' })
     @IsEnum(CryptoCurrency)
