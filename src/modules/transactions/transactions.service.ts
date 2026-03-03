@@ -36,6 +36,7 @@ import { ThirdPartyLogType, HttpMethod } from '../third-party-logs/entities/thir
 import { GetTransactionByMerchantReferenceResponseDTO } from './dto/accept/get-transaction-by-merchant-reference.dto';
 import { CreateAcceptTransactionDto } from './dto/accept/create-accept-transaction.dto';
 import { AcceptTransactionResponseDataDto } from './dto/accept/accept-transaction-response.dto';
+import { AcceptEstimateResponseDataDto } from './dto/accept/estimate-response.dto';
 import { SaveAcceptTransactionDto } from './dto/accept/save-transaction.dto';
 
 @Injectable()
@@ -378,8 +379,20 @@ export class TransactionsService {
     return new GetTransactionByMerchantReferenceResponseDTO(transaction);
   }
 
-  async getEstimates(fiatCurrency: string, cryptoCurrency: string) {
-    return this.quantozService.getEstimatedPrices(fiatCurrency, cryptoCurrency);
+  async getEstimates(fiatCurrency: string, cryptoCurrency: string): Promise<AcceptEstimateResponseDataDto> {
+    const estimates = await this.quantozService.getEstimatedPrices(fiatCurrency, cryptoCurrency);
+
+    return {
+      fiatCurrency: estimates.currency || fiatCurrency,
+      cryptoCurrency: estimates.crypto || cryptoCurrency,
+      estimatedPrices: {
+        buy: estimates.estimatedPrices?.buy || estimates.price || 0,
+        sell: estimates.estimatedPrices?.sell || estimates.price || 0,
+        estimatedNetworkSlowFee: estimates.estimatedPrices?.estimatedNetworkSlowFee || 0,
+        estimatedNetworkFastFee: estimates.estimatedPrices?.estimatedNetworkFastFee || 0,
+        updated: estimates.estimatedPrices?.updated || new Date().toISOString(),
+      },
+    };
   }
 
   async createAcceptTransaction(request: CreateAcceptTransactionDto, merchantId: string): Promise<AcceptTransactionResponseDataDto> {
