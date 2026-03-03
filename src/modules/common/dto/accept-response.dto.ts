@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class AcceptSuccessResponseDto<T> {
+export class AcceptSuccessResponseDto {
     @ApiProperty({ example: 200 })
     code: number;
 
@@ -9,7 +9,4 @@ export class AcceptSuccessResponseDto<T> {
 
     @ApiProperty({ example: 'Request successful' })
     message: string;
-
-    @ApiProperty()
-    data: T;
 }
