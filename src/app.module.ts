@@ -15,7 +15,8 @@ import { ThirdPartyLogsModule } from './modules/third-party-logs/third-party-log
 import { CronModule } from './cron/cron.module';
 import { FeatureFlagModule } from './modules/feature-flags/feature-flag.module';
 import { SystemSettingsModule } from './modules/system-settings/system-settings.module';
-import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AllExceptionsFilter } from './modules/common/filters/all-exceptions.filter';
 import { RequestLoggingInterceptor } from './modules/common/interceptors/request-logging.interceptor';
 import { ResponseInterceptor } from './modules/common/interceptors/response.interceptor';
@@ -48,10 +49,18 @@ import databaseConfig from './config/database.config';
         FeatureFlagModule,
         SystemSettingsModule,
         ThirdPartyLogsModule,
+        ThrottlerModule.forRoot([{
+            ttl: 60000, // 60 seconds
+            limit: 60, // 60 requests per IP per minute
+        }]),
     ],
     controllers: [AppController],
     providers: [
         AppService,
+        {
+            provide: APP_GUARD,
+            useClass: ThrottlerGuard,
+        },
         {
             provide: APP_FILTER,
             useClass: AllExceptionsFilter,
