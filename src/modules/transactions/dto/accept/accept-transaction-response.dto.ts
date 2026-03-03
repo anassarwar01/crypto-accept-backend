@@ -1,6 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class AcceptTransactionResponseDataDto {
+    @ApiProperty({ example: '89156124691' })
+    requestId: string;
+
     @ApiProperty({ example: '1.00' })
     fiatAmount: string;
 
