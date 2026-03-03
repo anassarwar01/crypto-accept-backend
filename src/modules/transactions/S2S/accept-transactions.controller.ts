@@ -5,6 +5,7 @@ import { InjectMerchantIdInterceptor } from '../interceptors/inject-merchant-id.
 import { GetEstimatesParamsDto } from '../dto/accept/get-estimates-params.dto';
 import { CreateAcceptTransactionDto } from '../dto/accept/create-accept-transaction.dto';
 import { AcceptTransactionResponseDataDto } from '../dto/accept/accept-transaction-response.dto';
+import { AcceptEstimateResponseDataDto } from '../dto/accept/estimate-response.dto';
 
 @ApiTags('Get Transactions')
 @Controller('accept')
@@ -17,7 +18,7 @@ export class AcceptTransactionsController {
     @ApiOperation({ summary: 'Get estimated price' })
     async getEstimates(
         @Param() params: GetEstimatesParamsDto
-    ) {
+    ): Promise<AcceptEstimateResponseDataDto> {
         return this.transactionsService.getEstimates(params.fiatCurrency, params.cryptoCurrency);
     }
 
