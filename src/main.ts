@@ -176,6 +176,7 @@ async function bootstrap() {
         { type: 'apiKey', name: 'x-api-key', in: 'header' },
         'x-api-key',
       )
+      .addServer(process.env.BACKEND_DOMAIN || 'http://localhost:3000')
       .build();
 
     const s2sDocument = SwaggerModule.createDocument(app, s2sConfig, {
