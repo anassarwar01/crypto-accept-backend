@@ -184,6 +184,33 @@ async function bootstrap() {
       include: [AcceptTransactionsModule],
     });
 
+    // Force OpenAPI 3.1.0 to support the 'webhooks' property
+    s2sDocument.openapi = '3.1.0';
+
+    // Manually add webhooks documentation as it's not yet supported by decorators in this version
+    (s2sDocument as any).webhooks = {
+      'Transaction Status Update': {
+        description: 'Webhook sent to the merchant when a transaction status changes.',
+        post: {
+          description: 'The payload contains the latest transaction details and status.',
+          requestBody: {
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/MerchantWebhookPayloadDto'
+                }
+              }
+            }
+          },
+          responses: {
+            200: {
+              description: 'Webhook received successfully'
+            }
+          }
+        }
+      }
+    };
+
     /**
      * Filter S2S endpoints to only expose `/accept/` routes
      */
