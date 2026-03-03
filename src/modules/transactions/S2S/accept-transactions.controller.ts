@@ -9,10 +9,11 @@ import { AcceptEstimateResponseDataDto } from '../dto/accept/estimate-response.d
 import { GetTransactionByMerchantReferenceResponseDTO } from '../dto/accept/get-transaction-by-merchant-reference.dto';
 import { AcceptSuccessResponseDto } from '../../common/dto/accept-response.dto';
 import { ErrorResponseDto, UnauthorizedErrorResponseDto, NotFoundErrorResponseDto, TooManyRequestsErrorResponseDto, InternalServerErrorResponseDto } from '../../common/dto/error-response.dto';
+import { MerchantWebhookPayloadDto } from '../dto/accept/merchant-webhook-payload.dto';
 
 @ApiTags('Get Transactions')
 @Controller('accept')
-@ApiExtraModels(AcceptSuccessResponseDto, AcceptEstimateResponseDataDto, AcceptTransactionResponseDataDto, GetTransactionByMerchantReferenceResponseDTO)
+@ApiExtraModels(AcceptSuccessResponseDto, AcceptEstimateResponseDataDto, AcceptTransactionResponseDataDto, GetTransactionByMerchantReferenceResponseDTO, MerchantWebhookPayloadDto)
 export class AcceptTransactionsController {
     constructor(private readonly transactionsService: TransactionsService) { }
 
