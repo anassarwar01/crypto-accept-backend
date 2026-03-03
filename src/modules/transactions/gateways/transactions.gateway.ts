@@ -268,7 +268,7 @@ export class TransactionsGateway
                 this.logger.error(`Simulation confirming error: ${err.message}`);
                 return;
             }
-        }, 10000);
+        }, 5000);
 
         // 2️⃣ After delay, set to SUCCEEDED
         setTimeout(async () => {
