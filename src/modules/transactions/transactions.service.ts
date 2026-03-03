@@ -479,6 +479,7 @@ export class TransactionsService {
 
     // 6. Map to response DTO
     const responseData: AcceptTransactionResponseDataDto = {
+      requestId: transaction.merchantReference,
       fiatAmount: Number(transaction.fiatAmount).toFixed(2),
       fiatCurrency: transaction.fiatCurrency || '',
       cryptoCurrency: request.cryptoCurrency,
