@@ -12,8 +12,8 @@ export class GetEstimatesParamsDto {
     fiatCurrency: string;
 
     @ApiProperty({
-        enum: CryptoCurrency,
-        description: 'Crypto currency',
+        enum: ['BTC', 'ETH', 'LTC', 'USDC-ETH'],
+        description: 'Crypto currency (Allowed: BTC, ETH, LTC, USDC-ETH)',
         example: 'BTC'
     })
     @IsEnum(CryptoCurrency, { message: 'cryptoCurrency must be one of the following values: BTC, ETH, LTC, USDC-ETH' })
