@@ -28,12 +28,12 @@ import { QuantozService } from '../external-services/quantoz/quantoz.service';
 import { Transaction } from './entities/transaction.entity';
 import type { QuantozMerchantResponse, QuantozWebhookResponse } from '../external-services/quantoz/interfaces/quantoz.interfaces';
 import { generateSignature } from '../common/utils/helper';
-import { encodeReference } from '../common/utils/reference-coder';
+import { encodeReference, decodeReference } from '../common/utils/reference-coder';
 import { MESSAGES } from '@helper/constant/messages';
 import { validateTransactionState } from './utils/transaction-validator.util';
 import { ThirdPartyLogsService } from '../third-party-logs/third-party-logs.service';
 import { ThirdPartyLogType, HttpMethod } from '../third-party-logs/entities/third-party-log.entity';
-
+import { GetTransactionByMerchantReferenceResponseDTO } from './dto/accept/get-transaction-by-merchant-reference.dto';
 
 @Injectable()
 export class TransactionsService {
@@ -362,4 +362,22 @@ export class TransactionsService {
       }
     }
   }
+
+  /** Start S2S Endpoints */
+
+  async getDetailsByMerchantReference(merchantReference: string, merchantId: string): Promise<GetTransactionByMerchantReferenceResponseDTO> {
+    const transaction = await this.transactionRepository.findByMerchantReference(merchantId, merchantReference);
+
+    if (!transaction) {
+      throw new BadRequestException(MESSAGES.TRANSACTION_INVALID);
+    }
+
+    return new GetTransactionByMerchantReferenceResponseDTO(transaction);
+  }
+
+  async getEstimates(fiatCurrency: string, cryptoCurrency: string) {
+    return this.quantozService.getEstimatedPrices(fiatCurrency, cryptoCurrency);
+  }
+
+  /** End S2S Endpoints */
 }

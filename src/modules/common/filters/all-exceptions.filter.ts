@@ -50,7 +50,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
             }
         }
 
-        const redirectUrl = request.body?.redirectUrl || request.query?.redirectUrl || request['transaction']?.redirectUrl || null;
+        const isAcceptEndpoint = request.url.includes('/accept/');
+        const redirectUrl = !isAcceptEndpoint ? (request.body?.redirectUrl || request.query?.redirectUrl || request['transaction']?.redirectUrl || null) : undefined;
         const responseUrl = exception instanceof RedirectException ? exception.url : redirectUrl;
 
         const responseBody = new ApiResponse(

@@ -19,7 +19,10 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, ApiResponse<T>
                 const request = context.switchToHttp().getRequest();
                 let redirectUrl: string | undefined = undefined;
 
-                if (request['transaction']?.redirectUrl) {
+                // Do not include redirectUrl for S2S/accept endpoints
+                const isAcceptEndpoint = request.url.includes('/accept/');
+
+                if (!isAcceptEndpoint && request['transaction']?.redirectUrl) {
                     redirectUrl = request['transaction'].redirectUrl;
                 }
 

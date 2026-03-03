@@ -31,6 +31,7 @@ describe('TransactionsService', () => {
     updateTransaction: jest.fn(),
     updateTransactionStatus: jest.fn(),
     findByReference: jest.fn(),
+    findByMerchantReference: jest.fn(),
   };
 
   const mockConversionRatesService = {
@@ -346,6 +347,28 @@ describe('TransactionsService', () => {
 
       expect(updateStatusSpy).toHaveBeenCalledWith(transaction, TransactionStatus.CANCELLED);
       updateStatusSpy.mockRestore();
+    });
+  });
+
+  describe('getDetailsByMerchantReference', () => {
+    it('should return transaction if found for the merchant', async () => {
+      const merchantId = 'merch_123';
+      const requestId = 'req_123';
+      const transaction = { id: 'trans_123', merchantId } as any;
+
+      mockTransactionRepository.findByMerchantReference.mockResolvedValue(transaction);
+
+      const result = await service.getDetailsByMerchantReference(requestId, merchantId);
+
+      expect(result).toBeDefined();
+      expect(mockTransactionRepository.findByMerchantReference).toHaveBeenCalledWith(merchantId, requestId);
+    });
+
+    it('should throw BadRequestException if transaction not found', async () => {
+      mockTransactionRepository.findByMerchantReference.mockResolvedValue(null);
+
+      await expect(service.getDetailsByMerchantReference('ref', 'merch'))
+        .rejects.toThrow(BadRequestException);
     });
   });
 });
