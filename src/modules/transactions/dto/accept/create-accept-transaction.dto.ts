@@ -5,11 +5,13 @@ import { FiatCurrency } from '../../enums/transaction.enums';
 import { CryptoCurrency } from '../../../crypto-transactions/enums/crypto-transaction.enums';
 import { AcceptCustomerDto } from './customer.dto';
 import { IsMerchantAllowedUrl } from '../../decorators/is-merchant-allowed-url.decorator';
+import { IsUniqueRequestId } from '../../decorators/is-unique-request-id.decorator';
 
 export class CreateAcceptTransactionDto {
     @ApiProperty({ example: '89156124691' })
     @IsString()
     @IsNotEmpty()
+    @IsUniqueRequestId()
     requestId: string;
 
     @ApiProperty({ type: () => AcceptCustomerDto })
