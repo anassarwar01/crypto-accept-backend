@@ -24,7 +24,7 @@ export class AuthMiddleware implements NestMiddleware {
 
         if (!apiKey) {
             throw new UnauthorizedException(
-                'API key is required. Please provide it in the x-api-key header.',
+                'API key is required.',
             );
         }
 

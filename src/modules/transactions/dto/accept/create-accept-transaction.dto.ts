@@ -30,7 +30,7 @@ export class CreateAcceptTransactionDto {
     @IsNotEmpty()
     fiatAmount: number;
 
-    @ApiProperty({ enum: CryptoCurrency, example: 'BTC' })
+    @ApiProperty({ enum: ['BTC', 'ETH', 'LTC', 'USDC-ETH'], example: 'BTC', description: 'Allowed values: BTC, ETH, LTC, USDC-ETH' })
     @IsEnum(CryptoCurrency, { message: 'cryptoCurrency must be one of the following values: BTC, ETH, LTC, USDC-ETH' })
     @IsNotIn(['XLM', 'ALGO'], { message: 'The selected crypto currency is not supported' })
     cryptoCurrency: CryptoCurrency;

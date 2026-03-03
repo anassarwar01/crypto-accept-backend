@@ -36,7 +36,6 @@ import { HttpModule } from '@nestjs/axios';
 import { ThirdPartyLogsModule } from '../third-party-logs/third-party-logs.module';
 import { TransactionsCallbackService } from './transactions-callback.service';
 import { RequestLogsModule } from '../request-logs/request-logs.module';
-import { AcceptTransactionsController } from './S2S/accept-transactions.controller';
 
 @Module({
   imports: [
@@ -56,7 +55,7 @@ import { AcceptTransactionsController } from './S2S/accept-transactions.controll
     ThirdPartyLogsModule,
     RequestLogsModule,
   ],
-  controllers: [TransactionsController, QuantozWebhookController, AcceptTransactionsController],
+  controllers: [TransactionsController, QuantozWebhookController],
   providers: [
     TransactionsService,
     CryptoTransactionsService,
@@ -77,9 +76,6 @@ export class TransactionsModule implements NestModule {
       .apply(AuthMiddleware)
       .forRoutes(
         { path: 'transactions', method: RequestMethod.POST },
-        { path: 'accept/transactions', method: RequestMethod.POST },
-        { path: 'accept/transactions/:requestId', method: RequestMethod.GET },
-        { path: 'accept/estimates/:fiatCurrency/:cryptoCurrency', method: RequestMethod.GET },
       );
 
     // Ref verification for summary

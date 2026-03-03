@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './modules/users/users.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
+import { AcceptTransactionsModule } from './modules/transactions/S2S/accept-transactions.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { MerchantsModule } from './modules/merchants/merchants.module';
 import { CryptocurrencyModule } from './modules/crypto-currencies/crypto-currencies.module';
@@ -39,6 +40,7 @@ import databaseConfig from './config/database.config';
         }),
         UsersModule,
         TransactionsModule,
+        AcceptTransactionsModule,
         CustomersModule,
         MerchantsModule,
         CryptocurrencyModule,
