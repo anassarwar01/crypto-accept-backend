@@ -10,9 +10,13 @@ import { GetTransactionByMerchantReferenceResponseDTO } from '../dto/accept/get-
 import { AcceptSuccessResponseDto } from '../../common/dto/accept-response.dto';
 import { ErrorResponseDto, UnauthorizedErrorResponseDto, NotFoundErrorResponseDto, TooManyRequestsErrorResponseDto, InternalServerErrorResponseDto } from '../../common/dto/error-response.dto';
 import { MerchantWebhookPayloadDto } from '../dto/accept/merchant-webhook-payload.dto';
+import { Flow } from '@merchant-settings/decorators/flow.decorator';
+import { MerchantFlowGuard } from '@merchant-settings/guards/merchant-flow.guard';
 
 @ApiTags('Get Transactions')
 @Controller('accept')
+@Flow('s2s')
+@UseGuards(MerchantFlowGuard)
 @ApiExtraModels(AcceptSuccessResponseDto, AcceptEstimateResponseDataDto, AcceptTransactionResponseDataDto, GetTransactionByMerchantReferenceResponseDTO, MerchantWebhookPayloadDto)
 export class AcceptTransactionsController {
     constructor(private readonly transactionsService: TransactionsService) { }

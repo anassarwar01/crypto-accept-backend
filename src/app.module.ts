@@ -16,8 +16,10 @@ import { ThirdPartyLogsModule } from './modules/third-party-logs/third-party-log
 import { CronModule } from './cron/cron.module';
 import { FeatureFlagModule } from './modules/feature-flags/feature-flag.module';
 import { SystemSettingsModule } from './modules/system-settings/system-settings.module';
+import { MerchantSettingsModule } from './modules/merchant-settings/merchant-settings.module';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { MerchantThrottlerGuard } from './modules/merchants/guards/merchant-throttler.guard';
 import { AllExceptionsFilter } from './modules/common/filters/all-exceptions.filter';
 import { RequestLoggingInterceptor } from './modules/common/interceptors/request-logging.interceptor';
 import { ResponseInterceptor } from './modules/common/interceptors/response.interceptor';
@@ -51,6 +53,7 @@ import databaseConfig from './config/database.config';
         FeatureFlagModule,
         SystemSettingsModule,
         ThirdPartyLogsModule,
+        MerchantSettingsModule,
         ThrottlerModule.forRoot([{
             ttl: 60000, // 60 seconds
             limit: 60, // 60 requests per IP per minute
@@ -61,7 +64,7 @@ import databaseConfig from './config/database.config';
         AppService,
         {
             provide: APP_GUARD,
-            useClass: ThrottlerGuard,
+            useClass: MerchantThrottlerGuard,
         },
         {
             provide: APP_FILTER,
