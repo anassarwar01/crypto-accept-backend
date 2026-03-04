@@ -45,7 +45,7 @@ export class TransactionsController {
   })
   @ApiOperation({ summary: 'Create transaction URL' })
   @ApiBody({ type: CreateTransactionDto })
-  @HttpCode(HttpStatus.CREATED)
+  @HttpCode(HttpStatus.OK)
   async create(
     @Body() createTransactionDto: CreateTransactionDto,
     @Req() request: Request & { userId: string; merchantId: string },
