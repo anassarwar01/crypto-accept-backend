@@ -8,7 +8,7 @@ import { AcceptTransactionResponseDataDto } from '../dto/accept/accept-transacti
 import { AcceptEstimateResponseDataDto } from '../dto/accept/estimate-response.dto';
 import { GetTransactionByMerchantReferenceResponseDTO } from '../dto/accept/get-transaction-by-merchant-reference.dto';
 import { AcceptSuccessResponseDto } from '../../common/dto/accept-response.dto';
-import { ErrorResponseDto, UnauthorizedErrorResponseDto, NotFoundErrorResponseDto, TooManyRequestsErrorResponseDto, InternalServerErrorResponseDto } from '../../common/dto/error-response.dto';
+import { ErrorResponseDto, UnauthorizedErrorResponseDto, ForbiddenErrorResponseDto, NotFoundErrorResponseDto, TooManyRequestsErrorResponseDto, InternalServerErrorResponseDto } from '../../common/dto/error-response.dto';
 import { MerchantWebhookPayloadDto } from '../dto/accept/merchant-webhook-payload.dto';
 import { Flow } from '@merchant-settings/decorators/flow.decorator';
 import { MerchantFlowGuard } from '@merchant-settings/guards/merchant-flow.guard';
@@ -41,6 +41,7 @@ export class AcceptTransactionsController {
     })
     @SwaggerApiResponse({ status: 400, description: 'Bad Request', type: ErrorResponseDto })
     @SwaggerApiResponse({ status: 401, description: 'Unauthorized', type: UnauthorizedErrorResponseDto })
+    @SwaggerApiResponse({ status: 403, description: 'Forbidden', type: ForbiddenErrorResponseDto })
     @SwaggerApiResponse({ status: 429, description: 'Too Many Requests', type: TooManyRequestsErrorResponseDto })
     @SwaggerApiResponse({ status: 500, description: 'Internal Server Error', type: InternalServerErrorResponseDto })
     async getEstimates(
@@ -70,6 +71,7 @@ export class AcceptTransactionsController {
     })
     @SwaggerApiResponse({ status: 400, description: 'Bad Request', type: ErrorResponseDto })
     @SwaggerApiResponse({ status: 401, description: 'Unauthorized', type: UnauthorizedErrorResponseDto })
+    @SwaggerApiResponse({ status: 403, description: 'Forbidden', type: ForbiddenErrorResponseDto })
     @SwaggerApiResponse({ status: 404, description: 'Transaction Not Found', type: NotFoundErrorResponseDto })
     @SwaggerApiResponse({ status: 429, description: 'Too Many Requests', type: TooManyRequestsErrorResponseDto })
     @SwaggerApiResponse({ status: 500, description: 'Internal Server Error', type: InternalServerErrorResponseDto })
@@ -100,6 +102,7 @@ export class AcceptTransactionsController {
     })
     @SwaggerApiResponse({ status: 400, description: 'Bad Request', type: ErrorResponseDto })
     @SwaggerApiResponse({ status: 401, description: 'Unauthorized', type: UnauthorizedErrorResponseDto })
+    @SwaggerApiResponse({ status: 403, description: 'Forbidden', type: ForbiddenErrorResponseDto })
     @SwaggerApiResponse({ status: 429, description: 'Too Many Requests', type: TooManyRequestsErrorResponseDto })
     @SwaggerApiResponse({ status: 500, description: 'Internal Server Error', type: InternalServerErrorResponseDto })
     async createAcceptTransaction(@Body() dto: CreateAcceptTransactionDto, @Req() request: any): Promise<AcceptTransactionResponseDataDto> {
