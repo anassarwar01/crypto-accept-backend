@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { TransactionStatus } from '../../enums/transaction.enums';
 
 export class MerchantWebhookPayloadDto {
     @ApiProperty({ example: 'req_123456', description: 'Merchant-provided request ID' })
@@ -10,8 +11,20 @@ export class MerchantWebhookPayloadDto {
     @ApiProperty({ example: '87G2A1', description: 'Short code for the transaction' })
     orderId: string;
 
-    @ApiProperty({ example: 'transfer.pending', description: 'Current status of the transaction' })
-    status: string;
+    @ApiProperty({
+        enum: [
+            TransactionStatus.PENDING,
+            TransactionStatus.ON_HOLD,
+            TransactionStatus.CONFIRMING,
+            TransactionStatus.SUCCEEDED,
+            TransactionStatus.FAILED,
+            TransactionStatus.CANCELLED,
+            TransactionStatus.EXPIRED,
+        ],
+        example: TransactionStatus.PENDING,
+        description: 'Current status of the transaction'
+    })
+    status: TransactionStatus;
 
     @ApiProperty({ example: 100.50, description: 'Fiat amount of the transaction' })
     fiatAmount: number;
