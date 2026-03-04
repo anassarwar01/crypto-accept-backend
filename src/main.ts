@@ -198,6 +198,106 @@ async function bootstrap() {
               'application/json': {
                 schema: {
                   $ref: '#/components/schemas/MerchantWebhookPayloadDto'
+                },
+                examples: {
+                  'Status: Pending': {
+                    summary: 'Transaction is pending payment',
+                    value: {
+                      requestId: 'req_123456',
+                      systemReference: 'SYS-BTC-12345',
+                      orderId: '87G2A1',
+                      status: 'transfer.pending',
+                      fiatAmount: 100.50,
+                      fiatCurrency: 'EUR',
+                      cryptoAmount: 0.0025,
+                      cryptoCurrency: 'BTC',
+                      createdAt: '2026-03-03T17:00:00.000Z'
+                    }
+                  },
+                  'Status: On Hold': {
+                    summary: 'Transaction is currently on hold',
+                    value: {
+                      requestId: 'req_123456',
+                      systemReference: 'SYS-BTC-12345',
+                      orderId: '87G2A1',
+                      status: 'transfer.onHold',
+                      fiatAmount: 100.50,
+                      fiatCurrency: 'EUR',
+                      cryptoAmount: 0.0025,
+                      cryptoCurrency: 'BTC',
+                      createdAt: '2026-03-03T17:00:00.000Z'
+                    }
+                  },
+                  'Status: Confirming': {
+                    summary: 'Transaction is being confirmed on the blockchain',
+                    value: {
+                      requestId: 'req_123456',
+                      systemReference: 'SYS-BTC-12345',
+                      orderId: '87G2A1',
+                      status: 'transfer.confirming',
+                      fiatAmount: 100.50,
+                      fiatCurrency: 'EUR',
+                      cryptoAmount: 0.0025,
+                      cryptoCurrency: 'BTC',
+                      createdAt: '2026-03-03T17:00:00.000Z'
+                    }
+                  },
+                  'Status: Succeeded': {
+                    summary: 'Transaction has been successfully completed',
+                    value: {
+                      requestId: 'req_123456',
+                      systemReference: 'SYS-BTC-12345',
+                      orderId: '87G2A1',
+                      status: 'transfer.succeeded',
+                      fiatAmount: 100.50,
+                      fiatCurrency: 'EUR',
+                      cryptoAmount: 0.0025,
+                      cryptoCurrency: 'BTC',
+                      createdAt: '2026-03-03T17:00:00.000Z'
+                    }
+                  },
+                  'Status: Failed': {
+                    summary: 'Transaction has failed',
+                    value: {
+                      requestId: 'req_123456',
+                      systemReference: 'SYS-BTC-12345',
+                      orderId: '87G2A1',
+                      status: 'transfer.failed',
+                      fiatAmount: 100.50,
+                      fiatCurrency: 'EUR',
+                      cryptoAmount: 0.0025,
+                      cryptoCurrency: 'BTC',
+                      createdAt: '2026-03-03T17:00:00.000Z'
+                    }
+                  },
+                  'Status: Cancelled': {
+                    summary: 'Transaction was cancelled',
+                    value: {
+                      requestId: 'req_123456',
+                      systemReference: 'SYS-BTC-12345',
+                      orderId: '87G2A1',
+                      status: 'transfer.cancelled',
+                      fiatAmount: 100.50,
+                      fiatCurrency: 'EUR',
+                      cryptoAmount: 0.0025,
+                      cryptoCurrency: 'BTC',
+                      createdAt: '2026-03-03T17:00:00.000Z'
+                    }
+                  },
+                  'Status: Expired': {
+                    summary: 'Transaction has expired',
+                    value: {
+                      requestId: 'req_123456',
+                      systemReference: 'SYS-BTC-12345',
+                      orderId: '87G2A1',
+                      status: 'transfer.expired',
+                      fiatAmount: 100.50,
+                      fiatCurrency: 'EUR',
+                      cryptoAmount: 0.0025,
+                      cryptoCurrency: 'BTC',
+                      createdAt: '2026-03-03T17:00:00.000Z'
+                    }
+                  },
                 }
               }
             }
