@@ -30,6 +30,14 @@ export class NotFoundErrorResponseDto extends ErrorResponseDto {
     declare message: string;
 }
 
+export class ForbiddenErrorResponseDto extends ErrorResponseDto {
+    @ApiProperty({ example: 403 })
+    declare code: number;
+
+    @ApiProperty({ example: 'Forbidden access' })
+    declare message: string;
+}
+
 export class TooManyRequestsErrorResponseDto extends ErrorResponseDto {
     @ApiProperty({ example: 429 })
     declare code: number;
