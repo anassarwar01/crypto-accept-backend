@@ -65,7 +65,7 @@ async function bootstrap() {
    * -------------------------------------------------------
    * Redirect HTTP → HTTPS when behind a reverse proxy.
    */
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.APP_ENV === 'production') {
     app.use((req, res, next) => {
       if (req.headers['x-forwarded-proto'] !== 'https') {
         return res.redirect(`https://${req.headers.host}${req.url}`);
@@ -115,7 +115,7 @@ async function bootstrap() {
    * - Development: allow all origins
    * - Production: restrict to FRONTEND_DOMAIN (comma-separated)
    */
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isDevelopment = process.env.APP_ENV === 'development';
 
   if (!isDevelopment && !process.env.FRONTEND_DOMAIN) {
     throw new Error('FRONTEND_DOMAIN must be defined in production');
@@ -147,7 +147,7 @@ async function bootstrap() {
    * - Basic Auth
    * - IP Whitelisting
    */
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.APP_ENV !== 'production') {
     /**
      * Checkout API Documentation
      */
