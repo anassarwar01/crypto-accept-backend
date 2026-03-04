@@ -15,6 +15,7 @@
   "moduleNameMapper": {
     "^@users/(.*)$": "<rootDir>/../src/modules/users/$1",
     "^@merchants/(.*)$": "<rootDir>/../src/modules/merchants/$1",
+    "^@merchant-settings/(.*)$": "<rootDir>/../src/modules/merchant-settings/$1",
     "^@customers/(.*)$": "<rootDir>/../src/modules/customers/$1",
     "^@transactions/(.*)$": "<rootDir>/../src/modules/transactions/$1",
     "^@cryptocurrency/(.*)$": "<rootDir>/../src/modules/cryptocurrency/$1",

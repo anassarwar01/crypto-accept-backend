@@ -10,7 +10,8 @@ import {
 } from 'typeorm';
 import { User } from '@users/entities/user.entity';
 import { Transaction } from '@transactions/entities/transaction.entity';
-import { MerchantCustomer } from '../../merchant-customers/entities/merchant-customer.entity';
+import { MerchantCustomer } from '@merchant-customers/entities/merchant-customer.entity';
+import { MerchantSetting } from '@merchant-settings/entities/merchant-setting.entity';
 
 @Entity('merchants')
 export class Merchant {
@@ -58,4 +59,7 @@ export class Merchant {
     (merchantCustomer) => merchantCustomer.merchant,
   )
   merchantCustomers?: MerchantCustomer[];
+
+  @OneToMany(() => MerchantSetting, (setting) => setting.merchant)
+  settings?: MerchantSetting[];
 }

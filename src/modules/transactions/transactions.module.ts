@@ -24,6 +24,7 @@ import { CryptocurrencyModule } from '../crypto-currencies/crypto-currencies.mod
 import { FeatureFlagModule } from '../feature-flags/feature-flag.module';
 import { IpregistryModule } from '../external-services/ipregistry/ipregistry.module';
 import { MerchantsModule } from '../merchants/merchants.module';
+import { MerchantSettingsModule } from '../merchant-settings/merchant-settings.module';
 import { SystemSettingsModule } from '../system-settings/system-settings.module';
 import { IsCryptocurrencyCodeConstraint } from './decorators/is-cryptocurrency-code.decorator';
 import { QuantozModule } from '../external-services/quantoz/quantoz.module';
@@ -54,6 +55,7 @@ import { RequestLogsModule } from '../request-logs/request-logs.module';
     HttpModule,
     ThirdPartyLogsModule,
     RequestLogsModule,
+    MerchantSettingsModule,
   ],
   controllers: [TransactionsController, QuantozWebhookController],
   providers: [

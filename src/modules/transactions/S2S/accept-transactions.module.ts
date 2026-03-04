@@ -4,8 +4,10 @@ import { TransactionsModule } from '../transactions.module';
 import { AuthMiddleware } from '../../common/middleware/auth.middleware';
 import { CommonModule } from '../../common/common.module';
 
+import { MerchantSettingsModule } from '../../merchant-settings/merchant-settings.module';
+
 @Module({
-    imports: [TransactionsModule, CommonModule],
+    imports: [TransactionsModule, CommonModule, MerchantSettingsModule],
     controllers: [AcceptTransactionsController],
 })
 export class AcceptTransactionsModule implements NestModule {

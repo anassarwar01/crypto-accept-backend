@@ -56,6 +56,9 @@
       "@external-services/*": [
         "src/modules/external-services/*"
       ],
+      "@merchant-settings/*": [
+        "src/modules/merchant-settings/*"
+      ],
       "@merchant-customers/*": [
         "src/modules/merchant-customers/*"
       ],

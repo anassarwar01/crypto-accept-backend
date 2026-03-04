@@ -37,8 +37,9 @@ export class AuthMiddleware implements NestMiddleware {
             throw new UnauthorizedException('Invalid API key.');
         }
 
-        // Attach merchantId to request object
-        (req as Request & { merchantId: string }).merchantId = merchant.id;
+        // Attach merchantId and rateLimit to request object
+        (req as any).merchantId = merchant.id;
+        (req as any).rateLimit = merchant.rateLimit;
 
         // Also attach to body so it's available for DTO validation
         if (req.body && typeof req.body === 'object') {
