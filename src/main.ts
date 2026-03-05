@@ -26,6 +26,7 @@ import { IoAdapter } from '@nestjs/platform-socket.io';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { AcceptTransactionsModule } from './modules/transactions/S2S/accept-transactions.module';
 import helmet from 'helmet';
+import basicAuth from 'express-basic-auth';
 
 async function bootstrap() {
   /**
@@ -145,6 +146,16 @@ async function bootstrap() {
    * - IP Whitelisting
    */
   if (process.env.APP_ENV !== 'production') {
+    app.use(
+      ['/s2s', '/checkout'],
+      basicAuth({
+        challenge: true,
+        users: {
+          [process.env.SWAGGER_USER || 'admin']: process.env.SWAGGER_PASSWORD || 'password',
+        },
+      }),
+    );
+
     /**
      * Checkout API Documentation
      */
