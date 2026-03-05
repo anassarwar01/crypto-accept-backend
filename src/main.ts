@@ -124,7 +124,7 @@ async function bootstrap() {
   app.enableCors({
     origin: isDevelopment
       ? '*'
-      : process.env.FRONTEND_DOMAIN?.split(','),
+      : process.env.FRONTEND_DOMAIN,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
   });
