@@ -38,8 +38,9 @@ export class RefMiddleware implements NestMiddleware {
             throw new BadRequestException(MESSAGES.TRANSACTION_INVALID);
         }
 
-        // Attach details to request object for logging and downstream use (including error handling)
+        // Attach details to request object for logging and downstream use (including guards)
         (req as any).transaction = transaction;
+        (req as any).merchantId = transaction.merchantId;
 
         validateTransactionState(transaction);
 

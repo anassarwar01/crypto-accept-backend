@@ -73,21 +73,15 @@ import { RequestLogsModule } from '../request-logs/request-logs.module';
 })
 export class TransactionsModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // Auth for creating transaction and getting merchant-level details
+    // Auth for creating transaction (POST /transactions)
     consumer
       .apply(AuthMiddleware)
-      .forRoutes(
-        { path: 'transactions', method: RequestMethod.POST },
-      );
+      .forRoutes({ path: 'transactions', method: RequestMethod.POST });
 
-    // Ref verification for summary
+    // Ref verification for all other routes (summary, details, etc.)
     consumer
       .apply(RefMiddleware)
-      .forRoutes(
-        { path: 'transactions/summary', method: RequestMethod.POST },
-        { path: 'transactions/details', method: RequestMethod.GET },
-        { path: 'transactions', method: RequestMethod.GET },
-        { path: 'transactions/test/status-update', method: RequestMethod.POST },
-      );
+      .exclude({ path: 'transactions', method: RequestMethod.POST })
+      .forRoutes(TransactionsController);
   }
 }
