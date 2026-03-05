@@ -117,14 +117,10 @@ async function bootstrap() {
    */
   const isDevelopment = process.env.APP_ENV === 'development';
 
-  if (!isDevelopment && !process.env.FRONTEND_DOMAIN) {
-    throw new Error('FRONTEND_DOMAIN must be defined in production');
-  }
-
   app.enableCors({
     origin: isDevelopment
       ? '*'
-      : process.env.FRONTEND_DOMAIN,
+      : process.env.FRONTEND_ORIGIN?.split(','),
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
   });
