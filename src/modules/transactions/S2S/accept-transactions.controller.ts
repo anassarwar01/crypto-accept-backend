@@ -13,7 +13,7 @@ import { MerchantWebhookPayloadDto } from '../dto/accept/merchant-webhook-payloa
 import { Flow } from '@merchant-settings/decorators/flow.decorator';
 import { MerchantFlowGuard } from '@merchant-settings/guards/merchant-flow.guard';
 
-@ApiTags('Get Transactions')
+@ApiTags('Transactions')
 @Controller('accept')
 @Flow('s2s')
 @UseGuards(MerchantFlowGuard)

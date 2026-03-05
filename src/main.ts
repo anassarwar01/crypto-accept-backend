@@ -26,6 +26,7 @@ import { IoAdapter } from '@nestjs/platform-socket.io';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { AcceptTransactionsModule } from './modules/transactions/S2S/accept-transactions.module';
 import helmet from 'helmet';
+import basicAuth from 'express-basic-auth';
 
 async function bootstrap() {
   /**
@@ -113,20 +114,17 @@ async function bootstrap() {
    * CORS Configuration
    * -------------------------------------------------------
    * - Development: allow all origins
-   * - Production: restrict to FRONTEND_DOMAIN (comma-separated)
+   * - Production: restrict to FRONTEND_ORIGIN (comma-separated)
    */
-  const isDevelopment = process.env.APP_ENV === 'development';
 
-  if (!isDevelopment && !process.env.FRONTEND_DOMAIN) {
-    throw new Error('FRONTEND_DOMAIN must be defined in production');
-  }
+  const isDevelopment = process.env.NODE_ENV === 'development';
 
   app.enableCors({
     origin: isDevelopment
       ? '*'
-      : process.env.FRONTEND_DOMAIN?.split(','),
+      : process.env.FRONTEND_ORIGIN?.split(',') || [],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    credentials: true,
+    credentials: !isDevelopment, // disable credentials when using *
   });
 
   /**
@@ -148,6 +146,16 @@ async function bootstrap() {
    * - IP Whitelisting
    */
   if (process.env.APP_ENV !== 'production') {
+    app.use(
+      ['/s2s', '/checkout'],
+      basicAuth({
+        challenge: true,
+        users: {
+          [process.env.SWAGGER_USER || 'admin']: process.env.SWAGGER_PASSWORD || 'password',
+        },
+      }),
+    );
+
     /**
      * Checkout API Documentation
      */
