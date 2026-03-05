@@ -117,7 +117,7 @@ async function bootstrap() {
    * - Production: restrict to FRONTEND_ORIGIN (comma-separated)
    */
 
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isDevelopment = process.env.APP_ENV === 'development';
 
   app.enableCors({
     origin: isDevelopment
