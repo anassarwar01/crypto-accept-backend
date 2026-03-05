@@ -116,10 +116,14 @@ async function bootstrap() {
    * - Production: restrict to FRONTEND_ORIGIN (comma-separated)
    */
 
+  const isDevelopment = process.env.NODE_ENV === 'development';
+
   app.enableCors({
-    origin: process.env.FRONTEND_ORIGIN?.split(','),
+    origin: isDevelopment
+      ? '*'
+      : process.env.FRONTEND_ORIGIN?.split(',') || [],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    credentials: true,
+    credentials: !isDevelopment, // disable credentials when using *
   });
 
   /**
