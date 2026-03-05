@@ -113,14 +113,11 @@ async function bootstrap() {
    * CORS Configuration
    * -------------------------------------------------------
    * - Development: allow all origins
-   * - Production: restrict to FRONTEND_DOMAIN (comma-separated)
+   * - Production: restrict to FRONTEND_ORIGIN (comma-separated)
    */
-  const isDevelopment = process.env.APP_ENV === 'development';
 
   app.enableCors({
-    origin: isDevelopment
-      ? '*'
-      : process.env.FRONTEND_ORIGIN?.split(','),
+    origin: process.env.FRONTEND_ORIGIN?.split(','),
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
   });

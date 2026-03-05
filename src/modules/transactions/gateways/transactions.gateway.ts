@@ -22,7 +22,7 @@ import { RequestLogsService } from '../../request-logs/request-logs.service';
 import { HttpMethod } from '../../request-logs/entities/request-log.entity';
 
 @WebSocketGateway({
-    cors: process.env.APP_ENV === 'development' ? '*' : process.env.FRONTEND_DOMAIN,
+    cors: process.env.FRONTEND_ORIGIN?.split(','),
     namespace: process.env.WEBSOCKET_NAMESPACE,
 })
 export class TransactionsGateway
