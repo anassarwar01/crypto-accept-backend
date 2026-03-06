@@ -117,7 +117,7 @@ async function bootstrap() {
    * - Production: restrict to FRONTEND_ORIGIN (comma-separated)
    */
 
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isDevelopment = process.env.APP_ENV === 'development';
 
   app.enableCors({
     origin: isDevelopment
@@ -147,7 +147,7 @@ async function bootstrap() {
    */
   if (process.env.APP_ENV !== 'production') {
     app.use(
-      ['/s2s', '/checkout'],
+      ['/s2s', '/s2s-json', '/checkout', '/checkout-json'],
       basicAuth({
         challenge: true,
         users: {
@@ -163,7 +163,7 @@ async function bootstrap() {
       .setTitle('Checkout API Documentation')
       .setDescription('Public Checkout APIs')
       .setVersion('1.0')
-      .addServer(process.env.BACKEND_DOMAIN || 'http://localhost:3000')
+      // No hardcoded server — resolved dynamically per request
       .build();
 
     const checkoutDocument = SwaggerModule.createDocument(
@@ -171,7 +171,20 @@ async function bootstrap() {
       checkoutConfig,
     );
 
-    // SwaggerModule.setup('checkout', app, checkoutDocument);
+    // Dynamic JSON endpoint: server URL is derived from the incoming request host
+    const httpAdapter = app.getHttpAdapter();
+    httpAdapter.get('/checkout-json', (req: any, res: any) => {
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+      const host = req.headers.host;
+      res.json({
+        ...checkoutDocument,
+        servers: [{ url: `${protocol}://${host}` }],
+      });
+    });
+
+    // SwaggerModule.setup('checkout', app, checkoutDocument, {
+    //   swaggerOptions: { url: '/checkout-json' },
+    // });
 
     /**
      * S2S (Server-to-Server) Documentation
@@ -185,7 +198,7 @@ async function bootstrap() {
         { type: 'apiKey', name: 'x-api-key', in: 'header' },
         'x-api-key',
       )
-      .addServer(process.env.BACKEND_DOMAIN || 'http://localhost:3000')
+      // No hardcoded server — resolved dynamically per request
       .build();
 
     const s2sDocument = SwaggerModule.createDocument(app, s2sConfig, {
@@ -332,7 +345,20 @@ async function bootstrap() {
     s2sDocument.paths = filteredPaths;
 
 
-    SwaggerModule.setup('s2s', app, s2sDocument);
+    // Dynamic JSON endpoint: server URL is derived from the incoming request host
+    httpAdapter.get('/s2s-json', (req: any, res: any) => {
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+      const host = req.headers.host;
+      res.json({
+        ...s2sDocument,
+        servers: [{ url: `${protocol}://${host}` }],
+      });
+    });
+
+    // Swagger UI fetches its spec from the dynamic endpoint above
+    SwaggerModule.setup('s2s', app, s2sDocument, {
+      swaggerOptions: { url: '/s2s-json' },
+    });
   }
 
   /**

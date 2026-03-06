@@ -21,7 +21,7 @@ import { Subscription } from 'rxjs';
 import { RequestLogsService } from '../../request-logs/request-logs.service';
 import { HttpMethod } from '../../request-logs/entities/request-log.entity';
 
-const isDevelopment = process.env.NODE_ENV === 'development';
+const isDevelopment = process.env.APP_ENV === 'development';
 
 @WebSocketGateway({
     namespace: process.env.WEBSOCKET_NAMESPACE,
