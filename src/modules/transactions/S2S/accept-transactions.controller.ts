@@ -12,11 +12,12 @@ import { ErrorResponseDto, UnauthorizedErrorResponseDto, ForbiddenErrorResponseD
 import { MerchantWebhookPayloadDto } from '../dto/accept/merchant-webhook-payload.dto';
 import { Flow } from '@merchant-settings/decorators/flow.decorator';
 import { MerchantFlowGuard } from '@merchant-settings/guards/merchant-flow.guard';
+import { MerchantIpWhitelistGuard } from '../../merchants/guards/merchant-ip-whitelist.guard';
 
 @ApiTags('Transactions')
 @Controller('accept')
 @Flow('s2s')
-@UseGuards(MerchantFlowGuard)
+@UseGuards(MerchantFlowGuard, MerchantIpWhitelistGuard)
 @ApiExtraModels(AcceptSuccessResponseDto, AcceptEstimateResponseDataDto, AcceptTransactionResponseDataDto, GetTransactionByMerchantReferenceResponseDTO, MerchantWebhookPayloadDto)
 export class AcceptTransactionsController {
     constructor(private readonly transactionsService: TransactionsService) { }
