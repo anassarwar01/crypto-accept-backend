@@ -147,7 +147,7 @@ async function bootstrap() {
    */
   if (process.env.APP_ENV !== 'production') {
     app.use(
-      ['/s2s', '/s2s-json', '/checkout', '/checkout-json'],
+      ['/docs', '/docs-json', '/checkout', '/checkout-json'],
       basicAuth({
         challenge: true,
         users: {
@@ -346,7 +346,7 @@ async function bootstrap() {
 
 
     // Dynamic JSON endpoint: server URL is derived from the incoming request host
-    httpAdapter.get('/s2s-json', (req: any, res: any) => {
+    httpAdapter.get('/docs-json', (req: any, res: any) => {
       const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
       const host = req.headers.host;
       res.json({
@@ -356,8 +356,8 @@ async function bootstrap() {
     });
 
     // Swagger UI fetches its spec from the dynamic endpoint above
-    SwaggerModule.setup('s2s', app, s2sDocument, {
-      swaggerOptions: { url: '/s2s-json' },
+    SwaggerModule.setup('docs', app, s2sDocument, {
+      swaggerOptions: { url: '/docs-json' },
     });
   }
 
