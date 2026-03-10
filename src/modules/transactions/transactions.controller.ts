@@ -7,6 +7,8 @@ import {
   HttpCode,
   HttpStatus,
   UseInterceptors,
+  Param,
+  UseGuards,
 } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
@@ -18,13 +20,17 @@ import {
 } from '@nestjs/swagger';
 import { TransactionSummaryDto } from './dto/transaction-summary.dto';
 
-import { TransactionStatus } from './enums/transaction.enums';
+import { TransactionStatus, TransactionPlatform } from './enums/transaction.enums';
 import { InjectMerchantIdInterceptor } from './interceptors/inject-merchant-id.interceptor';
 import { getClientIp } from '../common/utils/helper';
 import { Idempotent } from '../common/decorators/idempotent.decorator';
+import { Flow } from '@merchant-settings/decorators/flow.decorator';
+import { MerchantFlowGuard } from '@merchant-settings/guards/merchant-flow.guard';
 
 @ApiTags('Transactions')
 @Controller('transactions')
+@Flow('checkout')
+@UseGuards(MerchantFlowGuard)
 export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) { }
 
@@ -39,7 +45,7 @@ export class TransactionsController {
   })
   @ApiOperation({ summary: 'Create transaction URL' })
   @ApiBody({ type: CreateTransactionDto })
-  @HttpCode(HttpStatus.CREATED)
+  @HttpCode(HttpStatus.OK)
   async create(
     @Body() createTransactionDto: CreateTransactionDto,
     @Req() request: Request & { userId: string; merchantId: string },
@@ -70,7 +76,7 @@ export class TransactionsController {
   }
 
   @Post('summary')
-  // @Idempotent()
+  @Idempotent()
   @ApiHeader({
     name: 'ref',
     description: 'System Reference',

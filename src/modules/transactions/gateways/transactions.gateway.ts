@@ -21,10 +21,19 @@ import { Subscription } from 'rxjs';
 import { RequestLogsService } from '../../request-logs/request-logs.service';
 import { HttpMethod } from '../../request-logs/entities/request-log.entity';
 
+const isDevelopment = process.env.APP_ENV === 'development';
+
 @WebSocketGateway({
-    cors: process.env.APP_ENV === 'development' ? '*' : process.env.FRONTEND_DOMAIN,
     namespace: process.env.WEBSOCKET_NAMESPACE,
+    cors: {
+        origin: isDevelopment
+            ? '*' // allow all origins in development
+            : process.env.FRONTEND_ORIGIN?.split(',') || [], // restrict in production
+        credentials: !isDevelopment, // false in dev, true in prod
+        methods: ['GET', 'POST'],
+    },
 })
+
 export class TransactionsGateway
     implements
     OnGatewayConnection,
@@ -268,7 +277,7 @@ export class TransactionsGateway
                 this.logger.error(`Simulation confirming error: ${err.message}`);
                 return;
             }
-        }, 10000);
+        }, 5000);
 
         // 2️⃣ After delay, set to SUCCEEDED
         setTimeout(async () => {

@@ -24,6 +24,7 @@ import { CryptocurrencyModule } from '../crypto-currencies/crypto-currencies.mod
 import { FeatureFlagModule } from '../feature-flags/feature-flag.module';
 import { IpregistryModule } from '../external-services/ipregistry/ipregistry.module';
 import { MerchantsModule } from '../merchants/merchants.module';
+import { MerchantSettingsModule } from '../merchant-settings/merchant-settings.module';
 import { SystemSettingsModule } from '../system-settings/system-settings.module';
 import { IsCryptocurrencyCodeConstraint } from './decorators/is-cryptocurrency-code.decorator';
 import { QuantozModule } from '../external-services/quantoz/quantoz.module';
@@ -54,6 +55,7 @@ import { RequestLogsModule } from '../request-logs/request-logs.module';
     HttpModule,
     ThirdPartyLogsModule,
     RequestLogsModule,
+    MerchantSettingsModule,
   ],
   controllers: [TransactionsController, QuantozWebhookController],
   providers: [
@@ -71,19 +73,15 @@ import { RequestLogsModule } from '../request-logs/request-logs.module';
 })
 export class TransactionsModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // Auth for creating transaction
+    // Auth for creating transaction (POST /transactions)
     consumer
       .apply(AuthMiddleware)
       .forRoutes({ path: 'transactions', method: RequestMethod.POST });
 
-    // Ref verification for summary
+    // Ref verification for all other routes (summary, details, etc.)
     consumer
       .apply(RefMiddleware)
-      .forRoutes(
-        { path: 'transactions/summary', method: RequestMethod.POST },
-        { path: 'transactions/details', method: RequestMethod.GET },
-        { path: 'transactions', method: RequestMethod.GET },
-        { path: 'transactions/test/status-update', method: RequestMethod.POST },
-      );
+      .exclude({ path: 'transactions', method: RequestMethod.POST })
+      .forRoutes(TransactionsController);
   }
 }

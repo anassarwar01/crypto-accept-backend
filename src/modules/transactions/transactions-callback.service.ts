@@ -36,9 +36,9 @@ export class TransactionsCallbackService {
             systemReference: transaction.systemReference,
             orderId: transaction.shortCode,
             status: transaction.status,
-            fiatAmount: Number(transaction.fiatAmount || 0).toFixed(2),
+            fiatAmount: Number(transaction.fiatAmount || 0),
             fiatCurrency: transaction.fiatCurrency,
-            cryptoAmount: transaction.cryptoTransaction?.amount ?? null,
+            cryptoAmount: transaction.cryptoTransaction?.amount ? Number(transaction.cryptoTransaction.amount) : 0,
             cryptoCurrency: transaction.cryptoTransaction?.currency ?? null,
             createdAt: transaction.createdAt.toISOString(),
         };
@@ -52,9 +52,9 @@ export class TransactionsCallbackService {
                 systemReference: transaction.systemReference,
                 orderId: transaction.shortCode,
                 status: transaction.status,
-                fiatAmount: Number(transaction.fiatAmount || 0).toFixed(2),
+                fiatAmount: Number(transaction.fiatAmount || 0),
                 fiatCurrency: transaction.fiatCurrency,
-                cryptoAmount: transaction.cryptoTransaction?.amount ?? null,
+                cryptoAmount: transaction.cryptoTransaction?.amount ? Number(transaction.cryptoTransaction.amount) : 0,
                 cryptoCurrency: transaction.cryptoTransaction?.currency ?? null,
                 createdAt: transaction.createdAt.toISOString(),
             }
