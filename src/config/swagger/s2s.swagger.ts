@@ -161,7 +161,7 @@ export function setupS2SSwagger(app: INestApplication): void {
 
   // Dynamic JSON endpoint: server URL is derived from the incoming request host
   const httpAdapter = app.getHttpAdapter();
-  httpAdapter.get('/docs-json', (req: any, res: any) => {
+  httpAdapter.get('/api/accept/docs-json', (req: any, res: any) => {
     const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
     const host = req.headers.host;
     res.json({
@@ -172,6 +172,6 @@ export function setupS2SSwagger(app: INestApplication): void {
 
   // Swagger UI fetches its spec from the dynamic endpoint above
   SwaggerModule.setup('api/accept/docs', app, s2sDocument, {
-    swaggerOptions: { url: '/docs-json' },
+    swaggerOptions: { url: '/api/accept/docs-json' },
   });
 }
