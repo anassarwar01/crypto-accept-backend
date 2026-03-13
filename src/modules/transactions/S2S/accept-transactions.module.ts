@@ -14,10 +14,6 @@ export class AcceptTransactionsModule implements NestModule {
     configure(consumer: MiddlewareConsumer) {
         consumer
             .apply(AuthMiddleware)
-            .forRoutes(
-                { path: 'accept/transactions', method: RequestMethod.POST },
-                { path: 'accept/transactions/:requestId', method: RequestMethod.GET },
-                { path: 'accept/estimates/:fiatCurrency/:cryptoCurrency', method: RequestMethod.GET },
-            );
+            .forRoutes('api/accept/v1/(.*)');
     }
 }
