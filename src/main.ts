@@ -159,7 +159,7 @@ async function bootstrap() {
   );
 
   // Checkout API Documentation
-  setupCheckoutSwagger(app);
+  // setupCheckoutSwagger(app);
 
   // S2S API Documentation
   setupS2SSwagger(app);

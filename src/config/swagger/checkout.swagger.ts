@@ -70,58 +70,10 @@ export function setupCheckoutSwagger(app: INestApplication): void {
     checkoutDocument.components!.schemas = filteredSchemas;
   }
 
-
-
   // Force OpenAPI 3.1.0 to support the 'webhooks' property
   checkoutDocument.openapi = '3.1.0';
 
   /**
-  
-  const wsFullSpec = [
-  'Connection to the server is via **Socket.io**. This is NOT an HTTP request.',
-  '',
-  '### 1. Connection Details',
-  '',
-  '| Property | Value |',
-  '| :--- | :--- |',
-  '| **URL** | `{{BASE_URL}}` |',
-  '| **Namespace** | `' + (process.env.WEBSOCKET_NAMESPACE || '/') + '` |',
-  '',
-  '### 2. Client → Server Events',
-  '',
-  '| Event | Description | Payload |',
-  '| :--- | :--- | :--- |',
-  '| `subscribe` | Join a transaction room | `{ "ref": "string", "signature": "string" }` |',
-  '| `unsubscribe` | Leave a transaction room | `{ "ref": "string" }` |',
-  '| `clientEvent` | Update status (testing) | `{ "ref": "string", "status": "string" }` |',
-  '',
-  '### 3. Server → Client Events',
-  '',
-  '| Event | Description | Payload |',
-  '| :--- | :--- | :--- |',
-  '| `serverEvent` | Broadcast when status changes | `{ "ref": "string", "orderId": "string", "status": "string", "redirectUrl": "string", "explorerLink": "string" }` |',
-  '| `serverAck` | Acknowledgement of client events | `{ "status": "updated" }` |',
-].join('\n');
-
-checkoutDocument.openapi = '3.1.0';
-
-checkoutDocument.paths['/docs/websocket'] = {
-  get: {
-    tags: ['WebSocket'],
-    summary: 'Real-Time WebSocket Event Specification',
-    description: wsFullSpec,
-    operationId: 'websocketDocs',
-    deprecated: true,
-    responses: {
-      200: {
-        description: 'WebSocket documentation only',
-      },
-    },
-  },
-};
-  
-
-  
   * Consolidated WebSocket (Real-Time) Specification
    */
   const wsFullSpec = [
