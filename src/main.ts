@@ -149,7 +149,7 @@ async function bootstrap() {
    */
 
   app.use(
-    ['/docs', '/docs-json', '/checkout', '/checkout-json'],
+    ['/api/accept/docs', '/api/accept/docs-json', '/checkout', '/checkout-json'],
     basicAuth({
       challenge: true,
       users: {
