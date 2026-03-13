@@ -5,9 +5,6 @@ import { AcceptTransactionsModule } from '../../modules/transactions/S2S/accept-
 export function setupS2SSwagger(app: INestApplication): void {
   const s2sConfig = new DocumentBuilder()
     .setTitle('Merchant Transaction API Documentation')
-    .setDescription(
-      'This is a pre-release BETA version of the API for the purposes of early visibility of merchants who are starting integration work.',
-    )
     .setVersion('1.0')
     .addApiKey(
       { type: 'apiKey', name: 'x-api-key', in: 'header' },
