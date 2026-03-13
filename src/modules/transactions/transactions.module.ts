@@ -76,12 +76,21 @@ export class TransactionsModule implements NestModule {
     // Auth for creating transaction (POST /transactions)
     consumer
       .apply(AuthMiddleware)
-      .forRoutes({ path: 'transactions', method: RequestMethod.POST });
+      .exclude(
+        { path: 'transactions/details', method: RequestMethod.GET },
+        { path: 'transactions/summary', method: RequestMethod.POST },
+      )
+      .forRoutes(
+        { path: 'transactions', method: RequestMethod.POST },
+        { path: 'transactions/:requestId', method: RequestMethod.GET }
+      );
 
-    // Ref verification for all other routes (summary, details, etc.)
+    // Ref verification for specific routes (summary, details)
     consumer
       .apply(RefMiddleware)
-      .exclude({ path: 'transactions', method: RequestMethod.POST })
-      .forRoutes(TransactionsController);
+      .forRoutes(
+        { path: 'transactions/details', method: RequestMethod.GET },
+        { path: 'transactions/summary', method: RequestMethod.POST },
+      );
   }
 }
