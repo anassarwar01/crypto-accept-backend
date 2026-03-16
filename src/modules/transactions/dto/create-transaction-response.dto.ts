@@ -25,7 +25,6 @@ export class CreateTransactionResponseDTO {
     constructor(transaction: Transaction, paymentUrl: string, theme: string = 'light') {
         this.requestId = transaction.merchantReference;
         const encodedRef = encodeReference(transaction.systemReference);
-        this.url = `${paymentUrl}?ref=${encodedRef}`;
-        this.theme = theme;
+        this.url = `${paymentUrl}?ref=${encodedRef}&theme=${theme}`;
     }
 }
