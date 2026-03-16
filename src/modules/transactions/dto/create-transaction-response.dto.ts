@@ -15,9 +15,17 @@ export class CreateTransactionResponseDTO {
     })
     requestId: string;
 
-    constructor(transaction: Transaction, paymentUrl: string) {
+    @ApiProperty({
+        example: 'light',
+        description: 'The theme for the payment page',
+        enum: ['light', 'dark'],
+    })
+    theme: string;
+
+    constructor(transaction: Transaction, paymentUrl: string, theme: string = 'light') {
         this.requestId = transaction.merchantReference;
         const encodedRef = encodeReference(transaction.systemReference);
         this.url = `${paymentUrl}?ref=${encodedRef}`;
+        this.theme = theme;
     }
 }

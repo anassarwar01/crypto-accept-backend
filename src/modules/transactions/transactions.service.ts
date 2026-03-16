@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, ForbiddenException, Inject, forwardRef, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { MerchantSetting } from '../merchant-settings/entities/merchant-setting.entity';
 import { ConfigService } from '@nestjs/config';
 import { CreateTransactionDto, SaveTransactionDto } from './dto/create-transaction.dto';
 import { CustomersService } from '../customers/customers.service';
@@ -58,6 +59,8 @@ export class TransactionsService {
     private readonly quantozService: QuantozService,
     private readonly callbackService: TransactionsCallbackService,
     private readonly thirdPartyLogsService: ThirdPartyLogsService,
+    @InjectRepository(MerchantSetting)
+    private readonly merchantSettingRepository: Repository<MerchantSetting>,
   ) {
     this.signatureSecret = this.configService.get<string>('SOCKET_SIGNATURE_SECRET') || 'default-secret-change-me';
   }
@@ -119,10 +122,19 @@ export class TransactionsService {
     // Send callback to merchant
     this.callbackService.sendCallback(transaction);
 
+    // Fetch merchant theme
+    const themeSetting = await this.merchantSettingRepository.findOne({
+      where: {
+        merchantId,
+        key: 'theme',
+      },
+    });
+    const theme = themeSetting?.value || 'light';
+
     // Generate order request URL
     const paymentUrl = this.configService.get<string>('FRONTEND_DOMAIN') || '';
 
-    return new CreateTransactionResponseDTO(transaction, paymentUrl);
+    return new CreateTransactionResponseDTO(transaction, paymentUrl, theme);
   }
 
   async getDetails(
