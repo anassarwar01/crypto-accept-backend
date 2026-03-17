@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AcceptTransactionsModule } from '../../modules/transactions/S2S/accept-transactions.module';
+import { API_CONFIG } from '../api.config';
 
 export function setupS2SSwagger(app: INestApplication): void {
   const s2sConfig = new DocumentBuilder()
@@ -158,7 +159,10 @@ export function setupS2SSwagger(app: INestApplication): void {
 
   // Dynamic JSON endpoint: server URL is derived from the incoming request host
   const httpAdapter = app.getHttpAdapter();
-  httpAdapter.get('/api/accept/docs-json', (req: any, res: any) => {
+  const docsJsonPath = `/${API_CONFIG.ACCEPT.DOCS}-json`;
+  const docsPath = API_CONFIG.ACCEPT.DOCS;
+
+  httpAdapter.get(docsJsonPath, (req: any, res: any) => {
     const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
     const host = req.headers.host;
     res.json({
@@ -168,7 +172,7 @@ export function setupS2SSwagger(app: INestApplication): void {
   });
 
   // Swagger UI fetches its spec from the dynamic endpoint above
-  SwaggerModule.setup('api/accept/docs', app, s2sDocument, {
-    swaggerOptions: { url: '/api/accept/docs-json' },
+  SwaggerModule.setup(docsPath, app, s2sDocument, {
+    swaggerOptions: { url: docsJsonPath },
   });
 }
