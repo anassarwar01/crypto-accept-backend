@@ -15,7 +15,7 @@ import { MerchantFlowGuard } from '@merchant-settings/guards/merchant-flow.guard
 import { MerchantIpWhitelistGuard } from '../../merchants/guards/merchant-ip-whitelist.guard';
 
 @ApiTags('Transactions')
-@Controller('accept')
+@Controller()
 @Flow('s2s')
 @UseGuards(MerchantFlowGuard, MerchantIpWhitelistGuard)
 @ApiExtraModels(AcceptSuccessResponseDto, AcceptEstimateResponseDataDto, AcceptTransactionResponseDataDto, GetTransactionByMerchantReferenceResponseDTO, MerchantWebhookPayloadDto)

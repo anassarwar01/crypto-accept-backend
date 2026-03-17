@@ -5,6 +5,7 @@ import { AuthMiddleware } from '../../common/middleware/auth.middleware';
 import { CommonModule } from '../../common/common.module';
 
 import { MerchantSettingsModule } from '../../merchant-settings/merchant-settings.module';
+import { API_CONFIG } from '../../../config/api.config';
 
 @Module({
     imports: [TransactionsModule, CommonModule, MerchantSettingsModule],
@@ -14,10 +15,6 @@ export class AcceptTransactionsModule implements NestModule {
     configure(consumer: MiddlewareConsumer) {
         consumer
             .apply(AuthMiddleware)
-            .forRoutes(
-                { path: 'accept/transactions', method: RequestMethod.POST },
-                { path: 'accept/transactions/:requestId', method: RequestMethod.GET },
-                { path: 'accept/estimates/:fiatCurrency/:cryptoCurrency', method: RequestMethod.GET },
-            );
+            .forRoutes(AcceptTransactionsController);
     }
 }

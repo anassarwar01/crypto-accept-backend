@@ -24,6 +24,8 @@ import { AllExceptionsFilter } from './modules/common/filters/all-exceptions.fil
 import { RequestLoggingInterceptor } from './modules/common/interceptors/request-logging.interceptor';
 import { ResponseInterceptor } from './modules/common/interceptors/response.interceptor';
 import { IdempotencyInterceptor } from './modules/common/interceptors/idempotency.interceptor';
+import { RouterModule } from '@nestjs/core';
+import { API_CONFIG } from './config/api.config';
 import databaseConfig from './config/database.config';
 
 @Module({
@@ -54,6 +56,16 @@ import databaseConfig from './config/database.config';
         SystemSettingsModule,
         ThirdPartyLogsModule,
         MerchantSettingsModule,
+        RouterModule.register([
+            {
+                path: API_CONFIG.CHECKOUT.PREFIX,
+                module: TransactionsModule,
+            },
+            {
+                path: API_CONFIG.ACCEPT.PREFIX,
+                module: AcceptTransactionsModule,
+            },
+        ]),
         ThrottlerModule.forRoot([{
             ttl: 60000, // 60 seconds
             limit: 60, // 60 requests per IP per minute

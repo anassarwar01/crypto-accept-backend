@@ -9,6 +9,7 @@ import {
   UseInterceptors,
   Param,
   UseGuards,
+  ForbiddenException,
 } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
@@ -17,12 +18,19 @@ import {
   ApiOperation,
   ApiHeader,
   ApiBody,
+  ApiResponse as SwaggerApiResponse,
 } from '@nestjs/swagger';
+import { CreateTransactionResponseDTO } from './dto/create-transaction-response.dto';
+import { TransactionDetailsResponseDto } from './dto/transaction-details.dto';
+import { TransactionSummaryResponseDto } from './dto/transaction-summary.dto';
+import { GetTransactionByMerchantReferenceResponseDTO } from './dto/accept/get-transaction-by-merchant-reference.dto';
+import { ErrorResponseDto, UnauthorizedErrorResponseDto, ForbiddenErrorResponseDto, NotFoundErrorResponseDto, TooManyRequestsErrorResponseDto, InternalServerErrorResponseDto } from '../common/dto/error-response.dto';
 import { TransactionSummaryDto } from './dto/transaction-summary.dto';
 
 import { TransactionStatus, TransactionPlatform } from './enums/transaction.enums';
 import { InjectMerchantIdInterceptor } from './interceptors/inject-merchant-id.interceptor';
 import { getClientIp } from '../common/utils/helper';
+import { decodeReference } from '../common/utils/reference-coder';
 import { Idempotent } from '../common/decorators/idempotent.decorator';
 import { Flow } from '@merchant-settings/decorators/flow.decorator';
 import { MerchantFlowGuard } from '@merchant-settings/guards/merchant-flow.guard';
@@ -45,6 +53,16 @@ export class TransactionsController {
   })
   @ApiOperation({ summary: 'Create transaction URL' })
   @ApiBody({ type: CreateTransactionDto })
+  @SwaggerApiResponse({
+    status: 200,
+    description: 'Success',
+    type: CreateTransactionResponseDTO,
+  })
+  @SwaggerApiResponse({ status: 400, description: 'Bad Request', type: ErrorResponseDto })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized', type: UnauthorizedErrorResponseDto })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden', type: ForbiddenErrorResponseDto })
+  @SwaggerApiResponse({ status: 429, description: 'Too Many Requests', type: TooManyRequestsErrorResponseDto })
+  @SwaggerApiResponse({ status: 500, description: 'Internal Server Error', type: InternalServerErrorResponseDto })
   @HttpCode(HttpStatus.OK)
   async create(
     @Body() createTransactionDto: CreateTransactionDto,
@@ -66,6 +84,17 @@ export class TransactionsController {
     required: true,
   })
   @ApiOperation({ summary: 'Get transaction details' })
+  @SwaggerApiResponse({
+    status: 200,
+    description: 'Success',
+    type: TransactionDetailsResponseDto,
+  })
+  @SwaggerApiResponse({ status: 400, description: 'Bad Request', type: ErrorResponseDto })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized', type: UnauthorizedErrorResponseDto })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden', type: ForbiddenErrorResponseDto })
+  @SwaggerApiResponse({ status: 404, description: 'Transaction Not Found', type: NotFoundErrorResponseDto })
+  @SwaggerApiResponse({ status: 429, description: 'Too Many Requests', type: TooManyRequestsErrorResponseDto })
+  @SwaggerApiResponse({ status: 500, description: 'Internal Server Error', type: InternalServerErrorResponseDto })
   @HttpCode(HttpStatus.OK)
   async getDetails(
     @Req() request: any,
@@ -84,6 +113,17 @@ export class TransactionsController {
   })
   @ApiOperation({ summary: 'Get transaction summary before processing' })
   @ApiBody({ type: TransactionSummaryDto })
+  @SwaggerApiResponse({
+    status: 200,
+    description: 'Success',
+    type: TransactionSummaryResponseDto,
+  })
+  @SwaggerApiResponse({ status: 400, description: 'Bad Request', type: ErrorResponseDto })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized', type: UnauthorizedErrorResponseDto })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden', type: ForbiddenErrorResponseDto })
+  @SwaggerApiResponse({ status: 404, description: 'Transaction Not Found', type: NotFoundErrorResponseDto })
+  @SwaggerApiResponse({ status: 429, description: 'Too Many Requests', type: TooManyRequestsErrorResponseDto })
+  @SwaggerApiResponse({ status: 500, description: 'Internal Server Error', type: InternalServerErrorResponseDto })
   @HttpCode(HttpStatus.OK)
   async getSummary(
     @Req() request: any,
@@ -93,34 +133,31 @@ export class TransactionsController {
     return this.transactionsService.getSummary(transaction, summaryDto);
   }
 
-  @Get('')
+  @Get(':requestId')
   @ApiHeader({
-    name: 'ref',
-    description: 'System Reference',
+    name: 'x-api-key',
+    description: 'Merchant API Key',
     required: true,
+    schema: { default: 'API-GQC6I9RQ' },
   })
-  @ApiOperation({ summary: 'Get transaction summary' })
+  @ApiOperation({ summary: 'Get transaction' })
+  @SwaggerApiResponse({
+    status: 200,
+    description: 'Success',
+    type: GetTransactionByMerchantReferenceResponseDTO,
+  })
+  @SwaggerApiResponse({ status: 400, description: 'Bad Request', type: ErrorResponseDto })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized', type: UnauthorizedErrorResponseDto })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden', type: ForbiddenErrorResponseDto })
+  @SwaggerApiResponse({ status: 404, description: 'Transaction Not Found', type: NotFoundErrorResponseDto })
+  @SwaggerApiResponse({ status: 429, description: 'Too Many Requests', type: TooManyRequestsErrorResponseDto })
+  @SwaggerApiResponse({ status: 500, description: 'Internal Server Error', type: InternalServerErrorResponseDto })
   @HttpCode(HttpStatus.OK)
   async getTransaction(
+    @Param('requestId') requestId: string,
     @Req() request: any,
   ) {
-    const transaction = request.transaction;
-    return this.transactionsService.getTransaction(transaction);
+    return await this.transactionsService.getDetailsByMerchantReference(requestId, request.merchantId);
   }
 
-  // @Post('test/status-update')
-  // @ApiHeader({
-  //   name: 'ref',
-  //   description: 'System Reference',
-  //   required: true,
-  // })
-  // @ApiOperation({ summary: 'Test endpoint to update transaction status and trigger WebSocket' })
-  // @HttpCode(HttpStatus.OK)
-  // async updateStatus(
-  //   @Req() request: any,
-  //   @Body('status') status: TransactionStatus,
-  // ) {
-  //   const transaction = request.transaction;
-  //   return this.transactionsService.updateStatus(transaction, status);
-  // }
 }
