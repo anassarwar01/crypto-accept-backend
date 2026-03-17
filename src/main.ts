@@ -23,6 +23,7 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { setupCheckoutSwagger } from './config/swagger/checkout.swagger';
 import { setupS2SSwagger } from './config/swagger/s2s.swagger';
+import { API_CONFIG } from './config/api.config';
 import { ValidationPipe } from '@nestjs/common';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { TransactionsModule } from './modules/transactions/transactions.module';
@@ -103,12 +104,11 @@ async function bootstrap() {
    * -------------------------------------------------------
    * Global API Prefix
    * -------------------------------------------------------
-   * All routes prefixed with:
-   * /api/v1
+   * All routes prefixed:
    * Excluding webhooks (often required externally).
    */
   app.setGlobalPrefix('api/v1', {
-    exclude: ['webhooks/(.*)', 'api/accept/v1/(.*)'],
+    exclude: ['webhooks/(.*)', `${API_CONFIG.ACCEPT.PREFIX}/(.*)`, `${API_CONFIG.CHECKOUT.PREFIX}/(.*)`],
   });
 
   /**
@@ -148,8 +148,15 @@ async function bootstrap() {
    * - IP Whitelisting
    */
 
+  const sanitizePath = (path: string) => path.startsWith('/') ? path : `/${path}`;
+
   app.use(
-    ['/api/accept/docs', '/api/accept/docs-json', '/checkout', '/checkout-json'],
+    [
+      sanitizePath(API_CONFIG.ACCEPT.DOCS),
+      sanitizePath(`${API_CONFIG.ACCEPT.DOCS}-json`),
+      sanitizePath(API_CONFIG.CHECKOUT.DOCS),
+      sanitizePath(`${API_CONFIG.CHECKOUT.DOCS}-json`),
+    ],
     basicAuth({
       challenge: true,
       users: {
@@ -159,7 +166,7 @@ async function bootstrap() {
   );
 
   // Checkout API Documentation
-  // setupCheckoutSwagger(app);
+  setupCheckoutSwagger(app);
 
   // S2S API Documentation
   setupS2SSwagger(app);

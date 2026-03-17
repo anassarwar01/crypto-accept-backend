@@ -5,6 +5,7 @@ import {
   RequestMethod,
 } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { API_CONFIG } from '../../config/api.config';
 import { CustomersModule } from '../customers/customers.module';
 import { UsersModule } from '../users/users.module';
 import { CommonModule } from '../common/common.module';
@@ -77,20 +78,17 @@ export class TransactionsModule implements NestModule {
     consumer
       .apply(AuthMiddleware)
       .exclude(
-        { path: 'transactions/details', method: RequestMethod.GET },
-        { path: 'transactions/summary', method: RequestMethod.POST },
+        `${API_CONFIG.CHECKOUT.PREFIX}/transactions/details`,
+        `${API_CONFIG.CHECKOUT.PREFIX}/transactions/summary`,
       )
-      .forRoutes(
-        { path: 'transactions', method: RequestMethod.POST },
-        { path: 'transactions/:requestId', method: RequestMethod.GET }
-      );
+      .forRoutes(TransactionsController);
 
     // Ref verification for specific routes (summary, details)
     consumer
       .apply(RefMiddleware)
       .forRoutes(
-        { path: 'transactions/details', method: RequestMethod.GET },
-        { path: 'transactions/summary', method: RequestMethod.POST },
+        `${API_CONFIG.CHECKOUT.PREFIX}/transactions/details`,
+        `${API_CONFIG.CHECKOUT.PREFIX}/transactions/summary`,
       );
   }
 }

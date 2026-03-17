@@ -1,10 +1,11 @@
 import { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { API_CONFIG } from '../api.config';
 
 export function setupCheckoutSwagger(app: INestApplication): void {
   const checkoutConfig = new DocumentBuilder()
     .setTitle('Checkout API Documentation')
-    .setDescription('Public Checkout APIs')
+    // .setDescription('Public Checkout APIs')
     .setVersion('1.0')
     // No hardcoded server — resolved dynamically per request
     .build();
@@ -30,100 +31,11 @@ export function setupCheckoutSwagger(app: INestApplication): void {
     Object.values(obj).forEach(extractRefs);
   };
 
-  Object.keys(checkoutDocument.paths).forEach((path) => {
-    if (!path.includes('/accept/')) {
-      filteredCheckoutPaths[path] = checkoutDocument.paths[path];
-      extractRefs(checkoutDocument.paths[path]);
-    }
-  });
-
-  checkoutDocument.paths = filteredCheckoutPaths;
-
-  // Recursively find dependencies for used schemas
-  const resolveSchemaDependencies = () => {
-    let addedNew = false;
-    usedSchemas.forEach((schemaName) => {
-      const schema = checkoutDocument.components?.schemas?.[schemaName];
-      if (schema) {
-        const beforeCount = usedSchemas.size;
-        extractRefs(schema);
-        if (usedSchemas.size > beforeCount) {
-          addedNew = true;
-        }
-      }
-    });
-    if (addedNew) {
-      resolveSchemaDependencies();
-    }
-  };
-  resolveSchemaDependencies();
-
-  // Filter components.schemas
-  const schemas = checkoutDocument.components?.schemas;
-  if (schemas) {
-    const filteredSchemas: Record<string, any> = {};
-    Object.keys(schemas).forEach((schemaName) => {
-      if (usedSchemas.has(schemaName)) {
-        filteredSchemas[schemaName] = schemas[schemaName];
-      }
-    });
-    checkoutDocument.components!.schemas = filteredSchemas;
-  }
-
-  // Force OpenAPI 3.1.0 to support the 'webhooks' property
-  checkoutDocument.openapi = '3.1.0';
-
-  /**
-  * Consolidated WebSocket (Real-Time) Specification
-   */
-  const wsFullSpec = [
-    'Connection to the server is via **Socket.io**. This is NOT an HTTP request.',
-    '',
-    '#### **1. Connection Details**',
-    '| Property | Value |',
-    '| :--- | :--- |',
-    '| **URL** | `{{BASE_URL}}` |',
-    '| **Namespace** | `' + (process.env.WEBSOCKET_NAMESPACE || '/') + '` |',
-    '',
-    '#### **2. Client → Server Events**',
-    '| Event | Description | Payload |',
-    '| :--- | :--- | :--- |',
-    '| `subscribe` | Join a transaction room. | `{ "ref": "string", "signature": "string" }` |',
-    '| `unsubscribe` | Leave a transaction room. | `{ "ref": "string" }` |',
-    '| `clientEvent` | Update status (testing). | `{ "ref": "string", "status": "string" }` |',
-    '',
-    '#### **3. Server → Client Events**',
-    '| Event | Description | Payload |',
-    '| :--- | :--- | :--- |',
-    '| `serverEvent` | Broadcasted on status change. | `{ "ref": "string", "orderId": "string", "status": "string", "redirectUrl": "string", "explorerLink": "string" }` |',
-    '| `serverAck` | Acknowledgement of client events. | `{ "status": "updated", ... }` |'
-  ].join('\n');
-
-  // Single entry point for all WebSocket info
-  delete checkoutDocument.paths['/websocket/connect'];
-  delete checkoutDocument.paths['/websocket/events/subscribe'];
-  delete checkoutDocument.paths['/websocket/events/unsubscribe'];
-  delete checkoutDocument.paths['/websocket/events/clientEvent'];
-  delete checkoutDocument.paths['/websocket/events/serverEvent'];
-
-  checkoutDocument.paths['/transactions'] = {
-    get: {
-      tags: ['WebSocket'],
-      summary: 'Real-Time Event Specification',
-      description: wsFullSpec,
-      responses: {
-        200: {
-          description: 'Specification documentation',
-        },
-      },
-    },
-  };
-
   /**
    * 2. System Webhooks
    * Manually added as they appear after APIs in the UI
    */
-  (checkoutDocument as any).webhooks = {
+  const webhooks = {
     'Transaction Status Update': {
       description: 'Webhook sent to the merchant when a transaction status changes.',
       post: {
@@ -246,9 +158,61 @@ export function setupCheckoutSwagger(app: INestApplication): void {
     },
   };
 
+  // Extract schemas from paths
+  Object.keys(checkoutDocument.paths).forEach((path) => {
+    // Exclude S2S, summary, and details endpoints
+    if (!path.includes('/accept/') && !path.includes('/summary') && !path.includes('/details')) {
+      filteredCheckoutPaths[path] = checkoutDocument.paths[path];
+      extractRefs(checkoutDocument.paths[path]);
+    }
+  });
+
+  // Extract schemas from webhooks
+  extractRefs(webhooks);
+
+  checkoutDocument.paths = filteredCheckoutPaths;
+  (checkoutDocument as any).webhooks = webhooks;
+
+  // Recursively find dependencies for used schemas
+  const resolveSchemaDependencies = () => {
+    let addedNew = false;
+    usedSchemas.forEach((schemaName) => {
+      const schema = checkoutDocument.components?.schemas?.[schemaName];
+      if (schema) {
+        const beforeCount = usedSchemas.size;
+        extractRefs(schema);
+        if (usedSchemas.size > beforeCount) {
+          addedNew = true;
+        }
+      }
+    });
+    if (addedNew) {
+      resolveSchemaDependencies();
+    }
+  };
+  resolveSchemaDependencies();
+
+  // Filter components.schemas
+  const schemas = checkoutDocument.components?.schemas;
+  if (schemas) {
+    const filteredSchemas: Record<string, any> = {};
+    Object.keys(schemas).forEach((schemaName) => {
+      if (usedSchemas.has(schemaName)) {
+        filteredSchemas[schemaName] = schemas[schemaName];
+      }
+    });
+    checkoutDocument.components!.schemas = filteredSchemas;
+  }
+
+  // Force OpenAPI 3.1.0 to support the 'webhooks' property
+  checkoutDocument.openapi = '3.1.0';
+
   // Dynamic JSON endpoint: server URL is derived from the incoming request host
   const httpAdapter = app.getHttpAdapter();
-  httpAdapter.get('/checkout-json', (req: any, res: any) => {
+  const docsJsonPath = `/${API_CONFIG.CHECKOUT.DOCS}-json`;
+  const docsPath = API_CONFIG.CHECKOUT.DOCS;
+
+  httpAdapter.get(docsJsonPath, (req: any, res: any) => {
     const protocol =
       req.headers['x-forwarded-proto'] || req.protocol || 'https';
     const host = req.headers.host;
@@ -258,7 +222,7 @@ export function setupCheckoutSwagger(app: INestApplication): void {
     });
   });
 
-  SwaggerModule.setup('checkout', app, checkoutDocument, {
-    swaggerOptions: { url: '/checkout-json' },
+  SwaggerModule.setup(docsPath, app, checkoutDocument, {
+    swaggerOptions: { url: docsJsonPath },
   });
 }
