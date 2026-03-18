@@ -48,7 +48,7 @@ export class OrderItemDto {
     quantity: number;
 
     @ApiProperty({
-        example: 99.99,
+        example: 10,
         description: 'Price must be between 0.01 and 100',
         minimum: 0.01,
         maximum: 100,
@@ -65,7 +65,7 @@ export class CreateTransactionDto {
     @IsEnum(FiatCurrency, { message: 'Invalid currency' })
     fiatCurrency: FiatCurrency;
 
-    @ApiProperty({ example: 10 })
+    @ApiProperty({ example: 20 })
     @IsNumber()
     @Min(1)
     @Max(1000)
