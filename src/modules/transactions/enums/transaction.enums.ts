@@ -1,8 +1,8 @@
 export enum FiatCurrency {
     USD = 'USD',
     EUR = 'EUR',
-    GBP = 'GBP',
-    NGN = 'NGN',
+    // GBP = 'GBP',
+    // NGN = 'NGN',
 }
 
 export enum AllFiatCurrency {
