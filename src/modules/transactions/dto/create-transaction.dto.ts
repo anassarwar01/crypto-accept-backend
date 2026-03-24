@@ -48,7 +48,7 @@ export class OrderItemDto {
     quantity: number;
 
     @ApiProperty({
-        example: 99.99,
+        example: 10,
         description: 'Price must be between 0.01 and 100',
         minimum: 0.01,
         maximum: 100,
@@ -65,7 +65,7 @@ export class CreateTransactionDto {
     @IsEnum(FiatCurrency, { message: 'Invalid currency' })
     fiatCurrency: FiatCurrency;
 
-    @ApiProperty({ example: 10 })
+    @ApiProperty({ example: 20 })
     @IsNumber()
     @Min(1)
     @Max(1000)
@@ -83,15 +83,14 @@ export class CreateTransactionDto {
     @Type(() => OrderItemDto)
     orderItems?: OrderItemDto[];
 
-    @ApiPropertyOptional({
+    @ApiProperty({
         format: 'uri',
-        example: 'https://example.com/callback',
-        description: 'Optional callback URL for notifications',
+        example: 'https://example.com/webhook',
+        description: 'Optional webhook URL for notifications',
     })
-    @IsOptional()
     @IsUrl()
     @IsMerchantAllowedUrl('Callback')
-    callbackUrl?: string;
+    webhookUrl?: string;
 
     @ApiProperty({
         format: 'uri',
@@ -152,7 +151,7 @@ export class SaveTransactionDto {
         this.expiresAt = new Date(Date.now() + expireMinutes * 60 * 1000);
         this.orderItems = request.orderItems || [];
         this.redirectUrl = request.redirectUrl;
-        this.callbackUrl = request.callbackUrl;
+        this.callbackUrl = request.webhookUrl;
         this.expireMinutes = expireMinutes;
         this.platform = TransactionPlatform.CHECKOUT;
     }
