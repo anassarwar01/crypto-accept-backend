@@ -9,6 +9,7 @@ import {
   JoinTable,
 } from 'typeorm';
 import { Merchant } from '../../merchants/entities/merchant.entity';
+import { Admin } from '../../admins/entities/admin.entity';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -63,4 +64,6 @@ export class User {
   @OneToMany(() => Merchant, (merchant) => merchant.user)
   merchants!: Merchant[];
 
+  @OneToMany(() => Admin, (admin) => admin.user)
+  admins!: Admin[];
 }
