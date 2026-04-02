@@ -21,6 +21,7 @@ tsConfigPaths.register({
     '@system-settings/*': ['src/modules/system-settings/*'],
     '@feature-flags/*': ['src/modules/feature-flags/*'],
     '@external-services/*': ['src/modules/external-services/*'],
+    '@merchant-settings/*': ['src/modules/merchant-settings/*'],
     '@merchant-customers/*': ['src/modules/merchant-customers/*'],
     '@common/*': ['src/modules/common/*'],
     '@cron/*': ['src/cron/*'],
