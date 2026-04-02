@@ -27,6 +27,7 @@ import { IdempotencyInterceptor } from './modules/common/interceptors/idempotenc
 import { RouterModule } from '@nestjs/core';
 import { API_CONFIG } from './config/api.config';
 import databaseConfig from './config/database.config';
+import { QuantozWebhookController } from './modules/external-services/quantoz/webhooks/quantoz-webhook.controller';
 
 @Module({
     imports: [
@@ -71,7 +72,7 @@ import databaseConfig from './config/database.config';
             limit: 60, // 60 requests per IP per minute
         }]),
     ],
-    controllers: [AppController],
+    controllers: [AppController, QuantozWebhookController],
     providers: [
         AppService,
         {
