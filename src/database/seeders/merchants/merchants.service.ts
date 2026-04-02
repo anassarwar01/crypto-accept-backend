@@ -22,6 +22,18 @@ export class MerchantsSeederService {
     // Get all users with role MERCHANT
     const merchantUsers = await userRepo.find({ where: { role: UserRole.MERCHANT } });
 
+    const defaultAllowedSources = [
+      {
+        allowed_ips: ['*'],
+        callback_domain: [
+          'https://yoursite.com'
+        ],
+        redirect_domain: [
+          'https://yoursite.com',
+        ],
+      },
+    ];
+
     for (const user of merchantUsers) {
       const existing = await merchantRepo.findOneBy({ userId: user.id });
       if (!existing) {
@@ -29,12 +41,14 @@ export class MerchantsSeederService {
           userId: user.id,
           apiKey: `API-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
           rateLimit: 100,
-          allowedSources: [{ source: 'default' }],
+          allowedSources: defaultAllowedSources,
         };
         await merchantRepo.save(merchantRepo.create(payload));
         console.log(`Merchant for user ${user.name || user.email} created`);
       } else {
-        console.log(`Merchant for user ${user.name || user.email} already exists`);
+        existing.allowedSources = defaultAllowedSources;
+        await merchantRepo.save(existing);
+        console.log(`Merchant for user ${user.name || user.email} already exists. Updated allowed sources.`);
       }
     }
 

@@ -9,7 +9,7 @@ import { MESSAGES } from '@helper/constant/messages';
 export class IpregistryService extends BaseHttpService {
     protected readonly logger = new Logger(IpregistryService.name);
     private readonly BASE_URL = process.env.IPREGISTRY_BASE_URL || 'https://api.ipregistry.co';
-    private readonly API_KEY = process.env.IPREGISTRY_API_KEY || 'ira_i7pzSiez0jrIPGKBmIvu8RCmANOtvk0TiZmd';
+    private readonly API_KEY = process.env.IPREGISTRY_API_KEY || '';
 
     constructor(
         protected readonly httpService: HttpService,
