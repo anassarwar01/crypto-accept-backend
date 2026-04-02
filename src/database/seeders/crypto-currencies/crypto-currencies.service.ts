@@ -21,6 +21,7 @@ export class CryptocurrenciesSeederService {
       { name: 'Algorand', symbol: 'ALGO' },
       { name: 'Litecoin', symbol: 'LTC' },
       { name: 'Stellar', symbol: 'XLM' },
+      { name: 'USDC', symbol: 'USDC-ETH' },
     ];
 
     for (const crypto of cryptos) {
