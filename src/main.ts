@@ -108,7 +108,7 @@ async function bootstrap() {
    * Excluding webhooks (often required externally).
    */
   app.setGlobalPrefix('api/v1', {
-    exclude: ['webhooks/(.*)', `${API_CONFIG.ACCEPT.PREFIX}/(.*)`, `${API_CONFIG.CHECKOUT.PREFIX}/(.*)`],
+    exclude: ['health', 'webhooks/(.*)', `${API_CONFIG.ACCEPT.PREFIX}/(.*)`, `${API_CONFIG.CHECKOUT.PREFIX}/(.*)`],
   });
 
   /**
