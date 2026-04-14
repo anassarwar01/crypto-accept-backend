@@ -27,15 +27,16 @@ export class IpregistryService extends BaseHttpService {
      * Checks if an IP is allowed based on country list and security rules
      * @param ip Client IP
      * @param allowedCountries List of ISO country codes
+     * @param preFetchedIpData Optional pre-fetched IP data to prevent duplicate HTTP calls
      */
-    async checkAccess(ip: string, allowedCountries: string[]): Promise<{ allowed: boolean; reason?: string }> {
+    async checkAccess(ip: string, allowedCountries: string[], preFetchedIpData?: any): Promise<{ allowed: boolean; reason?: string }> {
         try {
             // Localhost check for development
             if (process.env.APP_ENV === 'development') {
                 return { allowed: true };
             }
 
-            const response = await this.getIpInfo(ip);
+            const response = preFetchedIpData || await this.getIpInfo(ip);
 
             if (!response || !response.location || !response.security) {
                 this.logger.warn(`Invalid response from Ipregistry for IP: ${ip}`);

@@ -13,6 +13,7 @@ import { MerchantWebhookPayloadDto } from '../dto/accept/merchant-webhook-payloa
 import { Flow } from '@merchant-settings/decorators/flow.decorator';
 import { MerchantFlowGuard } from '@merchant-settings/guards/merchant-flow.guard';
 import { MerchantIpWhitelistGuard } from '../../merchants/guards/merchant-ip-whitelist.guard';
+import { getClientIp } from '../../common/utils/helper';
 
 @ApiTags('Transactions')
 @Controller()
@@ -107,6 +108,7 @@ export class AcceptTransactionsController {
     @SwaggerApiResponse({ status: 429, description: 'Too Many Requests', type: TooManyRequestsErrorResponseDto })
     @SwaggerApiResponse({ status: 500, description: 'Internal Server Error', type: InternalServerErrorResponseDto })
     async createAcceptTransaction(@Body() dto: CreateAcceptTransactionDto, @Req() request: any): Promise<AcceptTransactionResponseDataDto> {
-        return this.transactionsService.createAcceptTransaction(dto, request.merchantId);
+        const ip = getClientIp(request);
+        return this.transactionsService.createAcceptTransaction(dto, request.merchantId, ip);
     }
 }

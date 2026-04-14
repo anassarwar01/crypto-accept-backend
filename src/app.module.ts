@@ -17,6 +17,7 @@ import { CronModule } from './cron/cron.module';
 import { FeatureFlagModule } from './modules/feature-flags/feature-flag.module';
 import { SystemSettingsModule } from './modules/system-settings/system-settings.module';
 import { MerchantSettingsModule } from './modules/merchant-settings/merchant-settings.module';
+import { HealthModule } from './modules/health/health.module';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { MerchantThrottlerGuard } from './modules/merchants/guards/merchant-throttler.guard';
@@ -57,6 +58,7 @@ import { QuantozWebhookController } from './modules/external-services/quantoz/we
         SystemSettingsModule,
         ThirdPartyLogsModule,
         MerchantSettingsModule,
+        HealthModule,
         RouterModule.register([
             {
                 path: API_CONFIG.CHECKOUT.PREFIX,

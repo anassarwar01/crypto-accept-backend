@@ -141,17 +141,8 @@ export class TransactionsService {
     transaction: Transaction,
     ip?: string,
   ): Promise<TransactionDetailsResponseDto> {
-    const flag = await this.featureFlagService.getFlag('country_restriction');
-
-    if (flag && flag.active && ip) {
-      const allowedCountries = flag.rules?.allowed_countries || [];
-      const result = await this.ipregistryService.checkAccess(ip, allowedCountries);
-
-      if (!result.allowed) {
-        await this.updateStatus(transaction, TransactionStatus.CANCELLED);
-        throw new ForbiddenException(result.reason || 'Access denied based on your location or security settings.');
-      }
-    }
+    // Country Restriction Check
+    await this.validateIpAccess(ip, transaction);
 
     const cryptosResponse = await this.cryptoService.findAll();
     return new TransactionDetailsResponseDto(cryptosResponse || [], transaction);
@@ -407,8 +398,12 @@ export class TransactionsService {
     };
   }
 
-  async createAcceptTransaction(request: CreateAcceptTransactionDto, merchantId: string): Promise<AcceptTransactionResponseDataDto> {
+  async createAcceptTransaction(request: CreateAcceptTransactionDto, merchantId: string, ip?: string): Promise<AcceptTransactionResponseDataDto> {
     let transaction: Transaction | null = null;
+
+    // Country Restriction Check
+    await this.validateIpAccess(ip);
+
     try {
       // 1. Get or create customer
       const customer = await this.customerService.getCustomerByEmail(
@@ -514,4 +509,34 @@ export class TransactionsService {
   }
 
   /** End S2S Endpoints */
+
+  /**
+   * Helper method to validate IP access against country restrictions and security flags (VPN, Tor, Proxy)
+   * Optionally cancels a transaction if it is provided and fails the check.
+   */
+  async validateIpAccess(ip?: string, transaction?: Transaction): Promise<void> {
+    if (!ip) return;
+
+    const flag = await this.featureFlagService.getFlag('country_restriction');
+
+
+    if (flag && !flag.active) return;
+
+    const ipResponse = await this.ipregistryService.getIpInfo(ip);
+    const countryCode = ipResponse?.location?.country?.code;
+
+    if (countryCode) {
+      const isAllowed = await this.featureFlagService.isCountryAllowed(countryCode);
+      const result = await this.ipregistryService.checkAccess(ip, isAllowed ? [countryCode] : [], ipResponse);
+
+      if (!isAllowed || !result.allowed) {
+        if (transaction) {
+          await this.updateStatus(transaction, TransactionStatus.CANCELLED);
+        }
+        throw new ForbiddenException(result.reason || 'Access denied based on your location or security settings.');
+      }
+    }
+  }
+
+
 }

@@ -36,6 +36,7 @@
     "@nestjs/platform-socket.io": "^11.1.11",
     "@nestjs/schedule": "^6.1.0",
     "@nestjs/swagger": "^11.2.3",
+    "@nestjs/terminus": "^11.1.1",
     "@nestjs/throttler": "^6.5.0",
     "@nestjs/typeorm": "^11.0.0",
     "@nestjs/websockets": "^11.1.11",
@@ -100,20 +101,14 @@
     "moduleNameMapper": {
       "^@users/(.*)$": "<rootDir>/modules/users/$1",
       "^@merchants/(.*)$": "<rootDir>/modules/merchants/$1",
-      "^@merchant-settings/(.*)$": "<rootDir>/modules/merchant-settings/$1",
-      "^@merchant-customers/(.*)$": "<rootDir>/modules/merchant-customers/$1",
       "^@customers/(.*)$": "<rootDir>/modules/customers/$1",
+      "^@merchant-customers/(.*)$": "<rootDir>/modules/merchant-customers/$1",
+      "^@merchant-settings/(.*)$": "<rootDir>/modules/merchant-settings/$1",
       "^@transactions/(.*)$": "<rootDir>/modules/transactions/$1",
       "^@cryptocurrency/(.*)$": "<rootDir>/modules/cryptocurrency/$1",
-      "^@database/data-source$": "<rootDir>/../data-source.ts",
-      "^@helper/(.*)$": "<rootDir>/helper/$1",
       "^@crypto-transactions/(.*)$": "<rootDir>/modules/crypto-transactions/$1",
-      "^@system-settings/(.*)$": "<rootDir>/modules/system-settings/$1",
-      "^@feature-flags/(.*)$": "<rootDir>/modules/feature-flags/$1",
-      "^@external-services/(.*)$": "<rootDir>/modules/external-services/$1",
-      "^@common/(.*)$": "<rootDir>/modules/common/$1",
-      "^@cron/(.*)$": "<rootDir>/cron/$1",
-      "^@test/(.*)$": "<rootDir>/test/$1"
+      "^@database/data-source$": "<rootDir>/../data-source.ts",
+      "^@helper/(.*)$": "<rootDir>/helper/$1"
     }
   }
 }
