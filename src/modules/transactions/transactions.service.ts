@@ -69,7 +69,7 @@ export class TransactionsService {
    * Get wallet address from environment variables based on crypto currency
    */
   private getWalletAddress(cryptoCurrency: string): string {
-    const envKey = `${cryptoCurrency.toUpperCase()}_ADDRESS`;
+    const envKey = `${cryptoCurrency.toUpperCase().replace(/-/g, '_')}_ADDRESS`;
     return this.configService.get<string>(envKey) || '';
   }
 
