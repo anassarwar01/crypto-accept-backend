@@ -54,7 +54,7 @@ export class QuantozService extends BaseHttpService {
   }
 
   private getAccountCode(crypto: string): string {
-    const envKey = `QUANTOZ_ACCOUNT_CODE_${crypto.toUpperCase()}`;
+    const envKey = `QUANTOZ_ACCOUNT_CODE_${crypto.toUpperCase().replace(/-/g, '_')}`;
     const accountCode = this.configService.get<string>(envKey);
     if (!accountCode) {
       throw new HttpException(`Account code not configured for crypto: ${crypto}`, 500);
