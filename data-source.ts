@@ -4,6 +4,7 @@ process.env.PGTZ = 'UTC';
 import path from 'path';
 import { DataSource } from 'typeorm';
 import * as dotenv from 'dotenv';
+import { buildDatabaseSslConfig } from './src/config/database.config';
 dotenv.config();
 
 // Use process.cwd() to build paths so this file works when loaded by
@@ -37,6 +38,7 @@ const AppDataSource = new DataSource({
   entities: [path.join(baseDir, 'src/**/*.entity{.ts,.js}')],
   migrations: [path.join(baseDir, 'src/database/migrations/*{.ts,.js}')],
   useUTC: true,
+  ssl: buildDatabaseSslConfig(env),
 });
 
 export default AppDataSource;

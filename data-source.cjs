@@ -38,6 +38,15 @@ const dbPass = env.DB_PASS ?? env.DATABASE_PASSWORD ?? env.DATABASE_PASS;
 const dbName =
   env.DB_NAME ?? env.DATABASE_NAME ?? env.DB_DATABASE ?? env.DATABASE_DB;
 
+const ssl = env.DATABASE_SSL_ENABLED === 'true'
+  ? {
+      rejectUnauthorized: env.DATABASE_REJECT_UNAUTHORIZED === 'true',
+      ca: env.DATABASE_CA || undefined,
+      key: env.DATABASE_KEY || undefined,
+      cert: env.DATABASE_CERT || undefined,
+    }
+  : false;
+
 const AppDataSource = new DataSource({
   type: 'postgres',
   host: dbHost,
@@ -48,6 +57,7 @@ const AppDataSource = new DataSource({
   entities: [path.join(baseDir, 'src/**/*.entity{.ts,.js}')],
   migrations: [path.join(baseDir, 'src/database/migrations/*{.ts,.js}')],
   useUTC: true,
+  ssl,
 });
 
 module.exports = AppDataSource;
