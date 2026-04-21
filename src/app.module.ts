@@ -27,7 +27,7 @@ import { ResponseInterceptor } from './modules/common/interceptors/response.inte
 import { IdempotencyInterceptor } from './modules/common/interceptors/idempotency.interceptor';
 import { RouterModule } from '@nestjs/core';
 import { API_CONFIG } from './config/api.config';
-import databaseConfig from './config/database.config';
+import databaseConfig, { buildDatabaseSslConfig } from './config/database.config';
 import { QuantozWebhookController } from './modules/external-services/quantoz/webhooks/quantoz-webhook.controller';
 
 @Module({
@@ -43,6 +43,7 @@ import { QuantozWebhookController } from './modules/external-services/quantoz/we
             entities: [__dirname + '/**/*.entity{.ts,.js}'],
             synchronize: false, // set to true only in dev
             useUTC: true,
+            ssl: buildDatabaseSslConfig(),
         }),
         UsersModule,
         TransactionsModule,
