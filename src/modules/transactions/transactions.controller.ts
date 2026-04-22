@@ -130,7 +130,8 @@ export class TransactionsController {
     @Body() summaryDto: TransactionSummaryDto,
   ) {
     const transaction = request.transaction;
-    return this.transactionsService.getSummary(transaction, summaryDto);
+    const ip = getClientIp(request);
+    return this.transactionsService.getSummary(transaction, summaryDto, ip);
   }
 
   @Get(':requestId')

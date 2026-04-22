@@ -4,6 +4,7 @@ import { TransactionsService } from '../transactions.service';
 import { InjectMerchantIdInterceptor } from '../interceptors/inject-merchant-id.interceptor';
 import { GetEstimatesParamsDto } from '../dto/accept/get-estimates-params.dto';
 import { CreateAcceptTransactionDto } from '../dto/accept/create-accept-transaction.dto';
+import { CreatePayoutDto } from '../dto/accept/create-payout.dto';
 import { AcceptTransactionResponseDataDto } from '../dto/accept/accept-transaction-response.dto';
 import { AcceptEstimateResponseDataDto } from '../dto/accept/estimate-response.dto';
 import { GetTransactionByMerchantReferenceResponseDTO } from '../dto/accept/get-transaction-by-merchant-reference.dto';
@@ -110,5 +111,36 @@ export class AcceptTransactionsController {
     async createAcceptTransaction(@Body() dto: CreateAcceptTransactionDto, @Req() request: any): Promise<AcceptTransactionResponseDataDto> {
         const ip = getClientIp(request);
         return this.transactionsService.createAcceptTransaction(dto, request.merchantId, ip);
+    }
+
+    // Create payout
+    @Post('payouts')
+    @HttpCode(HttpStatus.OK)
+    @UseInterceptors(InjectMerchantIdInterceptor)
+    @ApiHeader({ name: 'x-api-key', required: true })
+    @ApiOperation({ summary: 'Create payout', description: 'Initiate a new payout.' })
+    @ApiBody({ type: CreatePayoutDto })
+    @SwaggerApiResponse({
+        status: 200,
+        description: 'Payout created successfully',
+        schema: {
+            allOf: [
+                { $ref: getSchemaPath(AcceptSuccessResponseDto) },
+                {
+                    properties: {
+                        data: { type: 'object' }, // Can be replaced with actual DTO when ready
+                    },
+                },
+            ],
+        },
+    })
+    @SwaggerApiResponse({ status: 400, description: 'Bad Request', type: ErrorResponseDto })
+    @SwaggerApiResponse({ status: 401, description: 'Unauthorized', type: UnauthorizedErrorResponseDto })
+    @SwaggerApiResponse({ status: 403, description: 'Forbidden', type: ForbiddenErrorResponseDto })
+    @SwaggerApiResponse({ status: 429, description: 'Too Many Requests', type: TooManyRequestsErrorResponseDto })
+    @SwaggerApiResponse({ status: 500, description: 'Internal Server Error', type: InternalServerErrorResponseDto })
+    async createPayout(@Body() dto: CreatePayoutDto, @Req() request: any): Promise<any> {
+        const ip = getClientIp(request);
+        return this.transactionsService.createPayout(dto, request.merchantId, ip);
     }
 }

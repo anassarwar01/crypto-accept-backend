@@ -26,6 +26,44 @@ export interface QuantozMerchantResponse {
     merchantCustomerEmailAddress: string
 }
 
+export interface QuantozReturnResponse {
+    crypto: string;
+    status: string;
+    created: string; // ISO date string
+    currency: string;
+    cryptoCode: string;
+    bankFeeFiat: number;
+    callbackUrl: string | null;
+    cryptoAmount: number;
+    currencyCode: string;
+    bankFeeCrypto: number;
+    executedPrice: number;
+    totalCurrency: number;
+    partnerFeeFiat: number;
+    currencyBankFee: number;
+    transactionCode: string;
+    partnerFeeCrypto: number;
+    blockchainMessage: string | null;
+    executedFiatValue: number;
+    paymentMethodCode: string;
+    currencyNetworkFee: number;
+    currencyServiceFee: number;
+    requestedFiatValue: number;
+    totalCurrencyToPay: number;
+    merchantAccountCode: string;
+    consumerEmailAddress: string | null;
+    executedCryptoAmount: number;
+    merchantCustomerCode: string;
+    requestedCryptoAmount: number;
+    cryptoBuyPriceBeforeFee: number;
+    estimatedNetworkFeeFiat: number;
+    destinationCryptoAddress: string;
+    estimatedNetworkFeeCrypto: number;
+    cryptoBuyPriceAfterServiceFee: number;
+    accountCode: string;
+
+}
+
 export interface QuantozWebhookResponse {
     Status: string,
     Comment: string,
@@ -43,6 +81,7 @@ export interface QuantozWebhookResponse {
     MerchantCustomerCode: string,
     MerchantCustomerEmailAddress: string,
     Merchant?: {
+        CurrencyAmount: number,
         ReceiveCryptoTxId: string;
         ReceivedCryptoAmount: number;
     },

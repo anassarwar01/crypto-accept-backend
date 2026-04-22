@@ -20,6 +20,9 @@ export enum CryptoStatus {
     buyIncasso = 'buyIncasso',
     sendDelay = 'sendDelay',
     toCancel = 'toCancel',
+    simulated = 'simulated',
+    sending = 'sending',
+    initiated = 'initiated',
 }
 
 export const EXPLORER_LINKS = {
