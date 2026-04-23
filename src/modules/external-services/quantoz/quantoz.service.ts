@@ -199,7 +199,7 @@ export class QuantozService extends BaseHttpService {
       crypto,
       currency,
       generateUniqueAddress: true,
-      ...(fiatAmount ? { fiatAmount } : {}),
+      fiatAmount: fiatAmount === 0 ? null : fiatAmount,
       paymentMethodCode: this.configService.get<string>('QUANTOZ_PAYMENT_METHOD_CODE_PAYIN'),
       callbackUrl: `${this.CALLBACK_BASE_URL}/webhooks/quantoz`,
     };
@@ -222,7 +222,7 @@ export class QuantozService extends BaseHttpService {
       crypto,
       currency,
       generateUniqueAddress: true,
-      ...(fiatAmount ? { fiatAmount } : {}),
+      fiatAmount: fiatAmount === 0 ? null : fiatAmount,
       paymentMethodCode: this.configService.get<string>('QUANTOZ_PAYMENT_METHOD_CODE_PAYIN'),
       callbackUrl: `${this.CALLBACK_BASE_URL}/webhooks/quantoz`,
     };
