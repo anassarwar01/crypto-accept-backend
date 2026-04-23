@@ -1,14 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
-import {
-  SignJWT,
-  jwtVerify,
-  compactDecrypt,
-  CompactEncrypt,
-  importSPKI,
-  importPKCS8
-} from 'jose';
+
+// Native ESM import workaround for 'jose' package since it doesn't support CJS anymore
+const getJose = async () => {
+  return (await new Function('return import("jose")')()) as typeof import('jose');
+};
 
 @Injectable()
 export class QuantozEncryption {
@@ -18,6 +15,7 @@ export class QuantozEncryption {
 
   private async getPrivateKey(alg: string = 'RS256') {
     try {
+      const { importPKCS8 } = await getJose();
       const pem = fs.readFileSync(this.privateKeyPath, 'utf8');
       return await importPKCS8(pem, alg);
     } catch (error) {
@@ -28,6 +26,7 @@ export class QuantozEncryption {
 
   private async getQuantozPublicKey(alg: string = 'RS256') {
     try {
+      const { importSPKI } = await getJose();
       const pem = fs.readFileSync(this.quantozPublicKeyPath, 'utf8');
       return await importSPKI(pem, alg);
     } catch (error) {
@@ -47,6 +46,7 @@ export class QuantozEncryption {
    */
   async encryptQuantozPayload(request: any): Promise<string | null> {
     try {
+      const { SignJWT, CompactEncrypt } = await getJose();
       const privateKey = await this.getPrivateKey('RS256');
       const quantozPublicKey = await this.getQuantozPublicKey('RSA-OAEP');
 
@@ -82,6 +82,7 @@ export class QuantozEncryption {
    */
   async decryptQuantozResponse(encryptedResponse: string): Promise<any> {
     try {
+      const { compactDecrypt, jwtVerify } = await getJose();
       const privateKey = await this.getPrivateKey('RSA-OAEP');
       const quantozPublicKey = await this.getQuantozPublicKey('RS256');
 
