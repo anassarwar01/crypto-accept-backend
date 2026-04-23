@@ -509,7 +509,7 @@ export class TransactionsService {
         cryptoAmount: Number(transaction.cryptoTransaction.amount),
         cryptoProcessingFee: Number(cryptoPrice.estimatedPrices?.estimatedNetworkFastFee || 0),
         status: transaction.status,
-        toBlockchainAddress: transaction.cryptoTransaction.walletAddress,
+        toBlockchainAddress: quantozResult.consumerCryptoPaymentAddress,
       };
 
       return responseData;
