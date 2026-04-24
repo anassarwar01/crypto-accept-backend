@@ -14,4 +14,6 @@ export enum QuantozStatus {
     SIMULATED = 'SIMULATED',
     SENDING = 'Sending',
     INITIATED = 'Initiated',
+    COMPLETED = 'Completed',
+    FAILED = 'Failed',
 }

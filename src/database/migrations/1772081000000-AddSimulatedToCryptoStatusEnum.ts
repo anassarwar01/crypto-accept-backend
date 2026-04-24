@@ -17,6 +17,14 @@ export class AddSimulatedToCryptoStatusEnum1772081000000 implements MigrationInt
       `ALTER TYPE "crypto_status_enum" ADD VALUE 'initiated'`,
     );
 
+    await queryRunner.query(
+      `ALTER TYPE "crypto_status_enum" ADD VALUE 'completed'`,
+    );
+
+    await queryRunner.query(
+      `ALTER TYPE "crypto_status_enum" ADD VALUE 'failed'`,
+    );
+
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

@@ -23,6 +23,8 @@ export enum CryptoStatus {
     simulated = 'simulated',
     sending = 'sending',
     initiated = 'initiated',
+    completed = 'completed',
+    failed = 'failed',
 }
 
 export const EXPLORER_LINKS = {
