@@ -25,6 +25,8 @@ export enum CryptoStatus {
     initiated = 'initiated',
     completed = 'completed',
     failed = 'failed',
+    staged = 'staged',
+    cancelled = 'cancelled',
 }
 
 export const EXPLORER_LINKS = {

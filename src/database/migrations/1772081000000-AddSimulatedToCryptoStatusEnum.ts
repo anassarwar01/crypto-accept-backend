@@ -25,6 +25,14 @@ export class AddSimulatedToCryptoStatusEnum1772081000000 implements MigrationInt
       `ALTER TYPE "crypto_status_enum" ADD VALUE 'failed'`,
     );
 
+    await queryRunner.query(
+      `ALTER TYPE "crypto_status_enum" ADD VALUE 'staged'`,
+    );
+
+    await queryRunner.query(
+      `ALTER TYPE "crypto_status_enum" ADD VALUE 'cancelled'`,
+    );
+
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

@@ -16,4 +16,6 @@ export enum QuantozStatus {
     INITIATED = 'Initiated',
     COMPLETED = 'Completed',
     FAILED = 'Failed',
+    CANCELLED = 'CANCELLED',
+    STAGED = 'Staged',
 }

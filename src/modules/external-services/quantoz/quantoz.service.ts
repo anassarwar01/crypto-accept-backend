@@ -309,6 +309,10 @@ export class QuantozService extends BaseHttpService {
         return CryptoStatus.completed;
       case QuantozStatus.FAILED:
         return CryptoStatus.failed;
+      case QuantozStatus.STAGED:
+        return CryptoStatus.staged;
+      case QuantozStatus.CANCELLED:
+        return CryptoStatus.cancelled;
       default:
         return externalStatus as CryptoStatus;
     }
