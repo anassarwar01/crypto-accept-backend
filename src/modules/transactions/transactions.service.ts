@@ -350,7 +350,7 @@ export class TransactionsService {
         // }
 
         // What staus that we need to update against transaction ?
-        if (cryptoStatus === CryptoStatus.sellInitiated) {
+        if (cryptoStatus === CryptoStatus.sellInitiated || cryptoStatus === CryptoStatus.simulated || cryptoStatus === CryptoStatus.sending || cryptoStatus === CryptoStatus.initiated) {
           newStatus = TransactionStatus.PENDING;
         } else if (cryptoStatus === CryptoStatus.confirming) {
           if (payload.Confirmations?.Count && payload.Confirmations?.Count >= 1) {
@@ -359,11 +359,11 @@ export class TransactionsService {
           else {
             newStatus = TransactionStatus.CONFIRMING
           }
-        } else if (cryptoStatus === CryptoStatus.sellCompleted || cryptoStatus === CryptoStatus.toPayout) {
+        } else if (cryptoStatus === CryptoStatus.sellCompleted || cryptoStatus === CryptoStatus.toPayout || cryptoStatus === CryptoStatus.completed) {
           newStatus = TransactionStatus.SUCCEEDED;
-        } else if (cryptoStatus === CryptoStatus.blocked) {
+        } else if (cryptoStatus === CryptoStatus.blocked || cryptoStatus === CryptoStatus.failed || cryptoStatus === CryptoStatus.staged) {
           newStatus = TransactionStatus.FAILED;
-        } else if ([CryptoStatus.deleted, CryptoStatus.sellCancelled, CryptoStatus.toCancel].includes(cryptoStatus)) {
+        } else if ([CryptoStatus.deleted, CryptoStatus.sellCancelled, CryptoStatus.toCancel].includes(cryptoStatus) || cryptoStatus === CryptoStatus.cancelled) {
           newStatus = TransactionStatus.CANCELLED;
         } else if (cryptoStatus === CryptoStatus.payoutOnHold) {
           newStatus = TransactionStatus.ON_HOLD;
