@@ -245,7 +245,7 @@ export class QuantozService extends BaseHttpService {
       ...payload,
       merchantCode: this.configService.get<string>('QUANTOZ_MERCHANT_CODE'),
       paymentMethodCode: this.configService.get<string>('QUANTOZ_PAYMENT_METHOD_CODE_PAYOUT'),
-      callbackUrl: `${this.CALLBACK_BASE_URL}`,
+      callbackUrl: `${this.CALLBACK_BASE_URL}/webhooks/quantoz`,
     };
     return this._request(HttpMethod.POST, url, data, transactionId);
   }
@@ -274,44 +274,48 @@ export class QuantozService extends BaseHttpService {
   }
 
   mapStatus(externalStatus: string): CryptoStatus {
-    switch (externalStatus) {
-      case QuantozStatus.SELL_INITIATED:
+    if (!externalStatus) return externalStatus as CryptoStatus;
+
+    const statusUpper = externalStatus.toUpperCase();
+
+    switch (statusUpper) {
+      case QuantozStatus.SELL_INITIATED.toUpperCase():
         return CryptoStatus.sellInitiated;
-      case QuantozStatus.SELL_COMPLETED:
+      case QuantozStatus.SELL_COMPLETED.toUpperCase():
         return CryptoStatus.sellCompleted;
-      case QuantozStatus.BLOCKED:
+      case QuantozStatus.BLOCKED.toUpperCase():
         return CryptoStatus.blocked;
-      case QuantozStatus.DELETED:
+      case QuantozStatus.DELETED.toUpperCase():
         return CryptoStatus.deleted;
-      case QuantozStatus.TO_PAYOUT:
+      case QuantozStatus.TO_PAYOUT.toUpperCase():
         return CryptoStatus.toPayout;
-      case QuantozStatus.CONFIRMING:
+      case QuantozStatus.CONFIRMING.toUpperCase():
         return CryptoStatus.confirming;
-      case QuantozStatus.PAYOUT_CONFIRMING:
+      case QuantozStatus.PAYOUT_CONFIRMING.toUpperCase():
         return CryptoStatus.payoutConfirming;
-      case QuantozStatus.SELL_CANCELLED:
+      case QuantozStatus.SELL_CANCELLED.toUpperCase():
         return CryptoStatus.sellCancelled;
-      case QuantozStatus.PAYOUT_ON_HOLD:
+      case QuantozStatus.PAYOUT_ON_HOLD.toUpperCase():
         return CryptoStatus.payoutOnHold;
-      case QuantozStatus.BUY_INCASSO:
+      case QuantozStatus.BUY_INCASSO.toUpperCase():
         return CryptoStatus.buyIncasso;
-      case QuantozStatus.SEND_DELAY:
+      case QuantozStatus.SEND_DELAY.toUpperCase():
         return CryptoStatus.sendDelay;
-      case QuantozStatus.TO_CANCEL:
+      case QuantozStatus.TO_CANCEL.toUpperCase():
         return CryptoStatus.toCancel;
-      case QuantozStatus.SIMULATED:
+      case QuantozStatus.SIMULATED.toUpperCase():
         return CryptoStatus.simulated;
-      case QuantozStatus.SENDING:
+      case QuantozStatus.SENDING.toUpperCase():
         return CryptoStatus.sending;
-      case QuantozStatus.INITIATED:
+      case QuantozStatus.INITIATED.toUpperCase():
         return CryptoStatus.initiated;
-      case QuantozStatus.COMPLETED:
+      case QuantozStatus.COMPLETED.toUpperCase():
         return CryptoStatus.completed;
-      case QuantozStatus.FAILED:
+      case QuantozStatus.FAILED.toUpperCase():
         return CryptoStatus.failed;
-      case QuantozStatus.STAGED:
+      case QuantozStatus.STAGED.toUpperCase():
         return CryptoStatus.staged;
-      case QuantozStatus.CANCELLED:
+      case QuantozStatus.CANCELLED.toUpperCase():
         return CryptoStatus.cancelled;
       default:
         return externalStatus as CryptoStatus;
