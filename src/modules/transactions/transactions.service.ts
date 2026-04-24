@@ -330,8 +330,8 @@ export class TransactionsService {
     const cryptoTransaction = await this.cryptoTransactionsService.updateTransactionByTransactionCode(
       payload.TransactionCode, {
       status: this.quantozService.mapStatus(payload.Status),
-      hash: payload.Merchant?.ReceiveCryptoTxId, // Quantoz might provide hash here or in another field
-      receivedAmount: payload.Merchant?.ReceivedCryptoAmount,
+      hash: payload.Merchant?.ReceiveCryptoTxId ?? payload.ReceiveIn?.TxId ?? payload.Sendout?.TxId,
+      receivedAmount: payload.Merchant?.ReceivedCryptoAmount ?? payload.ReceiveIn?.ReceivedCryptoAmount,
     });
 
     if (cryptoTransaction && cryptoTransaction.transaction) {

@@ -85,6 +85,13 @@ export interface QuantozWebhookResponse {
         ReceiveCryptoTxId: string;
         ReceivedCryptoAmount: number;
     },
+    ReceiveIn?: {
+        TxId: string;
+        ReceivedCryptoAmount: number;
+    },
+    Sendout?: {
+        TxId: string;
+    },
     Confirmations?: {
         Count: number,
         Required: number,
