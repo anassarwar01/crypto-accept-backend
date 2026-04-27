@@ -1,4 +1,4 @@
-import { FiatCurrency, TransactionPlatform, TransactionStatus } from '../../enums/transaction.enums';
+import { FiatCurrency, TransactionPlatform, TransactionStatus, TransactionType } from '../../enums/transaction.enums';
 import { Customer } from '../../../customers/entities/customer.entity';
 import * as crypto from 'crypto';
 
@@ -14,6 +14,7 @@ export class SaveAcceptTransactionDto {
     callbackUrl?: string;
     expireMinutes: number;
     platform: TransactionPlatform;
+    type: TransactionType;
 
     constructor(
         request: any,
@@ -22,6 +23,7 @@ export class SaveAcceptTransactionDto {
         fiatBaseAmount: number,
         fiatAmount: number,
         expireMinutes: number,
+        type: TransactionType,
     ) {
         this.merchantId = merchantId;
         this.customerId = customer.id;
@@ -34,6 +36,7 @@ export class SaveAcceptTransactionDto {
         this.callbackUrl = request.webhookUrl;
         this.expireMinutes = expireMinutes;
         this.platform = TransactionPlatform.S2S;
+        this.type = type;
     }
 
     toEntity() {
@@ -52,6 +55,7 @@ export class SaveAcceptTransactionDto {
             callbackUrl: this.callbackUrl,
             expireMinutes: this.expireMinutes,
             platform: this.platform,
+            type: this.type,
         };
     }
 }

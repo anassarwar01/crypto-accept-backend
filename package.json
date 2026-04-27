@@ -49,10 +49,11 @@
     "express-basic-auth": "^1.2.1",
     "helmet": "^8.1.0",
     "ioredis": "^5.9.1",
+    "jose": "^6.2.2",
+    "pg": "^8.20.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "socket.io": "^4.8.3",
-    "pg": "^8.20.0"
+    "socket.io": "^4.8.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -109,6 +110,9 @@
       "^@crypto-transactions/(.*)$": "<rootDir>/modules/crypto-transactions/$1",
       "^@database/data-source$": "<rootDir>/../data-source.ts",
       "^@helper/(.*)$": "<rootDir>/helper/$1"
-    }
+    },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!jose/)"
+    ]
   }
 }

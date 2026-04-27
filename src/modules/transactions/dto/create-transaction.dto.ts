@@ -15,7 +15,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional, ApiHideProperty } from '@nestjs/swagger';
-import { FiatCurrency, TransactionPlatform, TransactionStatus } from '../enums/transaction.enums';
+import { FiatCurrency, TransactionPlatform, TransactionStatus, TransactionType } from '../enums/transaction.enums';
 import { IsUniqueRequestId } from '../decorators/is-unique-request-id.decorator';
 import { IsMerchantAllowedUrl } from '../decorators/is-merchant-allowed-url.decorator';
 
@@ -133,6 +133,7 @@ export class SaveTransactionDto {
     callbackUrl?: string;
     expireMinutes: number;
     platform: TransactionPlatform;
+    type: TransactionType;
 
     constructor(
         request: any,
@@ -154,6 +155,7 @@ export class SaveTransactionDto {
         this.callbackUrl = request.webhookUrl;
         this.expireMinutes = expireMinutes;
         this.platform = TransactionPlatform.CHECKOUT;
+        this.type = TransactionType.PAYIN;
     }
 
     toEntity() {
@@ -173,6 +175,7 @@ export class SaveTransactionDto {
             callbackUrl: this.callbackUrl,
             expireMinutes: this.expireMinutes,
             platform: this.platform,
+            type: this.type,
         };
     }
 }

@@ -60,6 +60,10 @@ export class TransactionRepository {
         return this.repository.update({ systemReference }, { status });
     }
 
+    // async updateFiatAmount(id: string, fiatAmount: number) {
+    //     return this.repository.update({ id }, { fiatAmount });
+    // }
+
     async findById(id: string): Promise<Transaction | null> {
         return this.repository.findOne({ where: { id } as any });
     }

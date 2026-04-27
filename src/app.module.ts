@@ -75,7 +75,7 @@ import { QuantozWebhookController } from './modules/external-services/quantoz/we
             limit: 60, // 60 requests per IP per minute
         }]),
     ],
-    controllers: [AppController, QuantozWebhookController],
+    controllers: [AppController],
     providers: [
         AppService,
         {

@@ -134,7 +134,8 @@ describe('QuantozService', () => {
                 simulateData.currencyAmount,
                 simulateData.cryptoCode,
                 'email@test.com',
-                'REF123',
+                '127.0.0.1',
+                'EUR',
                 'TRANS123'
             );
 
@@ -146,8 +147,11 @@ describe('QuantozService', () => {
                 method: 'POST',
                 url: 'https://dcs-msb-test.azurewebsites.net/api/merchant/simulate',
                 data: expect.objectContaining({
-                    merchantCustomerCode: '30128A74-2A08-4855-A536-F83F11036396',
+                    consumerEmailAddress: 'email@test.com',
+                    consumerIP: '127.0.0.1',
                     crypto: 'ALGO',
+                    currency: 'EUR',
+                    generateUniqueAddress: true,
                     fiatAmount: 100,
                 }),
                 headers: expect.any(Object),
@@ -180,7 +184,8 @@ describe('QuantozService', () => {
                 sendData.currencyAmount,
                 sendData.cryptoCode,
                 'email@test.com',
-                'REF123',
+                '127.0.0.1',
+                'EUR',
                 'TRANS123'
             );
 
@@ -192,8 +197,11 @@ describe('QuantozService', () => {
                 method: 'POST',
                 url: 'https://dcs-msb-test.azurewebsites.net/api/merchant/send',
                 data: expect.objectContaining({
-                    merchantCustomerCode: '30128A74-2A08-4855-A536-F83F11036396',
+                    consumerEmailAddress: 'email@test.com',
+                    consumerIP: '127.0.0.1',
                     crypto: 'ALGO',
+                    currency: 'EUR',
+                    generateUniqueAddress: true,
                     fiatAmount: 100,
                 }),
                 headers: expect.any(Object),
@@ -257,7 +265,7 @@ describe('QuantozService', () => {
             expect(lastCallArgs.data).toBeUndefined(); // GET request data is undefined
 
             // For POST request
-            await service.merchantSimulate(100, 'ALGO', 'test@test.com', 'REF123');
+            await service.merchantSimulate(100, 'ALGO', 'test@test.com', '127.0.0.1', 'EUR');
             const postCallArgs = mockAxiosRef.request.mock.calls[1][0];
             expect(postCallArgs.data).toHaveProperty('payload');
             expect(typeof postCallArgs.data.payload).toBe('string');

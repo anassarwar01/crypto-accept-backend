@@ -1,13 +1,18 @@
-import { IsString, IsNotEmpty, IsEnum, IsUrl, IsOptional, ValidateNested, MinLength, MaxLength, IsNotIn, IsNumber, IsIn, Min, Max } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, IsUrl, IsOptional, IsNumber, IsIn, Min, Max, IsEmail, ValidateNested, MinLength, MaxLength } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { FiatCurrency } from '../../enums/transaction.enums';
 import { CryptoCurrency } from '../../../crypto-transactions/enums/crypto-transaction.enums';
-import { AcceptCustomerDto } from './customer.dto';
 import { IsMerchantAllowedUrl } from '../../decorators/is-merchant-allowed-url.decorator';
 import { IsUniqueRequestId } from '../../decorators/is-unique-request-id.decorator';
 
-export class CreateAcceptTransactionDto {
+export class PayoutCustomerDto {
+    @ApiProperty({ example: 'customer@example.com' })
+    @IsEmail()
+    @IsNotEmpty()
+    email: string;
+}
+
+export class CreatePayoutDto {
     @ApiProperty({ example: '89156124691', minLength: 8, maxLength: 16 })
     @IsString()
     @IsNotEmpty()
@@ -16,28 +21,36 @@ export class CreateAcceptTransactionDto {
     @IsUniqueRequestId()
     requestId: string;
 
-    @ApiProperty({ type: () => AcceptCustomerDto })
+    @ApiProperty({ type: () => PayoutCustomerDto })
     @ValidateNested()
-    @Type(() => AcceptCustomerDto)
-    customer: AcceptCustomerDto;
+    @Type(() => PayoutCustomerDto)
+    customer: PayoutCustomerDto;
+
+    @ApiProperty({ example: '0x1234567890abcdef1234567890abcdef12345678' })
+    @IsString()
+    @IsNotEmpty()
+    walletAddress: string;
+
+    @ApiProperty({ example: 100.50, description: 'The fiat amount as a decimal', minimum: 1, maximum: 1000 })
+    @IsNumber({ maxDecimalPlaces: 2 })
+    @Min(1)
+    @Max(1000)
+    @IsNotEmpty()
+    fiatAmount: number;
 
     @ApiProperty({ enum: ['USD', 'EUR'], example: 'EUR', description: 'Fiat currency (Only USD and EUR are supported)' })
     @IsIn(['USD', 'EUR'], { message: 'fiatCurrency must be either USD or EUR' })
     fiatCurrency: string;
 
-    // @ApiProperty({ example: 23.00, description: 'The fiat amount as a decimal', minimum: 1, maximum: 1000 })
-    // @IsNumber({ maxDecimalPlaces: 2 })
-    // @Min(1)
-    // @Max(1000)
-    // @IsNotEmpty()
-    // fiatAmount: number;
-
     @ApiProperty({ enum: ['BTC', 'ETH', 'LTC', 'USDC-ETH'], example: 'BTC', description: 'Allowed values: BTC, ETH, LTC, USDC-ETH' })
     @IsEnum(CryptoCurrency, { message: 'cryptoCurrency must be one of the following values: BTC, ETH, LTC, USDC-ETH' })
-    @IsNotIn(['XLM'], { message: 'The selected crypto currency is not supported' })
+    @IsNotEmpty()
     cryptoCurrency: CryptoCurrency;
 
-    @ApiProperty({ example: 'https://webhook.site/c5f0b861-4d3e-479f-9c0d-519a3cc5e25d', required: false })
+    @ApiProperty({
+        example: 'https://webhook.site/c5f0b861-4d3e-479f-9c0d-519a3cc5e25d',
+        required: false
+    })
     @IsUrl()
     @IsMerchantAllowedUrl('Callback')
     webhookUrl: string;
@@ -45,4 +58,5 @@ export class CreateAcceptTransactionDto {
     @IsString()
     @IsOptional()
     merchantId?: string;
+
 }

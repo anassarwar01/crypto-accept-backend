@@ -1,6 +1,46 @@
-import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
+import { createCipheriv, createDecipheriv, publicEncrypt, privateDecrypt, constants } from 'crypto';
 
 export class EncryptionUtil {
+    /**
+     * Encrypts text using RSA Public Key.
+     * 
+     * @param text The plain text to encrypt
+     * @param publicKey The RSA Public Key (PEM format)
+     * @returns Encrypted text as Base64 string
+     */
+    static rsaEncrypt(text: string, publicKey: string): string {
+        const buffer = Buffer.from(text, 'utf8');
+        const encrypted = publicEncrypt(
+            {
+                key: publicKey,
+                padding: constants.RSA_PKCS1_OAEP_PADDING,
+                oaepHash: 'sha256',
+            },
+            buffer,
+        );
+        return encrypted.toString('base64');
+    }
+
+    /**
+     * Decrypts text using RSA Private Key.
+     * 
+     * @param base64Text The encrypted text (Base64 string)
+     * @param privateKey The RSA Private Key (PEM format)
+     * @returns Decrypted plain text
+     */
+    static rsaDecrypt(base64Text: string, privateKey: string): string {
+        const buffer = Buffer.from(base64Text, 'base64');
+        const decrypted = privateDecrypt(
+            {
+                key: privateKey,
+                padding: constants.RSA_PKCS1_OAEP_PADDING,
+                oaepHash: 'sha256',
+            },
+            buffer,
+        );
+        return decrypted.toString('utf8');
+    }
+
     /**
      * Encrypts text using AES-256-GCM.
      * Expects hex-encoded key and IV from environment variables.

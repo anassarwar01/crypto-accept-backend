@@ -19,6 +19,7 @@ export class SystemSettingsSeederService {
     const settingsToSeed = [
       { key: 'transaction_expire_time', value: '15', is_editable: false },
       { key: 'base_currency', value: 'EUR', is_editable: false },
+      { key: 'quantoz_encryption', value: 'true', is_editable: false },
     ];
 
     for (const settingData of settingsToSeed) {

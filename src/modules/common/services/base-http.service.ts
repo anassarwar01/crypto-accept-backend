@@ -20,6 +20,7 @@ export abstract class BaseHttpService {
         headers?: any,
         transactionId?: string,
         type: ThirdPartyLogType = ThirdPartyLogType.HTTP,
+        skipLogging: boolean = false,
     ): Promise<T> {
         let axiosResponse: any;
         let responseData: any;
@@ -41,15 +42,18 @@ export abstract class BaseHttpService {
             status = (error as any).response?.status || 500;
             responseData = (error as any).response?.data || { message: (error as Error).message };
             this.handleError(error);
+            throw error; // redudant but satisfies linter
         } finally {
-            await this.thirdPartyLogsService.createLog({
-                transactionId,
-                httpRequest: { url, data, headers },
-                httpResponse: responseData,
-                httpMethod: method as HttpMethod,
-                httpCode: status,
-                type,
-            }).catch(err => this.logger.error(`Failed to create third party log: ${err.message}`));
+            if (!skipLogging) {
+                await this.thirdPartyLogsService.createLog({
+                    transactionId,
+                    httpRequest: { url, data, headers },
+                    httpResponse: responseData,
+                    httpMethod: method as HttpMethod,
+                    httpCode: status,
+                    type,
+                }).catch(err => this.logger.error(`Failed to create third party log: ${err.message}`));
+            }
         }
     }
 

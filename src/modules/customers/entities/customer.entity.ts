@@ -15,10 +15,10 @@ export class Customer {
   id: string;
 
   @Column({ type: 'varchar', nullable: true, name: 'first_name' })
-  firstName?: string;
+  firstName: string | null;
 
   @Column({ type: 'varchar', nullable: true, name: 'last_name' })
-  lastName?: string;
+  lastName: string | null;
 
   @Column({ type: 'varchar', unique: true, name: 'email' })
   email: string;
