@@ -103,4 +103,26 @@ export class CryptoTransactionsService {
             relations: ['transaction'],
         });
     }
+
+    async updateTransactionByReceiverWalletAddress(receiverAddress: string, data: Partial<CryptoTransaction>): Promise<CryptoTransaction | null> {
+        const record = await this.cryptoTransactionRepository.findOne({
+            where: { walletAddress: receiverAddress },
+            relations: ['transaction'],
+        });
+
+        if (record) {
+            // Fields that should ALWAYS be updated
+            const alwaysUpdate = ['status'];
+
+            Object.keys(data).forEach((key) => {
+                if (alwaysUpdate.includes(key) || record[key] === null || record[key] === undefined || record[key] === '') {
+                    record[key] = data[key];
+                }
+            });
+
+            return await this.cryptoTransactionRepository.save(record);
+        }
+
+        return null;
+    }
 }

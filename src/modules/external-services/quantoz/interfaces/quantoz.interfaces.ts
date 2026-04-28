@@ -24,6 +24,7 @@ export interface QuantozMerchantResponse {
     expectedCryptoAmount: number,
     merchantCustomerCode: string,
     merchantCustomerEmailAddress: string
+    consumerCryptoPaymentAddress: string,
 }
 
 export interface QuantozReturnResponse {
@@ -63,13 +64,17 @@ export interface QuantozReturnResponse {
     accountCode: string;
     consumerAccountCode: string;
     consumerCustomerCode: string;
+    consumerCryptoPaymentAddress: string;
 
 }
 
 export interface QuantozWebhookResponse {
+    Buy: null,
+    Sell: null,
+    Type: string,
     Status: string,
-    Comment: string,
     Created: string,
+    Comment: string,
     CryptoCode: string,
     ValidUntil: string,
     AccountCode: string,
@@ -87,8 +92,10 @@ export interface QuantozWebhookResponse {
         ReceiveCryptoTxId: string;
         ReceivedCryptoAmount: number;
     },
-    ReceiveIn?: {
+    ReceiveIn: {
         TxId: string;
+        ReceiveAddress: string;
+        BlockchainMessage: string;
         ReceivedCryptoAmount: number;
     },
     Sendout?: {
@@ -98,4 +105,5 @@ export interface QuantozWebhookResponse {
         Count: number,
         Required: number,
     },
+    CustomerReference: string
 }

@@ -327,12 +327,29 @@ export class TransactionsService {
       type: ThirdPartyLogType.WEBHOOK,
     });
 
-    const cryptoTransaction = await this.cryptoTransactionsService.updateTransactionByTransactionCode(
-      payload.TransactionCode, {
-      status: this.quantozService.mapStatus(payload.Status),
-      hash: payload.Merchant?.ReceiveCryptoTxId ?? payload.ReceiveIn?.TxId ?? payload.Sendout?.TxId,
-      receivedAmount: payload.Merchant?.ReceivedCryptoAmount ?? payload.ReceiveIn?.ReceivedCryptoAmount,
-    });
+    let cryptoTransaction;
+
+    if (payload.Type == 'RECEIVEIN') {
+      // Update transaction on the basis of receiver wallet address - merchant/send api 
+      cryptoTransaction = await this.cryptoTransactionsService.updateTransactionByReceiverWalletAddress(
+        payload.ReceiveIn.ReceiveAddress, {
+        status: this.quantozService.mapStatus(payload.Status),
+        hash: payload.ReceiveIn?.TxId,
+        receivedAmount: payload.ReceiveIn?.ReceivedCryptoAmount,
+        transactionCode: payload.TransactionCode,
+        merchantCode: payload.CustomerReference,
+        accountCode: payload.AccountCode
+      });
+
+    }
+    else {
+      cryptoTransaction = await this.cryptoTransactionsService.updateTransactionByTransactionCode(
+        payload.TransactionCode, {
+        status: this.quantozService.mapStatus(payload.Status),
+        hash: payload.Merchant?.ReceiveCryptoTxId ?? payload.ReceiveIn?.TxId ?? payload.Sendout?.TxId,
+        receivedAmount: payload.Merchant?.ReceivedCryptoAmount ?? payload.ReceiveIn?.ReceivedCryptoAmount,
+      });
+    }
 
     if (cryptoTransaction && cryptoTransaction.transaction) {
       const transaction = cryptoTransaction.transaction;
