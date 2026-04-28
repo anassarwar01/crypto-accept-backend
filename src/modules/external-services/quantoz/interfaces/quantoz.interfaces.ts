@@ -61,6 +61,8 @@ export interface QuantozReturnResponse {
     estimatedNetworkFeeCrypto: number;
     cryptoBuyPriceAfterServiceFee: number;
     accountCode: string;
+    consumerAccountCode: string;
+    consumerCustomerCode: string;
 
 }
 
