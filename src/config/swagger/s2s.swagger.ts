@@ -11,7 +11,7 @@ export function setupS2SSwagger(app: INestApplication): void {
       { type: 'apiKey', name: 'x-api-key', in: 'header' },
       'x-api-key',
     )
-    // No hardcoded server — resolved dynamically per request
+    .addServer(process.env.SWAGGER_BASE_PATH || '/')
     .build();
 
   const s2sDocument = SwaggerModule.createDocument(app, s2sConfig, {
@@ -158,21 +158,24 @@ export function setupS2SSwagger(app: INestApplication): void {
   s2sDocument.paths = filteredPaths;
 
   // Dynamic JSON endpoint: server URL is derived from the incoming request host
-  const httpAdapter = app.getHttpAdapter();
-  const docsJsonPath = `/${API_CONFIG.ACCEPT.DOCS}-json`;
+  // const httpAdapter = app.getHttpAdapter();
+  // const docsJsonPath = `/${API_CONFIG.ACCEPT.DOCS}-json`;
   const docsPath = API_CONFIG.ACCEPT.DOCS;
 
-  httpAdapter.get(docsJsonPath, (req: any, res: any) => {
-    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-    const host = req.headers.host;
-    res.json({
-      ...s2sDocument,
-      servers: [{ url: `${protocol}://${host}` }],
-    });
-  });
+  // httpAdapter.get(docsJsonPath, (req: any, res: any) => {
+  //   const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+  //   const host = req.headers.host;
+  //   res.json({
+  //     ...s2sDocument,
+  //     servers: [{ url: `${protocol}://${host}` }],
+  //   });
+  // });
 
-  // Swagger UI fetches its spec from the dynamic endpoint above
-  SwaggerModule.setup(docsPath, app, s2sDocument, {
-    swaggerOptions: { url: docsJsonPath },
-  });
+  // // Swagger UI fetches its spec from the dynamic endpoint above
+  // SwaggerModule.setup(docsPath, app, s2sDocument, {
+  //   swaggerOptions: { url: docsJsonPath },
+  // });
+
+  SwaggerModule.setup(docsPath, app, s2sDocument);
+
 }

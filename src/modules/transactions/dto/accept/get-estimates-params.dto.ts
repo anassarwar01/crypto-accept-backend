@@ -12,11 +12,11 @@ export class GetEstimatesParamsDto {
     fiatCurrency: string;
 
     @ApiProperty({
-        enum: ['BTC', 'ETH', 'LTC', 'USDC-ETH'],
-        description: 'Crypto currency (Allowed: BTC, ETH, LTC, USDC-ETH)',
+        enum: ['BTC', 'ETH', 'LTC', 'USDC-ETH', 'ALGO'],
+        description: 'Crypto currency (Allowed: BTC, ETH, LTC, USDC-ETH, ALGO)',
         example: 'BTC'
     })
-    @IsEnum(CryptoCurrency, { message: 'cryptoCurrency must be one of the following values: BTC, ETH, LTC, USDC-ETH' })
-    @IsNotIn(['XLM', 'ALGO'], { message: 'The selected crypto currency is not supported' })
+    @IsEnum(CryptoCurrency, { message: 'cryptoCurrency must be one of the following values: BTC, ETH, LTC, USDC-ETH, ALGO' })
+    @IsNotIn(['XLM'], { message: 'The selected crypto currency is not supported' })
     cryptoCurrency: CryptoCurrency;
 }
