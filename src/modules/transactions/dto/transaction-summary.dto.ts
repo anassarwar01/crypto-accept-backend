@@ -37,7 +37,7 @@ export class SaveCryptoTransactionDto {
         this.amount = quantozResult.expectedCryptoAmount;
         this.rate = rate?.estimatedPrices?.buy || 0;
         this.status = quantozService.mapStatus(quantozResult.status || 'SELLINITIATED');
-        this.walletAddress = quantozResult.cryptoPaymentAddress || '';
+        this.walletAddress = quantozResult.cryptoPaymentAddress || quantozResult.consumerCryptoPaymentAddress || '';
     }
 }
 
