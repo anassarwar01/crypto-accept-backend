@@ -160,8 +160,13 @@ export function setupCheckoutSwagger(app: INestApplication): void {
 
   // Extract schemas from paths
   Object.keys(checkoutDocument.paths).forEach((path) => {
-    // Exclude S2S, summary, and details endpoints
-    if (!path.includes('/accept/') && !path.includes('/summary') && !path.includes('/details')) {
+    // Exclude S2S, summary, details, and health endpoints
+    if (
+      !path.includes('/accept/') &&
+      !path.includes('/summary') &&
+      !path.includes('/details') &&
+      !path.includes('/health')
+    ) {
       filteredCheckoutPaths[path] = checkoutDocument.paths[path];
       extractRefs(checkoutDocument.paths[path]);
     }
