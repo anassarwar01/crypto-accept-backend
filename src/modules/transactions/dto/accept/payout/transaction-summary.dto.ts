@@ -27,17 +27,20 @@ export class SavePayoutTransactionDto {
     rate: number;
     status: CryptoStatus;
     walletAddress: string;
+    receivedAmount: number;
+
 
     constructor(transaction: Transaction, cryptoCurrency: string, quantozResult: QuantozReturnResponse, rate: QuantozEstimatedPrice, quantozService: QuantozService) {
         this.transactionId = transaction.id;
         this.transactionCode = quantozResult.transactionCode || '';
-        this.merchantCode = quantozResult.merchantCustomerCode || '';
-        this.accountCode = quantozResult.merchantAccountCode || quantozResult.accountCode || '';
+        this.merchantCode = quantozResult.merchantCustomerCode || quantozResult.consumerCustomerCode || '';
+        this.accountCode = quantozResult.merchantAccountCode || quantozResult.accountCode || quantozResult.consumerAccountCode || '';
         this.currency = cryptoCurrency as CryptoCurrency;
         this.amount = quantozResult.requestedCryptoAmount;
         this.rate = rate?.estimatedPrices?.buy || 0;
         this.status = quantozService.mapStatus(quantozResult.status || 'SELLINITIATED');
         this.walletAddress = quantozResult.destinationCryptoAddress || '';
+        this.receivedAmount = quantozResult.executedCryptoAmount || 0;
     }
 }
 
