@@ -11,4 +11,11 @@ export enum QuantozStatus {
     BUY_INCASSO = 'BuyIncasso',
     SEND_DELAY = 'SendDelay',
     TO_CANCEL = 'ToCancel',
+    SIMULATED = 'SIMULATED',
+    SENDING = 'Sending',
+    INITIATED = 'Initiated',
+    COMPLETED = 'COMPLETED',
+    FAILED = 'Failed',
+    CANCELLED = 'CANCELLED',
+    STAGED = 'Staged',
 }

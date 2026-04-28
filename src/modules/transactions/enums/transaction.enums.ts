@@ -215,6 +215,11 @@ export enum TransactionStatus {
     EXPIRED = 'transfer.expired',
     ON_HOLD = 'transfer.onHold'
 }
+
+export enum TransactionType {
+    PAYIN = 'payin',
+    PAYOUT = 'payout',
+}
 export enum TransactionPlatform {
     CHECKOUT = 'checkout',
     S2S = 's2s',
