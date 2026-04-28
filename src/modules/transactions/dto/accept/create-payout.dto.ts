@@ -42,8 +42,8 @@ export class CreatePayoutDto {
     @IsIn(['USD', 'EUR'], { message: 'fiatCurrency must be either USD or EUR' })
     fiatCurrency: string;
 
-    @ApiProperty({ enum: ['BTC', 'ETH', 'LTC', 'USDC-ETH'], example: 'BTC', description: 'Allowed values: BTC, ETH, LTC, USDC-ETH' })
-    @IsEnum(CryptoCurrency, { message: 'cryptoCurrency must be one of the following values: BTC, ETH, LTC, USDC-ETH' })
+    @ApiProperty({ enum: ['BTC', 'ETH', 'LTC', 'USDC-ETH', 'ALGO'], example: 'BTC', description: 'Allowed values: BTC, ETH, LTC, USDC-ETH, ALGO' })
+    @IsEnum(CryptoCurrency, { message: 'cryptoCurrency must be one of the following values: BTC, ETH, LTC, USDC-ETH, ALGO' })
     @IsNotEmpty()
     cryptoCurrency: CryptoCurrency;
 

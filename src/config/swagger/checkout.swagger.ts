@@ -8,6 +8,7 @@ export function setupCheckoutSwagger(app: INestApplication): void {
     // .setDescription('Public Checkout APIs')
     .setVersion('1.0')
     // No hardcoded server — resolved dynamically per request
+    .addServer(process.env.SWAGGER_BASE_PATH || '/')
     .build();
 
   const checkoutDocument = SwaggerModule.createDocument(app, checkoutConfig);
@@ -213,21 +214,24 @@ export function setupCheckoutSwagger(app: INestApplication): void {
   checkoutDocument.openapi = '3.1.0';
 
   // Dynamic JSON endpoint: server URL is derived from the incoming request host
-  const httpAdapter = app.getHttpAdapter();
-  const docsJsonPath = `/${API_CONFIG.CHECKOUT.DOCS}-json`;
+  // const httpAdapter = app.getHttpAdapter();
+  // const docsJsonPath = `/${API_CONFIG.CHECKOUT.DOCS}-json`;
   const docsPath = API_CONFIG.CHECKOUT.DOCS;
 
-  httpAdapter.get(docsJsonPath, (req: any, res: any) => {
-    const protocol =
-      req.headers['x-forwarded-proto'] || req.protocol || 'https';
-    const host = req.headers.host;
-    res.json({
-      ...checkoutDocument,
-      servers: [{ url: `${protocol}://${host}` }],
-    });
-  });
+  // httpAdapter.get(docsJsonPath, (req: any, res: any) => {
+  //   const protocol =
+  //     req.headers['x-forwarded-proto'] || req.protocol || 'https';
+  //   const host = req.headers.host;
+  //   const basePath = process.env.SWAGGER_BASE_PATH || '';
+  //   res.json({
+  //     ...checkoutDocument,
+  //     servers: [{ url: `${protocol}://${host}${basePath}` }],
+  //   });
+  // });
 
-  SwaggerModule.setup(docsPath, app, checkoutDocument, {
-    swaggerOptions: { url: docsJsonPath },
-  });
+  // SwaggerModule.setup(docsPath, app, checkoutDocument, {
+  //   swaggerOptions: { url: docsJsonPath },
+  // });
+
+  SwaggerModule.setup(docsPath, app, checkoutDocument);
 }
