@@ -38,7 +38,7 @@ export class TransactionsCallbackService {
             status: transaction.status,
             fiatAmount: Number(transaction.fiatAmount || 0),
             fiatCurrency: transaction.fiatCurrency,
-            cryptoAmount: transaction.cryptoTransaction?.amount ? Number(transaction.cryptoTransaction.amount) : 0,
+            cryptoAmount: Number(transaction.cryptoTransaction?.amount || transaction.cryptoTransaction?.receivedAmount || 0),
             cryptoCurrency: transaction.cryptoTransaction?.currency ?? null,
             createdAt: transaction.createdAt.toISOString(),
         };
@@ -47,17 +47,7 @@ export class TransactionsCallbackService {
         await this.statusHistoryRepository.save({
             transactionId: transaction.id,
             status: transaction.status,
-            metadata: {
-                requestId: transaction.merchantReference,
-                systemReference: transaction.systemReference,
-                orderId: transaction.shortCode,
-                status: transaction.status,
-                fiatAmount: Number(transaction.fiatAmount || 0),
-                fiatCurrency: transaction.fiatCurrency,
-                cryptoAmount: transaction.cryptoTransaction?.amount ? Number(transaction.cryptoTransaction.amount) : 0,
-                cryptoCurrency: transaction.cryptoTransaction?.currency ?? null,
-                createdAt: transaction.createdAt.toISOString(),
-            }
+            metadata: payload
         });
 
         const signature = this.generateSignature(payload);
